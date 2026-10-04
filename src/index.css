@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 antialiased;
+  font-family: var(--font-sans);
+}
+
+/* Numbers line up in receipt/price columns. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Respect the iOS home-indicator / Android gesture bar on fixed bottom bars. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Remove the 300ms tap-highlight delay on touch devices. */
+button,
+a {
+  touch-action: manipulation;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    @apply bg-white;
+  }
+}

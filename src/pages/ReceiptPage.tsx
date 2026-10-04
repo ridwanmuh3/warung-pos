@@ -1,0 +1,44 @@
+import { Link, useParams } from '@tanstack/react-router'
+import { IconPrinter } from '@tabler/icons-react'
+import { getOrder } from '../lib/orders'
+import { Receipt } from '../components/Receipt'
+import { PageHeader } from '../components/PageHeader'
+import { EmptyState } from '../components/EmptyState'
+
+export function ReceiptPage() {
+  const { orderId } = useParams({ from: '/riwayat/$orderId' })
+  const order = getOrder(orderId)
+
+  if (!order) {
+    return (
+      <EmptyState
+        emoji="🔍"
+        title="Pesanan tidak ditemukan"
+        description="Struk ini mungkin sudah tidak tersedia di perangkat ini."
+        action={
+          <Link to="/riwayat" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+            Kembali ke Riwayat
+          </Link>
+        }
+      />
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-md">
+      <div className="no-print">
+        <PageHeader title="Struk" subtitle={order.orderNumber} backTo="/riwayat" backLabel="Riwayat" />
+      </div>
+      <Receipt order={order} />
+      <div className="no-print mt-4">
+        <button
+          onClick={() => window.print()}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          <IconPrinter size={16} stroke={2} />
+          Cetak Struk
+        </button>
+      </div>
+    </div>
+  )
+}
