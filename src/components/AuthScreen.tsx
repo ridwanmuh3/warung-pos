@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import {
   IconAlertCircle,
@@ -15,6 +16,15 @@ type Mode = 'login' | 'register'
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pl-10 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100'
+
+/** Fills the viewport and centres the card both horizontally and vertically. */
+function Shell({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-dvh items-center justify-center px-4 py-10">
+      <div className="w-full max-w-sm">{children}</div>
+    </div>
+  )
+}
 
 /**
  * Sign-in / sign-up screen.
@@ -42,7 +52,8 @@ export function AuthScreen({
   // Already signed in: show the account instead of a form.
   if (session) {
     return (
-      <div className="mx-auto max-w-sm rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+      <Shell>
+      <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-brand-100 text-brand-700">
           <IconCheck size={28} stroke={2.5} />
         </span>
@@ -57,6 +68,7 @@ export function AuthScreen({
           Buka Kasir
         </Link>
       </div>
+      </Shell>
     )
   }
 
@@ -84,7 +96,8 @@ export function AuthScreen({
   }
 
   return (
-    <div className="mx-auto max-w-sm">
+    <Shell>
+    <div>
       <div className="mb-5 text-center">
         <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-600 text-white">
           <IconBuildingStore size={28} stroke={2} />
@@ -254,5 +267,6 @@ export function AuthScreen({
         Kata sandi disimpan sebagai hash PBKDF2 di perangkat ini, bukan teks biasa.
       </p>
     </div>
+    </Shell>
   )
 }
