@@ -2,7 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { IconArrowRight, IconAlertTriangle, IconMinus, IconPlus, IconShoppingCart, IconTrash } from '@tabler/icons-react'
 import { clearCart, removeFromCart, setQty, stalePriceIds, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
-import { useProducts } from '../lib/useProducts'
+import { useProducts } from '../lib/useServerData'
 import type { OrderItem } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { TotalPanel } from '../components/TotalPanel'
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/keranjang')({
 
 function CartPage() {
   const { items, count } = useCart()
-  const products = useProducts()
+  const { data: products } = useProducts()
   const stale = stalePriceIds(products)
   const staleNames = items.filter((item) => stale.includes(item.productId)).map((item) => item.name)
 

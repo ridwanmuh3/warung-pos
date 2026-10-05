@@ -8,26 +8,32 @@
     "build": "vite build && tsc --noEmit",
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "db:push": "node --env-file=.env node_modules/drizzle-kit/bin.cjs push",
+    "db:generate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs generate",
+    "db:studio": "node --env-file=.env node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "@tabler/icons-react": "^3.48.0",
     "@tanstack/react-router": "^1.170.41",
     "@tanstack/react-start": "^1.168.60",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "drizzle-orm": "1.0.0-rc.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@types/node": "^24.13.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
+    "@types/node": "^24.19.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "drizzle-kit": "1.0.0-rc.4",
     "nitro": "^3.0.260311-beta",
-    "oxlint": "^1.81.0",
+    "oxlint": "^1.86.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "~6.0.2",
-    "vite": "^8.3.0"
+    "typescript": "~6.0.3",
+    "vite": "^8.3.2"
   }
 }

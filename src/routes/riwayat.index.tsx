@@ -4,8 +4,8 @@ import { IconAlertTriangle, IconSearch, IconShoppingCart, IconX } from '@tabler/
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { dayKey, formatDayLabel, formatIDR, formatTime } from '../lib/format'
-import { listOrders, voidOrder } from '../lib/orders'
-import { useOrders } from '../lib/useOrders'
+import { listOrdersFn, voidOrderFn } from '../lib/data.functions'
+import { useOrders } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import type { Order, PaymentMethod, SalesChannel } from '../types'
@@ -36,11 +36,10 @@ function groupByDay(orders: Order[]): Array<[string, Order[]]> {
 export const Route = createFileRoute('/riwayat/')({
   component: OrdersPage,
   validateSearch: orderSearchSchema,
-  // Orders live in localStorage, so nothing can be rendered or loaded on the server.
-  ssr: false,
+  // Orders now live in the database, so the server can filter and count them.
   loaderDeps: ({ search }) => ({ q: search.q, method: search.method, channel: search.channel, day: search.day }),
-  loader: ({ deps }) => {
-    const all = listOrders()
+  loader: async ({ deps }) => {
+    const all = await listOrdersFn()
     const orders = all.filter((order) => {
       if (deps.day && dayKey(order.createdAt) !== deps.day) return false
       if (deps.method && order.paymentMethod !== deps.method) return false
@@ -67,12 +66,12 @@ function OrdersPage() {
   const [pendingVoid, setPendingVoid] = useState<Order | null>(null)
   const [voidReason, setVoidReason] = useState('')
   const navigate = useNavigate({ from: Route.fullPath })
-  const router = useRouter()
 
-  // Re-run the loader whenever the underlying store changes (new order, void, ...).
-  const liveOrders = useOrders()
+  // Re-run the loader whenever the order set changes (new order, void, ...).
+  const { data: liveOrders } = useOrders()
+  const router = useRouter()
   useEffect(() => {
-    router.invalidate()
+    void router.invalidate()
   }, [liveOrders, router])
 
   const hasFilters = q !== '' || method !== undefined || channel !== undefined || day !== undefined
@@ -315,9 +314,10 @@ function OrdersPage() {
               <button
                 data-testid="void-confirm"
                 onClick={() => {
-                  voidOrder(pendingVoid.id, voidReason)
-                  setPendingVoid(null)
-                  router.invalidate()
+                  void voidOrderFn({ data: { id: pendingVoid.id, reason: voidReason } }).then(() => {
+                    setPendingVoid(null)
+                    void router.invalidate()
+                  })
                 }}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
               >

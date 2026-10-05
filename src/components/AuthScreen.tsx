@@ -8,7 +8,7 @@ import {
   IconMail,
   IconUser,
 } from '@tabler/icons-react'
-import { login, register } from '../lib/auth'
+import { login, register } from '../lib/auth.session'
 import { useSession } from '../lib/useSession'
 
 type Mode = 'login' | 'register'

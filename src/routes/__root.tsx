@@ -35,9 +35,17 @@ function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const isAuthRoute = pathname === '/masuk'
 
+  // The session resolves from the server cookie on first paint. Rendering the
+  // sign-in screen before that resolves would flash it on every reload, so an
+  // unresolved session shows a neutral shell instead.
+  if (session === undefined) {
+    return (
+      <div className="grid min-h-full place-items-center p-6 text-sm text-slate-500">Memuat…</div>
+    )
+  }
+
   // Access gate: without a session every route renders the sign-in screen.
-  // This is a UI gate for shift staff, not a security boundary — client-side
-  // auth cannot be one, which is why the real swap to a server is mechanical.
+  // The decision is made from the server session, not a client flag.
   if (!session && !isAuthRoute) {
     return <AuthScreen initialMode="login" redirectTo={pathname} />
   }

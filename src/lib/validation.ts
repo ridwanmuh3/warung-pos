@@ -175,12 +175,8 @@ export const checkoutSchema = z
     cashier: cleanText(60),
     discountAmount: rupiah,
     discountPercent: z.union([discountPercent, z.null()]),
-    /** Raw cash tendered; required only for cash payments. */
-    cashTendered: z
-      .string()
-      .transform((value) => value.trim())
-      .transform((value) => (value === '' ? null : Number(value)))
-      .pipe(z.union([z.null(), rupiah])),
+    /** Cash tendered; required only for cash payments. */
+    cashTendered: z.union([rupiah, z.null()]),
     total: rupiah,
   })
   .refine((value) => value.paymentMethod !== 'tunai' || value.cashTendered !== null, {
@@ -196,10 +192,66 @@ export const checkoutSchema = z
   )
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
-export const openingCashSchema = z.object({ openingCash: numberField(rupiah) })
+/**
+ * Wire form of the checkout payload.
+ *
+ * The browser sends what the form actually holds — strings — and the server
+ * converts them with `checkoutSchema` before touching the database. Keeping the
+ * two apart means the transport type never has to equal the domain type.
+ */
+export const checkoutFormSchema = z.object({
+  paymentMethod,
+  channel: salesChannel,
+  cashier: z.string().max(200),
+  discountMode: z.enum(['rupiah', 'persen']),
+  discountInput: z.string().max(20),
+  cashInput: z.string().max(20),
+  total: rupiah,
+})
+
+/** Converts the raw form payload into the validated domain value. */
+export function parseCheckoutForm(form: z.infer<typeof checkoutFormSchema>): CheckoutInput {
+  const parsedNumber = (raw: string): number => {
+    const trimmed = raw.trim()
+    if (trimmed === '') return 0
+    const value = Number(trimmed)
+    return Number.isFinite(value) ? value : Number.NaN
+  }
+  return checkoutSchema.parse({
+    paymentMethod: form.paymentMethod,
+    channel: form.channel,
+    cashier: form.cashier,
+    discountAmount: form.discountMode === 'rupiah' ? parsedNumber(form.discountInput) : 0,
+    discountPercent: form.discountMode === 'persen' ? parsedNumber(form.discountInput) : null,
+    cashTendered: form.cashInput.trim() === '' ? null : parsedNumber(form.cashInput),
+    total: form.total,
+  })
+}
+
+/** Wire form of the shift payloads. */
+export const openingCashFormSchema = z.object({ openingCash: z.string().max(20) })
+export const shiftCloseFormSchema = z.object({
+  countedCash: z.string().max(20),
+  note: z.string().max(300),
+})
+
+/** Domain forms: the server converts the wire payload with these. */
+export const openingCashSchema = z.object({
+  openingCash: z
+    .string()
+    .transform((value) => value.trim())
+    .pipe(z.string().min(1, 'Modal awal wajib diisi'))
+    .transform((value) => Number(value))
+    .pipe(rupiah),
+})
 
 export const shiftCloseSchema = z.object({
-  countedCash: numberField(rupiah),
+  countedCash: z
+    .string()
+    .transform((value) => value.trim())
+    .pipe(z.string().min(1, 'Jumlah kas wajib diisi'))
+    .transform((value) => Number(value))
+    .pipe(rupiah),
   note: noteText,
 })
 

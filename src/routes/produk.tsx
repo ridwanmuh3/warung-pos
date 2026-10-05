@@ -13,8 +13,15 @@ import {
 import { CATEGORY_LABELS } from '../data/products'
 import { formatIDR } from '../lib/format'
 import { productDraftSchema } from '../lib/validation'
-import { addProduct, adjustStock, deleteProduct, resetProducts, updateProduct } from '../lib/products'
-import { useProducts } from '../lib/useProducts'
+import {
+  createProductFn,
+  deleteProductFn,
+  listProductsFn,
+  restockProductFn,
+  seedProductsFn,
+  updateProductFn,
+} from '../lib/data.functions'
+import { useProducts } from '../lib/useServerData'
 import type { Product, ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
@@ -248,8 +255,8 @@ const productSearchSchema = z.object({
 export const Route = createFileRoute('/produk')({
   component: ProductsPage,
   validateSearch: productSearchSchema,
-  // Catalog is stored in localStorage.
-  ssr: false,
+  // The catalog now lives in the database, so the list is fetched on the server.
+  loader: async () => ({ products: await listProductsFn() }),
 })
 
 function ProductsPage() {
@@ -260,7 +267,13 @@ function ProductsPage() {
   const filter = kategori ?? 'semua'
   const navigate = useNavigate({ from: Route.fullPath })
 
-  const products = useProducts()
+  const { data: products, reload } = useProducts()
+
+  async function resetCatalog() {
+    await Promise.all(products.map((product) => deleteProductFn({ data: { id: product.id } })))
+    await seedProductsFn()
+    reload()
+  }
 
   const lowStock = products.filter((p) => p.stock !== null && p.stock <= p.lowStockThreshold)
   const visible = products
@@ -274,22 +287,11 @@ function ProductsPage() {
       return
     }
     setFormError(null)
-    const base = {
-      name: parsed.data.name,
-      price: parsed.data.price,
-      cost: parsed.data.cost,
-      category: parsed.data.category,
-      emoji: parsed.data.emoji,
-      stock: parsed.data.stock,
-      lowStockThreshold: parsed.data.lowStockThreshold,
-      sku: parsed.data.sku ?? '',
-      barcode: parsed.data.barcode ?? '',
-    }
 
     if (draft.id) {
-      updateProduct(draft.id, base)
+      void updateProductFn({ data: { id: draft.id, draft } }).then(reload)
     } else {
-      addProduct(base)
+      void createProductFn({ data: draft }).then(reload)
     }
     setDraft(EMPTY_DRAFT)
   }
@@ -302,7 +304,9 @@ function ProductsPage() {
         action={
           <button
             onClick={() => {
-              if (confirm('Kembalikan produk ke daftar awal? Perubahan produk akan hilang.')) resetProducts()
+              if (confirm('Kembalikan produk ke daftar awal? Perubahan produk akan hilang.')) {
+                void resetCatalog()
+              }
             }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
@@ -411,7 +415,9 @@ function ProductsPage() {
                   </span>
                   {product.stock !== null && (
                     <button
-                      onClick={() => adjustStock(product.id, 10, 'restock')}
+                      onClick={() => {
+                        void restockProductFn({ data: { id: product.id, delta: 10 } }).then(reload)
+                      }}
                       className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                       aria-label={`Restock ${product.name} +10`}
                     >
@@ -466,9 +472,11 @@ function ProductsPage() {
               </button>
               <button
                 onClick={() => {
-                  deleteProduct(pendingDelete.id)
-                  if (draft.id === pendingDelete.id) setDraft(EMPTY_DRAFT)
-                  setPendingDelete(null)
+                  void deleteProductFn({ data: { id: pendingDelete.id } }).then(() => {
+                    if (draft.id === pendingDelete.id) setDraft(EMPTY_DRAFT)
+                    setPendingDelete(null)
+                    reload()
+                  })
                 }}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
               >

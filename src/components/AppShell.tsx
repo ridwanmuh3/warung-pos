@@ -12,8 +12,8 @@ import {
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useCart } from '../lib/cart'
-import { logout } from '../lib/auth'
-import type { SessionUser } from '../lib/auth'
+import { logout } from '../lib/auth.session'
+import type { PublicUser } from '../lib/auth.server'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Kasir', Icon: IconShoppingCart },
@@ -23,7 +23,7 @@ const NAV_ITEMS = [
   { to: '/laporan', label: 'Laporan', Icon: IconFileText },
 ] as const
 
-export function AppShell({ children, session }: { children: ReactNode; session: SessionUser | null }) {
+export function AppShell({ children, session }: { children: ReactNode; session: PublicUser | null }) {
   const { count } = useCart()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
@@ -31,8 +31,7 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
 
   function signOut() {
     setMenuOpen(false)
-    logout()
-    void navigate({ to: '/masuk' })
+    void logout().then(() => navigate({ to: '/masuk' }))
   }
 
   return (

@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { IconLockOpen, IconLock, IconAlertTriangle } from '@tabler/icons-react'
 import { formatDateTime, formatIDR } from '../lib/format'
-import { openingCashSchema, shiftCloseSchema } from '../lib/validation'
-import { closeShift, currentShift, expectedCashFor, openShift, useShifts } from '../lib/useShifts'
-import { useOrders } from '../lib/useOrders'
+import { openingCashFormSchema, shiftCloseFormSchema } from '../lib/validation'
+import { closeShiftFn, openShiftFn } from '../lib/data.functions'
+import { useCurrentShift, useOrders, useShifts } from '../lib/useServerData'
 
 /**
  * Cash-drawer shift panel: open the drawer with a float, then close it with a
  * physical count. The variance is the difference between counted and expected.
  */
 export function ShiftPanel() {
-  const shifts = useShifts()
-  const orders = useOrders()
-  const open = currentShift()
+  const { data: shifts, reload: reloadShifts } = useShifts()
+  const { data: orders, reload: reloadOrders } = useOrders()
+  const { data: open, reload: reloadCurrent } = useCurrentShift()
 
   const [openingCash, setOpeningCash] = useState('')
   const [countedCash, setCountedCash] = useState('')
@@ -49,13 +49,16 @@ export function ShiftPanel() {
           </label>
           <button
             onClick={() => {
-              const parsed = openingCashSchema.safeParse({ openingCash })
+              const parsed = openingCashFormSchema.safeParse({ openingCash })
               if (!parsed.success) {
                 setError(parsed.error.issues[0]?.message ?? 'Modal awal tidak valid')
                 return
               }
               setError(null)
-              openShift(parsed.data.openingCash)
+              void openShiftFn({ data: parsed.data }).then(() => {
+                reloadShifts()
+                reloadCurrent()
+              })
               setOpeningCash('')
             }}
             data-testid="open-shift"
@@ -97,7 +100,22 @@ export function ShiftPanel() {
     )
   }
 
-  const expected = expectedCashFor(open, orders)
+  // Expected drawer cash: float + cash sales − cash refunded by voids, all from
+  // the database. Computed here for display; the server recomputes on close.
+  const expected =
+    open.openingCash +
+    orders
+      .filter(
+        (order) =>
+          order.shiftId === open.id && order.status === 'paid' && order.paymentMethod === 'tunai',
+      )
+      .reduce((sum, order) => sum + order.total, 0) -
+    orders
+      .filter(
+        (order) =>
+          order.shiftId === open.id && order.status === 'void' && order.paymentMethod === 'tunai',
+      )
+      .reduce((sum, order) => sum + order.total, 0)
   const counted = Number(countedCash)
   const varianceValid = countedCash !== '' && Number.isFinite(counted)
   const variance = varianceValid ? Math.round(counted) - expected : 0
@@ -169,13 +187,17 @@ export function ShiftPanel() {
 
       <button
         onClick={() => {
-          const parsed = shiftCloseSchema.safeParse({ countedCash, note })
+          const parsed = shiftCloseFormSchema.safeParse({ countedCash, note })
           if (!parsed.success) {
             setError(parsed.error.issues[0]?.message ?? 'Jumlah kas tidak valid')
             return
           }
           setError(null)
-          closeShift({ countedCash: parsed.data.countedCash, note: parsed.data.note }, orders)
+          void closeShiftFn({ data: parsed.data }).then(() => {
+            reloadShifts()
+            reloadCurrent()
+            reloadOrders()
+          })
           setCountedCash('')
           setNote('')
         }}

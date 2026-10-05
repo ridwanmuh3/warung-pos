@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { IconArrowRight, IconShoppingCart } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CATEGORY_LABELS, CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
@@ -7,8 +7,7 @@ import { dayKey, formatDayLabel, formatIDR } from '../lib/format'
 import { busiestHour, channelBreakdown, hourHistogram, revenueTrend, topProducts } from '../lib/analytics'
 import { fetchReportingDay, streamCategoryBreakdown } from '../lib/reporting.functions'
 import { marginPercent } from '../lib/totals'
-import { useOrders } from '../lib/useOrders'
-import { useProducts } from '../lib/useProducts'
+import { useOrders, useProducts } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { ShiftPanel } from '../components/ShiftPanel'
@@ -51,15 +50,8 @@ export const Route = createFileRoute('/ringkasan')({
 
 function SummaryPage() {
   const { reportingDay } = Route.useLoaderData()
-  const orders = useOrders()
-  const products = useProducts()
-  const router = useRouter()
-
-  // Orders change on this device without a navigation; re-run the loader so the
-  // server-authoritative reporting day stays in sync.
-  useEffect(() => {
-    router.invalidate()
-  }, [orders, router])
+  const { data: orders } = useOrders()
+  const { data: products } = useProducts()
 
   const today = reportingDay
   const todayLabel = formatDayLabel(reportingDay)

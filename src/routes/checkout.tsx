@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { z } from 'zod'
 import { IconBuildingBank, IconCash, IconQrcode } from '@tabler/icons-react'
 import { PAYMENT_LABELS, CHANNEL_LABELS } from '../data/products'
 import { clearCart, currentCartItems, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
-import { createOrder } from '../lib/orders'
+import { createOrderFn } from '../lib/data.functions'
 import { discountValue, itemsTotal } from '../lib/totals'
-import { checkoutSchema } from '../lib/validation'
+import { checkoutFormSchema, parseCheckoutForm } from '../lib/validation'
 import type { PaymentMethod, SalesChannel } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
@@ -53,6 +54,7 @@ function CheckoutPage() {
   const [discountInput, setDiscountInput] = useState('')
   const [cashInput, setCashInput] = useState('')
   const [formErrors, setFormErrors] = useState<string[]>([])
+  const [submitting, setSubmitting] = useState(false)
   /** Synchronous latch: `disabled` alone cannot stop a double click before re-render. */
   const submittedRef = useRef(false)
 
@@ -96,32 +98,50 @@ function CheckoutPage() {
 
   function placeOrder() {
     if (submittedRef.current) return
-    const parsed = checkoutSchema.safeParse({
+    // Raw input shape: validated here for instant feedback, then validated again
+    // on the server (same schema), so a crafted request cannot bypass the rules.
+    const rawCheckout = {
       paymentMethod: payment,
       channel,
       cashier,
-      discountAmount: discountMode === 'rupiah' ? discount : 0,
-      discountPercent: discountMode === 'persen' ? Number(discountInput) || 0 : null,
-      cashTendered: payment === 'tunai' ? cashInput : null,
+      discountMode,
+      discountInput,
+      cashInput,
       total,
-    })
+    }
+    const parsed = checkoutFormSchema.safeParse(rawCheckout)
     if (!parsed.success) {
       setFormErrors(parsed.error.issues.map((issue) => issue.message))
       return
     }
+    // Local domain check for instant, precise feedback (cash < total, etc.).
+    try {
+      parseCheckoutForm(rawCheckout)
+    } catch (cause) {
+      setFormErrors(
+        cause instanceof z.ZodError
+          ? cause.issues.map((issue) => issue.message)
+          : ['Periksa kembali isian pembayaran'],
+      )
+      return
+    }
     setFormErrors([])
     submittedRef.current = true
-    const order = createOrder({
-      items: currentCartItems(),
-      discount,
-      paymentMethod: parsed.data.paymentMethod,
-      amountPaid: parsed.data.paymentMethod === 'tunai' ? parsed.data.cashTendered : null,
-      change: parsed.data.paymentMethod === 'tunai' ? (parsed.data.cashTendered ?? 0) - total : null,
-      channel: parsed.data.channel,
-      cashier: parsed.data.cashier ?? '',
-    })
-    clearCart()
-    navigate({ to: '/sukses/$orderId', params: { orderId: order.id } })
+    setSubmitting(true)
+    void (async () => {
+      try {
+        const order = await createOrderFn({
+          data: { items: currentCartItems(), discount, checkout: rawCheckout },
+        })
+        clearCart()
+        await navigate({ to: '/sukses/$orderId', params: { orderId: order.id } })
+      } catch (cause) {
+        // The order was not created: release the latch so the cashier can retry.
+        submittedRef.current = false
+        setSubmitting(false)
+        setFormErrors([cause instanceof Error ? cause.message : 'Gagal menyimpan pesanan'])
+      }
+    })()
   }
 
   const cashSection = payment === 'tunai' && (
@@ -213,7 +233,7 @@ function CheckoutPage() {
   const payButton = (className: string, label: ReactNode) => (
     <button
       onClick={placeOrder}
-      disabled={!canConfirm}
+      disabled={!canConfirm || submitting}
       data-testid="confirm-order"
       className={className}
     >
@@ -363,10 +383,10 @@ function CheckoutPage() {
             </div>
             {payButton(
               'mt-4 w-full rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-700 disabled:opacity-50',
-              'Konfirmasi Pesanan',
+              submitting ? 'Menyimpan…' : 'Konfirmasi Pesanan',
             )}
             <p className="mt-2 text-center text-xs text-slate-400">
-              Pesanan akan tersimpan di perangkat ini.
+              Pesanan tersimpan di server dan stok langsung berkurang.
             </p>
           </div>
         </div>
@@ -377,7 +397,7 @@ function CheckoutPage() {
         {payButton(
           'flex w-full items-center justify-between rounded-lg bg-brand-600 px-4 py-3 font-bold text-white disabled:opacity-50',
           <>
-            <span>Konfirmasi Pesanan</span>
+            <span>{submitting ? 'Menyimpan…' : 'Konfirmasi Pesanan'}</span>
             <span data-testid="mobile-payable-total" className="tabular">
               {formatIDR(total)}
             </span>

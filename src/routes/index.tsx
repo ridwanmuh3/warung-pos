@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { CATEGORY_LABELS } from '../data/products'
 import { addToCart, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
-import { useProducts } from '../lib/useProducts'
+import { useProducts } from '../lib/useServerData'
 import type { ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
@@ -38,7 +38,7 @@ function MenuPage() {
   const navigate = useNavigate({ from: Route.fullPath })
   const searchRef = useRef<HTMLInputElement>(null)
   const { items } = useCart()
-  const products = useProducts()
+  const { data: products, loading: productsLoading } = useProducts()
 
   const qtyByProduct = useMemo(() => {
     const map = new Map<string, number>()
@@ -139,7 +139,9 @@ function MenuPage() {
         ))}
       </div>
 
-      {visible.length === 0 ? (
+      {productsLoading ? (
+        <p className="py-10 text-center text-sm text-slate-500">Memuat produk…</p>
+      ) : visible.length === 0 ? (
         <EmptyState
           emoji={needle === '' ? '📦' : '🔍'}
           title={needle === '' ? 'Belum ada produk' : 'Produk tidak ditemukan'}

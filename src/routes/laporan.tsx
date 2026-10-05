@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react'
-import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { IconArrowRight, IconDownload, IconPrinter, IconShoppingCart } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
@@ -7,8 +7,7 @@ import { dayKey, dayKeyToInputValue, formatDayLabel, formatIDR, formatTime } fro
 import { buildDailyReport, dailyOrdersCsv, downloadTextFile, zReportText } from '../lib/report'
 import { fetchReportingDay } from '../lib/reporting.functions'
 import { marginPercent } from '../lib/totals'
-import { useOrders } from '../lib/useOrders'
-import { useShifts } from '../lib/useShifts'
+import { useOrders, useShifts } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 
@@ -27,15 +26,9 @@ export const Route = createFileRoute('/laporan')({
 
 function ReportPage() {
   const { day } = Route.useLoaderData()
-  const orders = useOrders()
-  const shifts = useShifts()
-  const router = useRouter()
+  const { data: orders } = useOrders()
+  const { data: shifts } = useShifts()
   const navigate = useNavigate({ from: Route.fullPath })
-
-  // Keep the loader-backed day in sync when orders change on this device.
-  useEffect(() => {
-    router.invalidate()
-  }, [orders, router])
 
   const report = useMemo(() => buildDailyReport(day, orders, shifts), [day, orders, shifts])
 

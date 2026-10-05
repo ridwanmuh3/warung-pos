@@ -1,19 +1,18 @@
-import { Link, createFileRoute, useParams } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { IconCheck, IconPlus, IconPrinter } from '@tabler/icons-react'
 import { formatIDR } from '../lib/format'
-import { getOrder } from '../lib/orders'
+import { getOrderFn } from '../lib/data.functions'
 import { Receipt } from '../components/Receipt'
 import { EmptyState } from '../components/EmptyState'
 
 export const Route = createFileRoute('/sukses/$orderId')({
   component: SuccessPage,
-  // Order is read from localStorage on the client.
-  ssr: false,
+  // The freshly created order is fetched from the database during SSR.
+  loader: async ({ params }) => ({ order: await getOrderFn({ data: { id: params.orderId } }) }),
 })
 
 function SuccessPage() {
-  const { orderId } = useParams({ strict: false }) as { orderId: string }
-  const order = getOrder(orderId)
+  const { order } = Route.useLoaderData()
 
   if (!order) {
     return (

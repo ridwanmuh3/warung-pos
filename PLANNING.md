@@ -368,4 +368,53 @@ Seluruh Phase 0–5 selesai dan terverifikasi. Ringkas:
 
 **Catatan keamanan (jujur):** auth ini **bukan** batas keamanan terhadap pemilik perangkat — auth client-side tidak mungkin begitu. Ini gerbang akses untuk staf shift pada satu perangkat. Yang benar-benar ditegakkan: kata sandi tidak pernah disimpan mentah, pesan gagal tidak membocorkan keberadaan akun, dan API-nya berbentuk sama seperti auth server sehingga penggantian nanti bersifat mekanis.
 
+## 16. Phase 7 (dieksekusi) — Backend Turso + Drizzle
+
+**Tujuan:** memindahkan penyimpanan dari `localStorage` ke database nyata, tanpa mengubah model UI.
+
+### 16.1 Lapisan data
+
+| Berkas | Peran |
+| ------ | ----- |
+| `src/db/schema.ts` | 7 tabel Drizzle: `users`, `products`, `orders`, `order_items`, `shifts`, `stock_movements`, `counters` |
+| `src/db/client.server.ts` | Klien libSQL lazy + memoised (`createServerOnlyFn`) |
+| `src/lib/env.server.ts` | Baca `TURSO_URL` / `TURSO_ACCESS_TOKEN` / `SESSION_SECRET`; gagal keras jika kosong |
+| `src/lib/data.server.ts` | Semua akses SQL (server-only) |
+| `src/lib/data.functions.ts` | RPC typed (`createServerFn`) — 16 endpoint |
+| `src/lib/useServerData.ts` | Hook klien (`useProducts`, `useOrders`, `useShifts`, `useCurrentShift`) |
+| `drizzle.config.ts` | Konfigurasi drizzle-kit (`dialect: 'turso'`) |
+
+### 16.2 Keputusan desain
+
+- **Uang = integer rupiah**, waktu = string ISO-8601 (urut leksikografis, cocok dengan kode laporan yang sudah ada).
+- **Snapshot tetap:** `order_items` menyimpan nama/harga/HPP saat penjualan.
+- **Nomor pesanan** dari tabel `counters` → tidak pernah dipakai ulang setelah void/hapus.
+- **Stok** berubah setelah order tersimpan (bukan sebelumnya), agar kegagalan tidak meninggalkan stok terpotong tanpa order.
+- **Auth pindah ke server:** hash PBKDF2 hanya ada di DB; sesi memakai **cookie terenkripsi** `httpOnly` (bukan lagi `localStorage`).
+- **Validasi ganda:** skema Zod yang sama dipakai di klien dan di server function; payload mentah (*wire*) dipisahkan dari bentuk domain.
+
+### 16.3 Verifikasi
+
+| Uji | Hasil |
+| --- | ----- |
+| `drizzle-kit push` | 7 tabel dibuat di Turso |
+| Seed otomatis | DB kosong → 14 produk terpasang otomatis |
+| Register | Akun masuk ke tabel `users`; cookie `warung-pos` `httpOnly`, `sameSite=Lax` |
+| Sesi | Cookie tidak bisa dibaca JS (`cookieReadable: false`); `localStorage` tidak menyimpan user |
+| Transaksi | ORD-001 Rp7.000 tunai Rp20.000 → kembalian Rp13.000; tersimpan di `orders` + `order_items` |
+| Stok | 40 → 38 saat jual, kembali 40 saat void (`stock_movements` mencatat keduanya) |
+| Gate akses | Tanpa sesi → layar masuk; katalog tidak dirender |
+| Rahasia | `TURSO_ACCESS_TOKEN` / `passwordHash` / `libsql://` **tidak ada** di bundle klien |
+
+### 16.4 Bug nyata yang ditemukan saat uji
+
+1. **Loop request tak terbatas.** `refreshSession()` memberi tahu subscriber, dan subscriber memanggil `refreshSession()` lagi — terlihat sebagai 8 request identik ke `/_serverFn/`. Diperbaiki: kontrak satu arah — `refreshSession()` menulis cache lalu memberi tahu; subscriber hanya membaca `getSessionSnapshot()`. Fetch hanya terjadi sekali saat mount.
+2. **Import diblokir build.** Modul bernama `*.client.ts` ditolak dari grafik server oleh import-protection TanStack Start. Di-rename menjadi `auth.session.ts` karena modul itu sebenarnya pembungkus RPC yang aman di kedua lingkungan.
+3. **Overload `drizzle()` libSQL.** `drizzle(client)` tidak lolos tipe di rc ini; bentuk yang benar adalah `drizzle({ client })`.
+4. **Konflik tipe input/output Zod** pada payload checkout/shift. Diperbaiki dengan memisahkan skema *wire* (string mentah) dari skema *domain* (angka tervalidasi).
+
+**Verifikasi dijalankan:** `pnpm build` + `pnpm lint` + `tsc --noEmit` hijau; server produksi :3100 dengan env dari `.env`; Chromium E2E untuk register, gate, katalog, transaksi, void, dan logout.
+
+**Sisa (belum dikerjakan):** keranjang masih `localStorage` (belum di-checkout); belum ada migrasi data `localStorage` lama → DB; belum ada multi-tenant/role.
+
 

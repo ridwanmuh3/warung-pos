@@ -62,24 +62,23 @@ UI-nya *responsive*: nyaman dipakai di **mobile** (dengan tab bar bawah), **tabl
 
 ### 3.5 Autentikasi & Validasi Input
 
-### Autentikasi (`src/lib/auth.ts`)
+### Autentikasi
 
-- **Register / Login / Logout** tersedia di route `/masuk` (mode `login` | `register`).
-- Kata sandi **tidak pernah disimpan sebagai teks biasa**: PBKDF2-SHA-256, 210.000 iterasi, salt acak 16 byte per pengguna, dibandingkan secara *constant-time*.
-- Pesan gagal login **identik** untuk email tidak dikenal dan kata sandi salah (mencegah enumerasi akun).
-- Sesi disimpan di `warung-pos.session.v1`; akun di `warung-pos.users.v1`.
-- **Gate akses** ada di `__root.tsx`: tanpa sesi, semua route menampilkan layar masuk. Ini gerbang UI untuk staf shift — bukan batas keamanan (auth client-side memang tidak bisa jadi batas keamanan), karena itu API-nya dibentuk agar penggantian ke server bersifat mekanis.
+- **Register / Login / Logout** di route `/masuk` (mode `login` | `register`).
+- **Server-authoritative:** kata sandi diverifikasi di server (PBKDF2-SHA-256, 210.000 iterasi, salt acak 16 byte per pengguna, perbandingan *constant-time*). Hash tidak pernah dikirim ke browser.
+- **Sesi = cookie terenkripsi** (`warung-pos`, `httpOnly`, `sameSite=lax`, `secure` di produksi) yang dikelola TanStack Start. Browser tidak pernah memegang data sesi yang bisa dibaca atau dipalsukan.
+- Pesan gagal login **identik** untuk email tidak dikenal dan kata sandi salah (anti-enumerasi akun).
+- Instalasi baru (0 akun) otomatis diarahkan ke mode **Daftar**.
 
 ### Validasi & anti-injection (`src/lib/validation.ts`)
 
-Seluruh input melewati satu modul Zod. Dua lapis pertahanan:
+Seluruh input melewati satu modul Zod, dan **skema yang sama dipakai di klien dan di server**: server function memvalidasi ulang setiap payload, jadi request buatan tangan tidak bisa melewati aturan UI.
 
-1. **Sanitasi saat input** — karakter kontrol (C0/C1, NUL) dan karakter markup (`<`, `>`, backtick) dibuang, spasi dirapikan, panjang dibatasi. Data yang tersimpan sudah inert.
-2. **Escape saat output** — React meng-escape seluruh teks yang diinterpolasi, dan aplikasi **tidak pernah** memakai `dangerouslySetInnerHTML` (diverifikasi via grep: nol kecocokan).
+Dua lapis pertahanan:
+1. **Sanitasi saat input** — karakter kontrol (C0/C1, NUL) dan karakter markup (`<`, `>`, backtick) dibuang, spasi dirapikan, panjang dibatasi.
+2. **Escape saat output** — React meng-escape semua interpolasi; aplikasi tidak pernah memakai `dangerouslySetInnerHTML` (diverifikasi grep).
 
-Skema yang tersedia: `requiredText`/`cleanText`/`noteText` (teks bebas), `rupiah`/`priceRupiah`/`quantity`/`discountPercent`, `numberField` (field angka), `email`, `password`, `personName`, `skuCode`, `barcodeCode`, serta skema form `productDraftSchema`, `checkoutSchema`, `openingCashSchema`, `shiftCloseSchema`, `registerSchema`, `loginSchema`.
-
-Contoh hasil uji: nama produk `"<img src=x onerror=alert(1)>Es Jeruk<img src=x onerror=alert(2)>"` tersimpan sebagai `"img src=x onerror=alert(1)Es Jerukimg src=x onerror=alert(2)"` — tanpa tag, tanpa kontrol, dan tidak pernah menjadi elemen DOM.
+Skema *wire* (`checkoutFormSchema`, `openingCashFormSchema`, `shiftCloseFormSchema`) memisahkan bentuk transport dari bentuk domain (`checkoutSchema`, `openingCashSchema`, `shiftCloseSchema`), sehingga payload mentah dari browser tidak pernah dipercaya apa adanya.
 
 ## 4. Fitur
 
@@ -121,21 +120,37 @@ Contoh hasil uji: nama produk `"<img src=x onerror=alert(1)>Es Jeruk<img src=x o
 - **Z-Report** (`zReportText`) adalah ringkasan tutup harian berformat teks untuk dicetak atau diunduh.
 - Hari dipilih lewat `?tanggal=<dayKey>`; rentang valid dan hari tanpa data menampilkan empty state, bukan angka basi.
 
-## 4.5 Penyimpanan & migrasi
+## 4.5 Basis Data (Turso / libSQL + Drizzle)
 
-| Key `localStorage` | Isi |
-| ------------------ | --- |
-| `warung-pos.cart.v1` | Keranjang aktif (bertahan saat refresh) |
-| `warung-pos.products.v1` | Katalog produk |
-| `warung-pos.orders.v2` | Pesanan (versi saat ini) |
-| `warung-pos.order-seq.v1` | High-water mark nomor pesanan (agar nomor tidak pernah dipakai ulang) |
-| `warung-pos.stock-movements.v1` | Jejak audit perubahan stok (maks. 500 terbaru) |
-| `warung-pos.shifts.v1` | Shift kas (buka/tutup, kas dihitung, selisih) |
-| `warung-pos.users.v1` | Akun (hash PBKDF2 + salt, bukan kata sandi) |
-| `warung-pos.session.v1` | Sesi aktif (id pengguna) |
+Seluruh data bisnis kini tersimpan di **Turso (libSQL)** melalui **Drizzle ORM**. `localStorage` hanya menyimpan keranjang yang belum di-checkout.
 
-Data `warung-pos.orders.v1` dari versi sebelumnya **dimigrasi otomatis** ke v2 saat pertama dibuka: field `discount` diisi dari selisih `subtotal − total`, lalu key lama dihapus.
+| Tabel | Isi |
+| ----- | --- |
+| `users` | Akun: hash PBKDF2 + salt, email unik |
+| `products` | Katalog: harga, HPP, stok, SKU/barcode unik |
+| `orders` | Pesanan: total, diskon, HPP, laba, status, kanal, kasir, `shift_id`, `user_id` |
+| `order_items` | Baris pesanan dengan snapshot nama/harga/HPP |
+| `shifts` | Shift kas: modal awal, kas dihitung, kas seharusnya, selisih |
+| `stock_movements` | Jejak audit perubahan stok |
+| `counters` | Nomor pesanan monotonik (`order_number`) |
 
+**Aturan penting:**
+- Uang selalu **integer rupiah**, tidak pernah float.
+- Waktu disimpan sebagai string ISO-8601 (urut secara leksikografis, sama seperti kode laporan).
+- `order_items` menyimpan **snapshot** harga dan HPP, sehingga mengubah katalog tidak mengubah riwayat.
+- Nomor pesanan diambil dari tabel `counters`, jadi menghapus/void pesanan tidak pernah memakai ulang nomor.
+- Skema didefinisikan di `src/db/schema.ts`; terapkan dengan `pnpm db:push`.
+
+## 4.6 Batas Server (boundary)
+
+| Pola berkas | Peran |
+| ----------- | ----- |
+| `src/db/*.server.ts` | Klien database; hanya bisa dijalankan di server (`createServerOnlyFn`) |
+| `src/lib/*.server.ts` | Logika server-only (env, auth, sesi, akses data, reporting) |
+| `src/lib/*.functions.ts` | `createServerFn` — RPC typed, aman diimpor dari mana saja |
+| `src/lib/*.ts` | Aman-klien (tipe, format, analitik, validasi, laporan) |
+
+Verifikasi: bundle klien **tidak** memuat `TURSO_ACCESS_TOKEN`, `passwordHash`, maupun `libsql://` (dicek via grep pada `.output/public`).
 
 ## 5. Cara Menjalankan
 
