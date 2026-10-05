@@ -108,7 +108,7 @@ export function AuthScreen({
         <p className="mt-1 text-sm text-slate-500">
           {mode === 'login'
             ? 'Masuk untuk mulai melayani transaksi.'
-            : 'Akun disimpan di perangkat ini saja.'}
+            : 'Akun disimpan dengan aman di server.'}
         </p>
       </div>
 
@@ -264,7 +264,7 @@ export function AuthScreen({
       </form>
 
       <p className="mt-4 text-center text-xs text-slate-400">
-        Kata sandi disimpan sebagai hash PBKDF2 di perangkat ini, bukan teks biasa.
+        Kata sandi disimpan terenkripsi di server, bukan teks biasa.
       </p>
     </div>
     </Shell>

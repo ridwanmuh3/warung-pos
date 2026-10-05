@@ -236,7 +236,7 @@ function OrdersPage() {
                             </span>
                             {order.status === 'void' && (
                               <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
-                                VOID
+                                BATAL
                               </span>
                             )}
                             {order.discount > 0 && (
@@ -268,7 +268,7 @@ function OrdersPage() {
                             data-testid={`void-${order.orderNumber}`}
                             className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                           >
-                            Void
+                            Batalkan
                           </button>
                         )}
                       </div>
@@ -289,7 +289,7 @@ function OrdersPage() {
                 <IconAlertTriangle size={20} />
               </span>
               <div>
-                <h2 className="font-semibold text-slate-900">Void {pendingVoid.orderNumber}?</h2>
+                <h2 className="font-semibold text-slate-900">Batalkan {pendingVoid.orderNumber}?</h2>
                 <p className="mt-1 text-sm text-slate-600">
                   Transaksi ditandai batal dan stok produknya dikembalikan. Transaksi tidak dihapus, jadi
                   jejaknya tetap ada.
@@ -300,7 +300,7 @@ function OrdersPage() {
               value={voidReason}
               onChange={(event) => setVoidReason(event.target.value)}
               placeholder="Alasan (opsional)"
-              aria-label="Alasan void"
+              aria-label="Alasan pembatalan"
               data-testid="void-reason"
               className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
@@ -321,7 +321,7 @@ function OrdersPage() {
                 }}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
               >
-                Void Transaksi
+                Batalkan Transaksi
               </button>
             </div>
           </div>

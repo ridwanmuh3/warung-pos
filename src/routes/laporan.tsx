@@ -66,7 +66,7 @@ function ReportPage() {
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
               <IconPrinter size={16} />
-              Cetak Z-Report
+              Cetak Laporan Harian
             </button>
           </div>
         }
@@ -124,7 +124,7 @@ function ReportPage() {
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Summary label="Omzet" value={formatIDR(report.revenue)} hint={`${report.paid.length} transaksi`} testId="report-revenue" />
-            <Summary label="Laba Kotor" value={formatIDR(report.profit)} hint={`HPP ${formatIDR(report.costTotal)}`} testId="report-profit" />
+            <Summary label="Laba Kotor" value={formatIDR(report.profit)} hint={`Modal ${formatIDR(report.costTotal)}`} testId="report-profit" />
             <Summary label="Margin" value={`${marginPercent(report.profit, report.revenue)}%`} hint={`Diskon ${formatIDR(report.discountTotal)}`} testId="report-margin" />
             <Summary
               label="Selisih Kas"
@@ -229,7 +229,7 @@ function ReportPage() {
 
           <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">Z-Report</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Laporan Harian</h2>
               <button
                 onClick={() => downloadTextFile(`z-report-${day}.txt`, zReportText(report, dayLabel))}
                 data-testid="download-zreport"

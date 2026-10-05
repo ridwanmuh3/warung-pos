@@ -147,7 +147,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error }: {
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <TextField
           id="product-cost"
-          label="HPP"
+          label="Modal"
           hint="harga beli"
           type="number"
           min={0}
@@ -419,7 +419,7 @@ function ProductsPage() {
                         void restockProductFn({ data: { id: product.id, delta: 10 } }).then(reload)
                       }}
                       className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                      aria-label={`Restock ${product.name} +10`}
+                      aria-label={`Tambah stok ${product.name} 10`}
                     >
                       <IconPlus size={12} stroke={2.5} />
                       10

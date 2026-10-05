@@ -19,7 +19,7 @@ function SuccessPage() {
       <EmptyState
         emoji="🔍"
         title="Pesanan tidak ditemukan"
-        description="Struk ini mungkin sudah tidak tersedia di perangkat ini."
+        description="Struk ini mungkin sudah tidak tersedia di server."
         action={
           <Link to="/riwayat" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
             Lihat Riwayat

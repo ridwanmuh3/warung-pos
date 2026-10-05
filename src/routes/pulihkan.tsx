@@ -98,7 +98,7 @@ function RestorePage() {
     <div>
       <PageHeader
         title="Pulihkan Data"
-        subtitle="Data dari versi penyimpanan lama (localStorage) bisa dipindahkan ke akun ini"
+        subtitle="Data dari versi sebelumnya di perangkat ini bisa dipindahkan ke akun ini"
         backTo="/"
         backLabel="Kembali ke kasir"
       />

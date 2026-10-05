@@ -154,7 +154,7 @@ function SummaryPage() {
           value={formatIDR(stats.revenue)}
           hint={
             stats.voidCount > 0
-              ? `${stats.todayOrders.length} transaksi · ${stats.voidCount} void`
+              ? `${stats.todayOrders.length} transaksi · ${stats.voidCount} dibatalkan`
               : `${stats.todayOrders.length} transaksi`
           }
         />
@@ -164,8 +164,8 @@ function SummaryPage() {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <StatCard testId="stat-laba" label="Laba Kotor" value={formatIDR(stats.profit)} hint="Omzet − HPP" />
-        <StatCard testId="stat-hpp" label="HPP Terjual" value={formatIDR(stats.costTotal)} hint="Modal barang" />
+        <StatCard testId="stat-laba" label="Laba Kotor" value={formatIDR(stats.profit)} hint="Omzet − Modal" />
+        <StatCard testId="stat-hpp" label="Modal Terjual" value={formatIDR(stats.costTotal)} hint="Harga beli barang" />
         <StatCard
           testId="stat-margin"
           label="Margin"
