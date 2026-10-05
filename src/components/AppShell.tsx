@@ -2,18 +2,22 @@ import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   IconBuildingStore,
   IconChartBar,
+  IconDatabaseImport,
   IconFileText,
   IconHistory,
   IconLogout,
   IconPackage,
   IconShoppingCart,
   IconUser,
+  IconUsers,
 } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useCart } from '../lib/cart'
 import { logout } from '../lib/auth.session'
 import type { PublicUser } from '../lib/auth.server'
+import { hasLegacyData } from '../lib/legacy'
+import { useTenant } from '../lib/useTenant'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Kasir', Icon: IconShoppingCart },
@@ -28,6 +32,12 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [menuOpen, setMenuOpen] = useState(false)
+  const [legacyAvailable, setLegacyAvailable] = useState(false)
+  const tenant = useTenant()
+
+  useEffect(() => {
+    setLegacyAvailable(hasLegacyData())
+  }, [])
 
   function signOut() {
     setMenuOpen(false)
@@ -99,6 +109,60 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                       <p className="truncate text-xs text-slate-500">{session.email}</p>
                     </div>
                   </div>
+
+                  {tenant.context && (
+                    <div className="px-2.5 pb-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        Toko · {tenant.context.role}
+                      </p>
+                      {tenant.memberships.length > 1 ? (
+                        <select
+                          value={tenant.context.tenantId}
+                          onChange={(event) => void tenant.switchTenant(event.target.value)}
+                          aria-label="Pilih toko"
+                          data-testid="tenant-switcher"
+                          className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 outline-none focus:border-brand-500"
+                        >
+                          {tenant.memberships.map((membership) => (
+                            <option key={membership.tenantId} value={membership.tenantId}>
+                              {membership.tenantName} · {membership.role}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="truncate text-sm font-medium text-slate-700">
+                          {tenant.context.tenantName}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {tenant.context?.role === 'owner' && (
+                    <Link
+                      to="/anggota"
+                      onClick={() => setMenuOpen(false)}
+                      role="menuitem"
+                      data-testid="account-members-link"
+                      className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                    >
+                      <IconUsers size={16} stroke={2} />
+                      Anggota Toko
+                    </Link>
+                  )}
+
+                  {legacyAvailable && (
+                    <Link
+                      to="/pulihkan"
+                      onClick={() => setMenuOpen(false)}
+                      role="menuitem"
+                      data-testid="account-restore-link"
+                      className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+                    >
+                      <IconDatabaseImport size={16} stroke={2} />
+                      Pulihkan Data Lama
+                    </Link>
+                  )}
+
                   <div className="my-1 border-t border-slate-100" />
                   <button
                     onClick={signOut}

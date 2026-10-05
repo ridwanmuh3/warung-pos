@@ -94,6 +94,17 @@ export interface Order {
   voidReason?: string
 }
 
+export type CartStatus = 'open' | 'parked'
+
+/** A server-side cart. Line items are price/HPP snapshots, like order items. */
+export interface Cart {
+  id: string
+  status: CartStatus
+  label?: string
+  items: OrderItem[]
+  updatedAt: string
+}
+
 export interface Shift {
   id: string
   openedAt: string

@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import * as data from './data.server'
-import { readSessionUserId } from './session.server'
+import { requireMembership } from './tenant.server'
 import {
   checkoutFormSchema,
   openingCashFormSchema,
@@ -16,22 +16,33 @@ import type { Order, Product, Shift, StockMovement } from '../types'
 /**
  * Typed data RPC.
  *
- * Every export is a `createServerFn`, so the client only ever sees an RPC stub —
- * the SQL and the database credentials stay on the server. Inputs are validated
- * with the same schemas the forms use, so a hand-crafted request cannot bypass
- * the UI rules.
+ * Every handler first resolves the caller's **tenant and role** from the
+ * encrypted session cookie (`requireMembership`). The client never sends a
+ * tenant id, so a crafted request cannot reach another shop's data; and a role
+ * that is too low is rejected here, not merely hidden in the UI.
  */
+
+/** Local start-of-day, as an ISO string, for the cashier's "today only" view. */
+function startOfTodayIso(): string {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  return start.toISOString()
+}
 
 /* ------------------------------- products ----------------------------- */
 
 export const listProductsFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<Product[]> => data.listProducts(),
+  async (): Promise<Product[]> => {
+    const ctx = await requireMembership('cashier')
+    return data.listProducts(ctx.tenantId)
+  },
 )
 
 export const createProductFn = createServerFn({ method: 'POST' })
   .validator(productDraftSchema)
-  .handler(async ({ data: draft }): Promise<Product> =>
-    data.createProduct({
+  .handler(async ({ data: draft }): Promise<Product> => {
+    const ctx = await requireMembership('manager')
+    return data.createProduct(ctx.tenantId, {
       name: draft.name,
       price: draft.price,
       cost: draft.cost,
@@ -41,8 +52,8 @@ export const createProductFn = createServerFn({ method: 'POST' })
       lowStockThreshold: draft.lowStockThreshold,
       sku: draft.sku ?? '',
       barcode: draft.barcode ?? '',
-    }),
-  )
+    })
+  })
 
 export const updateProductFn = createServerFn({ method: 'POST' })
   .validator(
@@ -52,8 +63,9 @@ export const updateProductFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data: input }): Promise<void> => {
+    const ctx = await requireMembership('manager')
     const draft = input.draft
-    await data.updateProduct(input.id, {
+    await data.updateProduct(ctx.tenantId, input.id, {
       name: draft.name,
       price: draft.price,
       cost: draft.cost,
@@ -69,24 +81,34 @@ export const updateProductFn = createServerFn({ method: 'POST' })
 export const deleteProductFn = createServerFn({ method: 'POST' })
   .validator(z.object({ id: z.string().min(1) }))
   .handler(async ({ data: input }): Promise<void> => {
-    await data.removeProduct(input.id)
+    const ctx = await requireMembership('manager')
+    await data.removeProduct(ctx.tenantId, input.id)
   })
 
 export const restockProductFn = createServerFn({ method: 'POST' })
   .validator(z.object({ id: z.string().min(1), delta: z.number().int().min(1).max(10_000) }))
   .handler(async ({ data: input }): Promise<void> => {
-    await data.applyStockDelta({ productId: input.id, delta: input.delta, reason: 'restock' })
+    const ctx = await requireMembership('manager')
+    await data.applyStockDelta(ctx.tenantId, {
+      productId: input.id,
+      delta: input.delta,
+      reason: 'restock',
+    })
   })
 
 export const listStockMovementsFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<StockMovement[]> => data.listStockMovements(),
+  async (): Promise<StockMovement[]> => {
+    const ctx = await requireMembership('manager')
+    return data.listStockMovements(ctx.tenantId)
+  },
 )
 
-/** Restores the seed catalog. Only inserts when the table is empty. */
+/** Restores the seed catalog. Only inserts when the tenant's catalog is empty. */
 export const seedProductsFn = createServerFn({ method: 'POST' }).handler(
   async (): Promise<number> => {
+    const ctx = await requireMembership('manager')
     const { DEFAULT_PRODUCTS } = await import('../data/products')
-    return data.seedProductsIfEmpty(DEFAULT_PRODUCTS)
+    return data.seedProductsIfEmpty(ctx.tenantId, DEFAULT_PRODUCTS)
   },
 )
 
@@ -102,12 +124,21 @@ const orderItemSchema = z.object({
 })
 
 export const listOrdersFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<Order[]> => data.listOrders(),
+  async (): Promise<Order[]> => {
+    const ctx = await requireMembership('cashier')
+    // Cashiers only see today's orders; managers and owners see all history.
+    const options = ctx.role === 'cashier' ? { fromIso: startOfTodayIso() } : {}
+    return data.listOrders(ctx.tenantId, options)
+  },
 )
 
 export const getOrderFn = createServerFn({ method: 'GET' })
   .validator(z.object({ id: z.string().min(1) }))
-  .handler(async ({ data: input }): Promise<Order | undefined> => data.getOrderById(input.id))
+  .handler(async ({ data: input }): Promise<Order | undefined> => {
+    const ctx = await requireMembership('cashier')
+    // A wrong tenant simply has no such order: an id leak reveals nothing.
+    return data.getOrderById(ctx.tenantId, input.id)
+  })
 
 export const createOrderFn = createServerFn({ method: 'POST' })
   .validator(
@@ -118,13 +149,11 @@ export const createOrderFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data: input }): Promise<Order> => {
+    const ctx = await requireMembership('cashier')
     // The raw form payload is re-validated here with the domain schema, so a
     // crafted request cannot bypass the rules the UI applies.
     const checkout = parseCheckoutForm(input.checkout)
-    // The signed-in user is read from the encrypted cookie, never from the
-    // request body, so a client cannot claim to be someone else.
-    const userId = (await readSessionUserId()) ?? undefined
-    return data.createOrder({
+    return data.createOrder(ctx.tenantId, {
       items: input.items,
       discount: input.discount,
       paymentMethod: checkout.paymentMethod,
@@ -133,39 +162,53 @@ export const createOrderFn = createServerFn({ method: 'POST' })
         checkout.paymentMethod === 'tunai' ? (checkout.cashTendered ?? 0) - checkout.total : null,
       channel: checkout.channel,
       cashier: checkout.cashier ?? '',
-      ...(userId ? { userId } : {}),
+      userId: ctx.userId,
     })
   })
 
 export const voidOrderFn = createServerFn({ method: 'POST' })
   .validator(z.object({ id: z.string().min(1), reason: z.string().max(240) }))
-  .handler(async ({ data: input }): Promise<Order | undefined> =>
-    data.voidOrder(input.id, input.reason),
-  )
+  .handler(async ({ data: input }): Promise<Order | undefined> => {
+    const ctx = await requireMembership('manager')
+    return data.voidOrder(ctx.tenantId, input.id, input.reason)
+  })
 
 /* -------------------------------- shifts ------------------------------ */
 
 export const listShiftsFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<Shift[]> => data.listShifts(),
+  async (): Promise<Shift[]> => {
+    const ctx = await requireMembership('cashier')
+    return data.listShifts(ctx.tenantId)
+  },
 )
 
 export const currentShiftFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<Shift | undefined> => data.getCurrentShift(),
+  async (): Promise<Shift | undefined> => {
+    const ctx = await requireMembership('cashier')
+    return data.getCurrentShift(ctx.tenantId)
+  },
 )
 
 export const openShiftFn = createServerFn({ method: 'POST' })
   .validator(openingCashFormSchema)
   .handler(async ({ data: input }): Promise<Shift> => {
+    const ctx = await requireMembership('cashier')
     const parsed = openingCashSchema.safeParse(input)
     if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? 'Modal awal tidak valid')
-    const userId = (await readSessionUserId()) ?? undefined
-    return data.openShift({ openingCash: parsed.data.openingCash, ...(userId ? { userId } : {}) })
+    return data.openShift(ctx.tenantId, {
+      openingCash: parsed.data.openingCash,
+      userId: ctx.userId,
+    })
   })
 
 export const closeShiftFn = createServerFn({ method: 'POST' })
   .validator(shiftCloseFormSchema)
   .handler(async ({ data: input }): Promise<Shift | undefined> => {
+    const ctx = await requireMembership('cashier')
     const parsed = shiftCloseSchema.safeParse(input)
     if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? 'Jumlah kas tidak valid')
-    return data.closeShift({ countedCash: parsed.data.countedCash, note: parsed.data.note })
+    return data.closeShift(ctx.tenantId, {
+      countedCash: parsed.data.countedCash,
+      note: parsed.data.note,
+    })
   })

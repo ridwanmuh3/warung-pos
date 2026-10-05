@@ -13,6 +13,8 @@ import { sessionSecret } from './env.server'
 
 export interface SessionData {
   userId?: string
+  /** Active tenant for a user who belongs to more than one shop. */
+  tenantId?: string
 }
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
@@ -37,10 +39,30 @@ export const readSessionUserId = createServerOnlyFn(async (): Promise<string | n
   return session.data.userId ?? null
 })
 
+/** Reads the active tenant id from the request cookie, or `null`. */
+export const readSessionTenantId = createServerOnlyFn(async (): Promise<string | null> => {
+  const session = await useSession<SessionData>(sessionConfig())
+  return session.data.tenantId ?? null
+})
+
 /** Persists the user id into the response cookie. */
 export const writeSessionUserId = createServerOnlyFn(async (userId: string): Promise<void> => {
   const session = await useSession<SessionData>(sessionConfig())
   await session.update({ userId })
+})
+
+/** Writes user and active tenant together, for sign-in and registration. */
+export const writeSessionIdentity = createServerOnlyFn(
+  async (userId: string, tenantId: string): Promise<void> => {
+    const session = await useSession<SessionData>(sessionConfig())
+    await session.update({ userId, tenantId })
+  },
+)
+
+/** Persists the active tenant into the response cookie. */
+export const writeSessionTenantId = createServerOnlyFn(async (tenantId: string): Promise<void> => {
+  const session = await useSession<SessionData>(sessionConfig())
+  await session.update({ tenantId })
 })
 
 /** Clears the session cookie. */

@@ -9,8 +9,10 @@
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
     "lint": "oxlint",
+    "check:tenant": "node scripts/check-tenant-scoping.mjs",
     "db:push": "node --env-file=.env node_modules/drizzle-kit/bin.cjs push",
     "db:generate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs migrate",
     "db:studio": "node --env-file=.env node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {

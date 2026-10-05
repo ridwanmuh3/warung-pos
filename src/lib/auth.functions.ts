@@ -7,7 +7,8 @@ import {
   verifyPassword,
 } from './auth.server'
 import type { PublicUser } from './auth.server'
-import { destroySession, readSessionUserId, writeSessionUserId } from './session.server'
+import { destroySession, readSessionUserId, writeSessionIdentity } from './session.server'
+import { listMemberships, provisionDefaultTenant } from './tenant.server'
 import { loginSchema, registerSchema } from './validation'
 
 /**
@@ -28,7 +29,8 @@ export const registerFn = createServerFn({ method: 'POST' })
     if (existing) return { ok: false, errors: ['Email sudah terdaftar'] }
 
     const user = await createUser({ name: data.name, email: data.email, password: data.password })
-    await writeSessionUserId(user.id)
+    const tenantId = await provisionDefaultTenant(user.id)
+    await writeSessionIdentity(user.id, tenantId)
     return { ok: true, user }
   })
 
@@ -42,7 +44,11 @@ export const loginFn = createServerFn({ method: 'POST' })
     const valid = await verifyPassword(user, data.password)
     if (!valid) return { ok: false, errors: ['Email atau kata sandi salah'] }
 
-    await writeSessionUserId(user.id)
+    // Every account belongs to at least one shop. Older accounts created before
+    // multi-tenancy get their default shop on first sign-in.
+    const existing = await listMemberships(user.id)
+    const tenantId = existing[0]?.tenantId ?? (await provisionDefaultTenant(user.id))
+    await writeSessionIdentity(user.id, tenantId)
     return {
       ok: true,
       user: { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt },

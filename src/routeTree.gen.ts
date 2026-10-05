@@ -10,11 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnggotaRouteImport } from './routes/anggota'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as LaporanRouteImport } from './routes/laporan'
 import { Route as MasukRouteImport } from './routes/masuk'
 import { Route as ProdukRouteImport } from './routes/produk'
+import { Route as PulihkanRouteImport } from './routes/pulihkan'
 import { Route as RingkasanRouteImport } from './routes/ringkasan'
 import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as RiwayatIndexRouteImport } from './routes/riwayat.index'
@@ -24,6 +26,11 @@ import { Route as SuksesOrderIdRouteImport } from './routes/sukses.$orderId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnggotaRoute = AnggotaRouteImport.update({
+  id: '/anggota',
+  path: '/anggota',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -49,6 +56,11 @@ const MasukRoute = MasukRouteImport.update({
 const ProdukRoute = ProdukRouteImport.update({
   id: '/produk',
   path: '/produk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PulihkanRoute = PulihkanRouteImport.update({
+  id: '/pulihkan',
+  path: '/pulihkan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RingkasanRoute = RingkasanRouteImport.update({
@@ -79,11 +91,13 @@ const SuksesOrderIdRoute = SuksesOrderIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/anggota': typeof AnggotaRoute
   '/checkout': typeof CheckoutRoute
   '/keranjang': typeof KeranjangRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
   '/produk': typeof ProdukRoute
+  '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
   '/api/health': typeof ApiHealthRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
@@ -92,11 +106,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/anggota': typeof AnggotaRoute
   '/checkout': typeof CheckoutRoute
   '/keranjang': typeof KeranjangRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
   '/produk': typeof ProdukRoute
+  '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
   '/api/health': typeof ApiHealthRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
@@ -106,11 +122,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/anggota': typeof AnggotaRoute
   '/checkout': typeof CheckoutRoute
   '/keranjang': typeof KeranjangRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
   '/produk': typeof ProdukRoute
+  '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
   '/api/health': typeof ApiHealthRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
@@ -121,11 +139,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/anggota'
     | '/checkout'
     | '/keranjang'
     | '/laporan'
     | '/masuk'
     | '/produk'
+    | '/pulihkan'
     | '/ringkasan'
     | '/api/health'
     | '/riwayat/$orderId'
@@ -134,11 +154,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/anggota'
     | '/checkout'
     | '/keranjang'
     | '/laporan'
     | '/masuk'
     | '/produk'
+    | '/pulihkan'
     | '/ringkasan'
     | '/api/health'
     | '/riwayat/$orderId'
@@ -147,11 +169,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/anggota'
     | '/checkout'
     | '/keranjang'
     | '/laporan'
     | '/masuk'
     | '/produk'
+    | '/pulihkan'
     | '/ringkasan'
     | '/api/health'
     | '/riwayat/$orderId'
@@ -161,11 +185,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnggotaRoute: typeof AnggotaRoute
   CheckoutRoute: typeof CheckoutRoute
   KeranjangRoute: typeof KeranjangRoute
   LaporanRoute: typeof LaporanRoute
   MasukRoute: typeof MasukRoute
   ProdukRoute: typeof ProdukRoute
+  PulihkanRoute: typeof PulihkanRoute
   RingkasanRoute: typeof RingkasanRoute
   ApiHealthRoute: typeof ApiHealthRoute
   RiwayatOrderIdRoute: typeof RiwayatOrderIdRoute
@@ -180,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/anggota': {
+      id: '/anggota'
+      path: '/anggota'
+      fullPath: '/anggota'
+      preLoaderRoute: typeof AnggotaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -215,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/produk'
       fullPath: '/produk'
       preLoaderRoute: typeof ProdukRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pulihkan': {
+      id: '/pulihkan'
+      path: '/pulihkan'
+      fullPath: '/pulihkan'
+      preLoaderRoute: typeof PulihkanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ringkasan': {
@@ -257,11 +297,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnggotaRoute: AnggotaRoute,
   CheckoutRoute: CheckoutRoute,
   KeranjangRoute: KeranjangRoute,
   LaporanRoute: LaporanRoute,
   MasukRoute: MasukRoute,
   ProdukRoute: ProdukRoute,
+  PulihkanRoute: PulihkanRoute,
   RingkasanRoute: RingkasanRoute,
   ApiHealthRoute: ApiHealthRoute,
   RiwayatOrderIdRoute: RiwayatOrderIdRoute,

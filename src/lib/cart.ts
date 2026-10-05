@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { getOpenCartFn, saveCartFn } from './cart.functions'
 import type { OrderItem, Product } from '../types'
 
 export interface CartState {
@@ -70,10 +71,15 @@ function persist(): void {
   }
 }
 
-function emit(): void {
+function emitLocal(): void {
   snapshot = buildSnapshot()
   persist()
   listeners.forEach((listener) => listener())
+}
+
+function emit(): void {
+  emitLocal()
+  scheduleSync()
 }
 
 function subscribe(listener: () => void): () => void {
@@ -136,9 +142,102 @@ export function clearCart(): void {
   emit()
 }
 
+/** Replaces the whole cart, e.g. when a parked cart is resumed. */
+export function setCartItems(next: OrderItem[]): void {
+  items = next.map((item) => ({ ...item }))
+  emit()
+}
+
 /** Snapshots used once, outside React, when placing an order. */
 export function currentCartItems(): OrderItem[] {
   return items.map((item) => ({ ...item }))
+}
+
+/* ------------------------- server synchronisation ---------------------- *
+ * The cart stays synchronous and local-first: every tap updates memory and
+ * localStorage immediately. When signed in, changes are pushed to the server
+ * after a short debounce, and a failed push (offline) is retried on the next
+ * change or when the browser comes back online.
+ */
+
+const SYNC_DEBOUNCE_MS = 500
+
+let syncEnabled = false
+let syncing = false
+let dirty = false
+let syncTimer: ReturnType<typeof setTimeout> | null = null
+let onlineListenerAttached = false
+
+async function flush(): Promise<void> {
+  if (!syncEnabled || !dirty) return
+  if (syncing) return
+  syncing = true
+  try {
+    await saveCartFn({ data: { items: currentCartItems() } })
+    dirty = false
+  } catch {
+    // Keep the local cart; it will be retried later.
+    dirty = true
+  } finally {
+    syncing = false
+  }
+}
+
+function scheduleSync(): void {
+  if (!syncEnabled) return
+  dirty = true
+  if (syncTimer !== null) clearTimeout(syncTimer)
+  syncTimer = setTimeout(() => {
+    syncTimer = null
+    void flush()
+  }, SYNC_DEBOUNCE_MS)
+}
+
+/** Pushes any pending local change immediately (used before checkout/navigation). */
+export async function flushCart(): Promise<void> {
+  if (syncTimer !== null) {
+    clearTimeout(syncTimer)
+    syncTimer = null
+  }
+  await flush()
+}
+
+/**
+ * Turns on server sync for the signed-in user and hydrates from the server.
+ * The server copy wins unless there are unsynced local edits.
+ */
+export async function startCartSync(): Promise<void> {
+  syncEnabled = true
+  if (!onlineListenerAttached && typeof window !== 'undefined') {
+    onlineListenerAttached = true
+    window.addEventListener('online', () => {
+      void flush()
+    })
+  }
+  try {
+    const remote = await getOpenCartFn()
+    if (remote && remote.items.length > 0 && !dirty) {
+      items = remote.items.map((item) => ({ ...item }))
+      emitLocal()
+    } else if (items.length > 0) {
+      // Local cart from the cache: push it up as this account's cart.
+      scheduleSync()
+    }
+  } catch {
+    // Offline on load: keep the local cart and retry on the next change.
+  }
+}
+
+/** Stops syncing and drops the local cache (used on sign-out). */
+export function stopCartSync(): void {
+  syncEnabled = false
+  dirty = false
+  if (syncTimer !== null) {
+    clearTimeout(syncTimer)
+    syncTimer = null
+  }
+  items = []
+  emitLocal()
 }
 
 /** Product ids whose cart price no longer matches the catalog price. */

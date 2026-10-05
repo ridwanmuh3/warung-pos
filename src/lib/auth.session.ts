@@ -1,6 +1,7 @@
 import { currentUserFn, loginFn, logoutFn, registerFn } from './auth.functions'
 import type { AuthResponse } from './auth.functions'
 import type { PublicUser } from './auth.server'
+import { startCartSync, stopCartSync } from './cart'
 
 /**
  * Client-side auth facade.
@@ -42,6 +43,7 @@ export async function login(input: { email: string; password: string }): Promise
     cache = result.user
     resolved = true
     listeners.forEach((listener) => listener())
+    void startCartSync()
   }
   return result
 }
@@ -57,12 +59,16 @@ export async function register(input: {
     cache = result.user
     resolved = true
     listeners.forEach((listener) => listener())
+    void startCartSync()
   }
   return result
 }
 
 export async function logout(): Promise<void> {
   await logoutFn()
+  // The cart belongs to the account: drop the local copy so the next user on
+  // this device never sees it.
+  stopCartSync()
   cache = null
   resolved = true
   listeners.forEach((listener) => listener())
@@ -74,5 +80,6 @@ export async function refreshSession(): Promise<PublicUser | null> {
   cache = user
   resolved = true
   listeners.forEach((listener) => listener())
+  if (user) void startCartSync()
   return user
 }
