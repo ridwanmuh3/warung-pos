@@ -1,7 +1,8 @@
-import { Link } from '@tanstack/react-router'
-import { IconArrowRight, IconMinus, IconPlus, IconShoppingCart, IconTrash } from '@tabler/icons-react'
-import { removeFromCart, setQty, useCart } from '../lib/cart'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { IconArrowRight, IconAlertTriangle, IconMinus, IconPlus, IconShoppingCart, IconTrash } from '@tabler/icons-react'
+import { clearCart, removeFromCart, setQty, stalePriceIds, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
+import { useProducts } from '../lib/useProducts'
 import type { OrderItem } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { TotalPanel } from '../components/TotalPanel'
@@ -30,8 +31,17 @@ function QtyStepper({ item }: { item: OrderItem }) {
   )
 }
 
-export function CartPage() {
+export const Route = createFileRoute('/keranjang')({
+  component: CartPage,
+  // Cart is persisted to localStorage, which only exists on the client.
+  ssr: false,
+})
+
+function CartPage() {
   const { items, count } = useCart()
+  const products = useProducts()
+  const stale = stalePriceIds(products)
+  const staleNames = items.filter((item) => stale.includes(item.productId)).map((item) => item.name)
 
   if (items.length === 0) {
     return (
@@ -58,6 +68,17 @@ export function CartPage() {
   return (
     <div className="pb-44 md:pb-0">
       <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/" backLabel="Tambah produk" />
+
+      {staleNames.length > 0 && (
+        <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <IconAlertTriangle size={18} stroke={2} className="mt-0.5 shrink-0" />
+          <p>
+            Harga berubah sejak item masuk keranjang:{' '}
+            <span className="font-semibold">{staleNames.join(', ')}</span>. Keranjang memakai harga saat
+            ditambahkan.
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-[1fr_18rem] lg:grid-cols-[1fr_20rem]">
         <ul className="space-y-2">
@@ -101,13 +122,23 @@ export function CartPage() {
           <TotalPanel
             items={items}
             footer={
-              <Link
-                to="/checkout"
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-brand-700"
-              >
-                Lanjut ke Detail Pesanan
-                <IconArrowRight size={16} stroke={2.5} />
-              </Link>
+              <div className="space-y-2">
+                <Link
+                  to="/checkout"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-brand-700"
+                >
+                  Lanjut ke Detail Pesanan
+                  <IconArrowRight size={16} stroke={2.5} />
+                </Link>
+                <button
+                  onClick={() => {
+                    if (confirm('Kosongkan keranjang?')) clearCart()
+                  }}
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Kosongkan keranjang
+                </button>
+              </div>
             }
           />
         </div>

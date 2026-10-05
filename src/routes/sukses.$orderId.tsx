@@ -1,11 +1,17 @@
-import { Link, useParams } from '@tanstack/react-router'
+import { Link, createFileRoute, useParams } from '@tanstack/react-router'
 import { IconCheck, IconPlus, IconPrinter } from '@tabler/icons-react'
 import { formatIDR } from '../lib/format'
 import { getOrder } from '../lib/orders'
 import { Receipt } from '../components/Receipt'
 import { EmptyState } from '../components/EmptyState'
 
-export function SuccessPage() {
+export const Route = createFileRoute('/sukses/$orderId')({
+  component: SuccessPage,
+  // Order is read from localStorage on the client.
+  ssr: false,
+})
+
+function SuccessPage() {
   const { orderId } = useParams({ strict: false }) as { orderId: string }
   const order = getOrder(orderId)
 

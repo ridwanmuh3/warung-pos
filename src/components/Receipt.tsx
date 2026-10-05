@@ -1,5 +1,5 @@
 import { IconBuildingStore } from '@tabler/icons-react'
-import { PAYMENT_LABELS } from '../data/products'
+import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { formatDateTime, formatIDR } from '../lib/format'
 import { lineSubtotal } from '../lib/totals'
 import type { Order } from '../types'
@@ -36,16 +36,60 @@ export function Receipt({ order }: { order: Order }) {
 
       <div className="my-4 border-t border-dashed border-slate-300" />
 
-      <div className="flex items-center justify-between">
+      <dl className="space-y-1 text-xs text-slate-500">
+        <div className="flex justify-between">
+          <dt>Subtotal</dt>
+          <dd className="tabular">{formatIDR(order.subtotal)}</dd>
+        </div>
+        {order.discount > 0 && (
+          <div className="flex justify-between text-red-600">
+            <dt>Diskon</dt>
+            <dd data-testid="receipt-discount" className="tabular">
+              −{formatIDR(order.discount)}
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      <div className="mt-2 flex items-center justify-between">
         <span className="text-sm font-semibold text-slate-900">Total</span>
         <span data-testid="receipt-total" className="tabular text-xl font-bold text-brand-600">
           {formatIDR(order.total)}
         </span>
       </div>
-      <div className="mt-2 flex justify-between text-xs text-slate-500">
-        <span>Metode</span>
-        <span>{PAYMENT_LABELS[order.paymentMethod]}</span>
-      </div>
+
+      <dl className="mt-2 space-y-1 text-xs text-slate-500">
+        <div className="flex justify-between">
+          <dt>Metode</dt>
+          <dd>{PAYMENT_LABELS[order.paymentMethod]}</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt>Jenis</dt>
+          <dd data-testid="receipt-channel">{CHANNEL_LABELS[order.channel]}</dd>
+        </div>
+        {order.cashier && (
+          <div className="flex justify-between">
+            <dt>Kasir</dt>
+            <dd>{order.cashier}</dd>
+          </div>
+        )}
+        {order.amountPaid !== null && (
+          <div className="flex justify-between">
+            <dt>Tunai</dt>
+            <dd data-testid="receipt-paid" className="tabular">
+              {formatIDR(order.amountPaid)}
+            </dd>
+          </div>
+        )}
+        {order.change !== null && (
+          <div className="flex justify-between font-semibold text-slate-700">
+            <dt>Kembalian</dt>
+            <dd data-testid="receipt-change" className="tabular">
+              {formatIDR(order.change)}
+            </dd>
+          </div>
+        )}
+      </dl>
 
       <p className="mt-5 text-center text-xs text-slate-400">Terima kasih telah berbelanja</p>
     </div>

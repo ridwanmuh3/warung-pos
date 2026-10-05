@@ -10,7 +10,11 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.output
+.nitro
+.tanstack
 *.local
+.smoke
 
 # Editor directories and files
 .vscode/*

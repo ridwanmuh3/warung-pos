@@ -1,17 +1,39 @@
-import { Link, Outlet, useRouterState } from '@tanstack/react-router'
-import { IconBuildingStore, IconChartBar, IconHistory, IconPackage, IconShoppingCart } from '@tabler/icons-react'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
+import {
+  IconBuildingStore,
+  IconChartBar,
+  IconFileText,
+  IconHistory,
+  IconLogout,
+  IconPackage,
+  IconShoppingCart,
+  IconUser,
+} from '@tabler/icons-react'
+import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useCart } from '../lib/cart'
+import { logout } from '../lib/auth'
+import type { SessionUser } from '../lib/auth'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Kasir', Icon: IconShoppingCart },
   { to: '/produk', label: 'Produk', Icon: IconPackage },
   { to: '/riwayat', label: 'Riwayat', Icon: IconHistory },
   { to: '/ringkasan', label: 'Ringkasan', Icon: IconChartBar },
+  { to: '/laporan', label: 'Laporan', Icon: IconFileText },
 ] as const
 
-export function AppShell() {
+export function AppShell({ children, session }: { children: ReactNode; session: SessionUser | null }) {
   const { count } = useCart()
+  const navigate = useNavigate()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  function signOut() {
+    setMenuOpen(false)
+    logout()
+    void navigate({ to: '/masuk' })
+  }
 
   return (
     <div className="flex min-h-full flex-col">
@@ -50,12 +72,52 @@ export function AppShell() {
             <span className="hidden sm:inline">Keranjang</span>
             <span className="tabular rounded bg-white/25 px-1.5 py-0.5 text-xs">{count}</span>
           </Link>
+
+          {session && (
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-expanded={menuOpen}
+                aria-haspopup="menu"
+                data-testid="account-menu"
+                className="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                <span className="grid size-6 place-items-center rounded-full bg-slate-900 text-[11px] font-bold text-white">
+                  {session.name.slice(0, 1).toUpperCase()}
+                </span>
+                <span className="hidden max-w-24 truncate lg:inline">{session.name}</span>
+              </button>
+
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
+                >
+                  <div className="flex items-center gap-2 px-2.5 py-2">
+                    <IconUser size={16} stroke={2} className="shrink-0 text-slate-400" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">{session.name}</p>
+                      <p className="truncate text-xs text-slate-500">{session.email}</p>
+                    </div>
+                  </div>
+                  <div className="my-1 border-t border-slate-100" />
+                  <button
+                    onClick={signOut}
+                    role="menuitem"
+                    data-testid="logout-button"
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    <IconLogout size={16} stroke={2} />
+                    Keluar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-24 md:pb-6">
-        <Outlet />
-      </main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-24 md:pb-6">{children}</main>
 
       {/* Mobile bottom tab bar */}
       <nav className="no-print safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">

@@ -1,11 +1,17 @@
-import { Link, useParams } from '@tanstack/react-router'
+import { Link, createFileRoute, useParams } from '@tanstack/react-router'
 import { IconPrinter } from '@tabler/icons-react'
 import { getOrder } from '../lib/orders'
 import { Receipt } from '../components/Receipt'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 
-export function ReceiptPage() {
+export const Route = createFileRoute('/riwayat/$orderId')({
+  component: ReceiptPage,
+  // Order is read from localStorage on the client.
+  ssr: false,
+})
+
+function ReceiptPage() {
   const { orderId } = useParams({ from: '/riwayat/$orderId' })
   const order = getOrder(orderId)
 
