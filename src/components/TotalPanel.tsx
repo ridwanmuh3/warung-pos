@@ -24,7 +24,7 @@ export function TotalPanel({
   const total = subtotal - discount
 
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${className}`}>
+    <div className={`rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 ${className}`}>
       <div className="flex items-center justify-between text-sm text-slate-500">
         <span>Jumlah item</span>
         <span className="tabular font-medium text-slate-700">{itemCount} pcs</span>
@@ -43,8 +43,8 @@ export function TotalPanel({
       )}
       <div className="my-3 border-t border-dashed border-slate-200" />
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-slate-900">Total</span>
-        <span data-testid="grand-total" className="tabular text-2xl font-bold text-brand-600">
+        <span className="text-sm font-semibold text-ink">Total</span>
+        <span data-testid="grand-total" className="tabular font-display text-3xl font-black leading-none text-ink">
           {formatIDR(total)}
         </span>
       </div>

@@ -9,6 +9,7 @@ import { useProducts } from '../lib/useServerData'
 import type { ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { SkeletonGrid } from '../components/ui/Skeleton'
 
 const FILTERS: Array<{ value: ProductCategory | 'semua'; label: string }> = [
   { value: 'semua', label: 'Semua' },
@@ -82,7 +83,7 @@ function MenuPage() {
         action={
           <Link
             to="/produk"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 rounded-full border-2 border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
           >
             <IconPackage size={16} />
             Kelola Produk
@@ -110,7 +111,7 @@ function MenuPage() {
           placeholder="Cari nama, SKU, atau scan barcode…"
           aria-label="Cari produk"
           data-testid="menu-search"
-          className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-9 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+          className="w-full rounded-sm border-2 border-border bg-surface py-2 pl-9 pr-9 text-sm text-ink outline-none transition duration-150 ease-out placeholder:text-mute focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
         />
         {query !== '' && (
           <button
@@ -128,10 +129,10 @@ function MenuPage() {
           <button
             key={filter.value}
             onClick={() => setSearch({ kategori: filter.value })}
-            className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition duration-150 ease-out ${
               active === filter.value
-                ? 'bg-brand-600 text-white'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-primary text-on-primary'
+                : 'border border-divider bg-surface text-body hover:bg-surface-muted'
             }`}
           >
             {filter.label}
@@ -139,8 +140,8 @@ function MenuPage() {
         ))}
       </div>
 
-      {productsLoading ? (
-        <p className="py-10 text-center text-sm text-slate-500">Memuat produk…</p>
+      {productsLoading && products.length === 0 ? (
+        <SkeletonGrid count={8} />
       ) : visible.length === 0 ? (
         <EmptyState
           emoji={needle === '' ? '📦' : '🔍'}
@@ -154,7 +155,7 @@ function MenuPage() {
             needle === '' ? (
               <Link
                 to="/produk"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
               >
                 <IconPackage size={16} />
                 Kelola Produk
@@ -162,7 +163,7 @@ function MenuPage() {
             ) : (
               <button
                 onClick={() => setSearch({ cari: '' })}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
               >
                 Hapus pencarian
               </button>
@@ -173,17 +174,20 @@ function MenuPage() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {visible.map((product) => {
             const qty = qtyByProduct.get(product.id) ?? 0
+            // Warn-and-allow (ADR-0005): an empty or negative count warns in
+            // red but never blocks the sale — the count may simply be stale.
             const soldOut = product.stock !== null && product.stock <= 0
-            const isLow = product.stock !== null && product.stock > 0 && product.stock <= product.lowStockThreshold
+            const isLow = product.stock !== null && product.stock <= product.lowStockThreshold
             return (
               <button
                 key={product.id}
                 onClick={() => addToCart(product)}
-                disabled={soldOut}
-                className="relative flex flex-col items-start rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all hover:border-brand-500 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:shadow-sm"
+                className={`relative flex flex-col items-start rounded-2xl border bg-surface p-3 text-left shadow-level1 transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-level3 active:scale-[0.98] ${
+                  soldOut ? 'border-danger/30' : 'border-border-subtle'
+                }`}
               >
                 {qty > 0 && (
-                  <span className="tabular absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-brand-600 text-xs font-bold text-white">
+                  <span className="tabular absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-ink text-xs font-bold text-white">
                     {qty}
                   </span>
                 )}
@@ -201,10 +205,10 @@ function MenuPage() {
                       soldOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-slate-400'
                     }`}
                   >
-                    {soldOut ? 'Stok habis' : `Stok ${product.stock}`}
+                    {soldOut ? `Stok habis (${product.stock})` : `Stok ${product.stock}`}
                   </span>
                 )}
-                <span className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg bg-slate-100 py-1.5 text-xs font-semibold text-slate-700">
+                <span className="mt-2 flex w-full items-center justify-center gap-1 rounded-full bg-surface-muted py-1.5 text-xs font-semibold text-body">
                   <IconPlus size={14} stroke={2.5} />
                   {soldOut ? 'Habis' : 'Tambah'}
                 </span>
@@ -218,7 +222,7 @@ function MenuPage() {
       <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
         <Link
           to="/keranjang"
-          className="flex items-center justify-between rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white"
+          className="flex items-center justify-between rounded-full border-2 border-primary bg-primary px-5 py-3 font-semibold text-on-primary"
         >
           <span className="flex items-center gap-2">
             <IconShoppingCart size={18} stroke={2} />

@@ -15,7 +15,7 @@ import { useSession } from '../lib/useSession'
 type Mode = 'login' | 'register'
 
 const inputClass =
-  'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pl-10 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100'
+  'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pl-10 text-sm text-slate-900 outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]'
 
 /** Fills the viewport and centres the card both horizontally and vertically. */
 function Shell({ children }: { children: ReactNode }) {
@@ -53,7 +53,7 @@ export function AuthScreen({
   if (session) {
     return (
       <Shell>
-      <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+      <div className="rounded-2xl border border-border-subtle bg-surface p-6 text-center shadow-sm">
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-brand-100 text-brand-700">
           <IconCheck size={28} stroke={2.5} />
         </span>
@@ -63,7 +63,7 @@ export function AuthScreen({
         </p>
         <Link
           to="/"
-          className="mt-5 inline-flex rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+          className="mt-5 inline-flex rounded-full border-2 border-primary bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
         >
           Buka Kasir
         </Link>
@@ -99,7 +99,7 @@ export function AuthScreen({
     <Shell>
     <div>
       <div className="mb-5 text-center">
-        <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-600 text-white">
+        <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-primary text-on-primary">
           <IconBuildingStore size={28} stroke={2} />
         </span>
         <h1 className="mt-3 text-2xl font-bold text-slate-900">
@@ -112,7 +112,7 @@ export function AuthScreen({
         </p>
       </div>
 
-      <div className="mb-4 flex rounded-xl border border-slate-200 bg-white p-1">
+      <div className="mb-4 flex rounded-2xl border border-border-subtle bg-surface p-1">
         {(['login', 'register'] as const).map((value) => (
           <button
             key={value}
@@ -137,7 +137,7 @@ export function AuthScreen({
           event.preventDefault()
           void submit()
         }}
-        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="rounded-2xl border border-border-subtle bg-surface p-5 shadow-level1"
       >
         {errors.length > 0 && (
           <div
@@ -231,12 +231,12 @@ export function AuthScreen({
           type="submit"
           disabled={busy}
           data-testid="auth-submit"
-          className="mt-5 w-full rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
+          className="mt-5 w-full h-11 rounded-full border-2 border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover active:scale-95 disabled:border-primary-muted disabled:bg-primary-muted disabled:text-mute"
         >
           {busy ? 'Memproses…' : mode === 'login' ? 'Masuk' : 'Daftar'}
         </button>
 
-        <p className="mt-3 text-center text-xs text-slate-400">
+        <p className="mt-3 text-center text-xs text-mute">
           {mode === 'login' ? (
             <>
               Belum punya akun?{' '}
@@ -263,7 +263,7 @@ export function AuthScreen({
         </p>
       </form>
 
-      <p className="mt-4 text-center text-xs text-slate-400">
+      <p className="mt-4 text-center text-xs text-mute">
         Kata sandi disimpan terenkripsi di server, bukan teks biasa.
       </p>
     </div>

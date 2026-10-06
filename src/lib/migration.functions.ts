@@ -3,6 +3,7 @@ import { z } from 'zod'
 import * as data from './data.server'
 import type { ImportBatchResult } from './data.server'
 import { requireMembership } from './tenant.server'
+import { orderItemSchema } from './validation'
 
 /**
  * Legacy-migration RPC (Phase 8B).
@@ -12,15 +13,6 @@ import { requireMembership } from './tenant.server'
  * re-validated here, the tenant and role come from the session, and the whole
  * import runs in one transaction with a server-generated batch id.
  */
-
-const itemSchema = z.object({
-  productId: z.string().min(1),
-  name: z.string().min(1),
-  emoji: z.string(),
-  price: z.number().int().min(0),
-  qty: z.number().int().min(1),
-  cost: z.number().int().min(0),
-})
 
 const productSchema = z.object({
   id: z.string().min(1),
@@ -39,7 +31,7 @@ const orderSchema = z.object({
   id: z.string().min(1),
   orderNumber: z.string().min(1),
   createdAt: z.string(),
-  items: z.array(itemSchema),
+  items: z.array(orderItemSchema),
   subtotal: z.number().int().min(0),
   discount: z.number().int().min(0),
   total: z.number().int().min(0),
@@ -48,7 +40,7 @@ const orderSchema = z.object({
   paymentMethod: z.enum(['tunai', 'qris', 'transfer']),
   amountPaid: z.number().int().nullable(),
   change: z.number().int().nullable(),
-  status: z.enum(['paid', 'void']),
+  status: z.enum(['paid', 'void', 'refunded']),
   channel: z.enum(['dine-in', 'bungkus', 'ojol']),
   cashier: z.string().optional(),
   shiftId: z.string().optional(),
@@ -71,7 +63,7 @@ const movementSchema = z.object({
   id: z.string().min(1),
   productId: z.string().min(1),
   delta: z.number().int(),
-  reason: z.enum(['sale', 'restock', 'adjust', 'void']),
+  reason: z.enum(['sale', 'restock', 'adjust', 'void', 'refund']),
   at: z.string(),
   orderId: z.string().optional(),
 })

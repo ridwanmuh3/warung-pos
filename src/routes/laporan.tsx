@@ -3,13 +3,15 @@ import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { IconArrowRight, IconDownload, IconPrinter, IconShoppingCart } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
-import { dayKey, dayKeyToInputValue, formatDayLabel, formatIDR, formatTime } from '../lib/format'
-import { buildDailyReport, dailyOrdersCsv, downloadTextFile, zReportText } from '../lib/report'
-import { fetchReportingDay } from '../lib/reporting.functions'
+import { dayKey, dayKeyToInputValue, formatDayLabel, formatIDR, formatTime, resolveReportingDay } from '../lib/format'
+import { buildDailyReport, dailyOrdersCsv, downloadTextFile, zReportText } from '../lib/reporting'
 import { marginPercent } from '../lib/totals'
 import { useOrders, useShifts } from '../lib/useServerData'
+import { SkeletonRows, SkeletonStats } from '../components/ui/Skeleton'
+import { StatCard as Summary, type StatTone } from '../components/ui/StatCard'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 
 export const Route = createFileRoute('/laporan')({
   component: ReportPage,
@@ -18,16 +20,15 @@ export const Route = createFileRoute('/laporan')({
   // browser-local orders, so only the data half is server-rendered.
   ssr: 'data-only',
   loaderDeps: ({ search }) => ({ tanggal: search.tanggal }),
-  loader: async ({ deps }) => {
-    const today = await fetchReportingDay({ data: { iso: undefined } })
-    return { day: deps.tanggal ?? today }
+  loader: ({ deps }) => {
+    return { day: deps.tanggal ?? resolveReportingDay() }
   },
 })
 
 function ReportPage() {
   const { day } = Route.useLoaderData()
-  const { data: orders } = useOrders()
-  const { data: shifts } = useShifts()
+  const { data: orders, loading: ordersLoading, error: ordersError, reload: reloadOrders } = useOrders()
+  const { data: shifts, error: shiftsError, reload: reloadShifts } = useShifts()
   const navigate = useNavigate({ from: Route.fullPath })
 
   const report = useMemo(() => buildDailyReport(day, orders, shifts), [day, orders, shifts])
@@ -41,6 +42,22 @@ function ReportPage() {
 
   const dayLabel = formatDayLabel(day)
   const hasData = report.orders.length > 0
+
+  const margin = marginPercent(report.profit, report.revenue)
+
+  // Cash variance tone follows the app's existing convention (ShiftPanel and the
+  // reconciliation list): pas = green, lebih (surplus) = amber, kurang = red.
+  // Nothing to reconcile — no closed shift, or the cash read failed — stays neutral.
+  const closedShiftCount = report.shifts.filter((shift) => shift.closedAt !== undefined).length
+  const cashState = report.cashVariance === 0 ? 'pas' : report.cashVariance > 0 ? 'lebih' : 'kurang'
+  const cashTone: StatTone =
+    shiftsError || closedShiftCount === 0
+      ? 'neutral'
+      : report.cashVariance === 0
+        ? 'positive'
+        : report.cashVariance > 0
+          ? 'warning'
+          : 'danger'
 
   return (
     <div>
@@ -105,7 +122,21 @@ function ReportPage() {
         </label>
       </div>
 
-      {!hasData ? (
+      {ordersLoading && orders.length === 0 ? (
+        <>
+          <SkeletonStats count={4} />
+          <SkeletonRows count={5} className="mt-4" />
+        </>
+      ) : ordersError && orders.length === 0 ? (
+        <ErrorState
+          title="Gagal memuat laporan"
+          description="Data transaksi tidak bisa diambil. Periksa koneksi internet lalu coba lagi."
+          onRetry={() => {
+            reloadOrders()
+            reloadShifts()
+          }}
+        />
+      ) : !hasData ? (
         <EmptyState
           emoji="📄"
           title="Tidak ada transaksi pada hari ini"
@@ -113,7 +144,7 @@ function ReportPage() {
           action={
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+              className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               <IconShoppingCart size={16} />
               Buka Kasir
@@ -125,17 +156,43 @@ function ReportPage() {
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Summary label="Omzet" value={formatIDR(report.revenue)} hint={`${report.paid.length} transaksi`} testId="report-revenue" />
             <Summary label="Laba Kotor" value={formatIDR(report.profit)} hint={`Modal ${formatIDR(report.costTotal)}`} testId="report-profit" />
-            <Summary label="Margin" value={`${marginPercent(report.profit, report.revenue)}%`} hint={`Diskon ${formatIDR(report.discountTotal)}`} testId="report-margin" />
+            <Summary label="Margin" value={`${margin}%`} hint={`Diskon ${formatIDR(report.discountTotal)}`} tone={margin < 0 ? 'danger' : 'neutral'} testId="report-margin" />
             <Summary
               label="Selisih Kas"
-              value={`${report.cashVariance > 0 ? '+' : ''}${formatIDR(report.cashVariance)}`}
-              hint={report.shifts.length > 0 ? `${report.shifts.length} shift` : 'Kas belum dibuka'}
+              // A missing cash figure must read as unknown, never as a real Rp0.
+              value={shiftsError ? '—' : `${report.cashVariance > 0 ? '+' : ''}${formatIDR(report.cashVariance)}`}
+              hint={
+                shiftsError
+                  ? 'Gagal memuat kas'
+                  : closedShiftCount > 0
+                    ? `${report.shifts.length} shift · ${cashState}`
+                    : report.shifts.length > 0
+                      ? `${report.shifts.length} shift · belum tutup`
+                      : 'Kas belum dibuka'
+              }
+              tone={cashTone}
               testId="report-variance"
             />
           </div>
 
+          {shiftsError && (
+            <div
+              role="alert"
+              className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-danger/30 bg-danger/6 px-3 py-2 text-sm text-danger"
+            >
+              <span>Sebagian data kas gagal dimuat, jadi angka Selisih Kas tidak ditampilkan.</span>
+              <button
+                type="button"
+                onClick={reloadShifts}
+                className="font-semibold underline underline-offset-2 hover:text-danger-hover"
+              >
+                Coba lagi
+              </button>
+            </div>
+          )}
+
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
               <h2 className="text-sm font-semibold text-slate-900">Pembayaran</h2>
               <ul className="mt-3 space-y-2" data-testid="report-payments">
                 {report.byPayment.map((row) => (
@@ -149,7 +206,7 @@ function ReportPage() {
               </ul>
             </section>
 
-            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
               <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
               <ul className="mt-3 space-y-2" data-testid="report-channels">
                 {report.byChannel.map((row) => (
@@ -165,7 +222,7 @@ function ReportPage() {
           </div>
 
           {report.shifts.length > 0 && (
-            <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
               <h2 className="text-sm font-semibold text-slate-900">Rekonsiliasi Kas</h2>
               <ul className="mt-3 space-y-2" data-testid="report-shifts">
                 {report.shifts.map((shift) => (
@@ -194,7 +251,7 @@ function ReportPage() {
             </section>
           )}
 
-          <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
             <h2 className="text-sm font-semibold text-slate-900">Transaksi ({report.orders.length})</h2>
             <ul className="mt-3 divide-y divide-slate-100" data-testid="report-orders">
               {report.orders.map((order) => (
@@ -227,7 +284,7 @@ function ReportPage() {
             </ul>
           </section>
 
-          <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900">Laporan Harian</h2>
               <button
@@ -248,28 +305,6 @@ function ReportPage() {
           </section>
         </>
       )}
-    </div>
-  )
-}
-
-function Summary({
-  label,
-  value,
-  hint,
-  testId,
-}: {
-  label: string
-  value: string
-  hint?: string
-  testId: string
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p data-testid={testId} className="tabular mt-1 text-2xl font-bold text-slate-900">
-        {value}
-      </p>
-      {hint && <p className="mt-0.5 text-xs text-slate-400">{hint}</p>}
     </div>
   )
 }

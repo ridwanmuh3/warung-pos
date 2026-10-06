@@ -1,18 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  createOrderFn,
-  createProductFn,
   currentShiftFn,
-  closeShiftFn,
-  deleteProductFn,
   listOrdersFn,
   listProductsFn,
   listShiftsFn,
   listStockMovementsFn,
-  openShiftFn,
-  restockProductFn,
-  updateProductFn,
-  voidOrderFn,
 } from './data.functions'
 import type { Order, Product, Shift, StockMovement } from '../types'
 
@@ -83,22 +75,4 @@ export function useStockMovements(): AsyncState<StockMovement[]> {
 
 export function useCurrentShift(): AsyncState<Shift | undefined> {
   return useServerData(() => currentShiftFn(), undefined)
-}
-
-/** Mutations. Each returns the raw server function so callers can `await` it. */
-export const productMutations = {
-  create: createProductFn,
-  update: updateProductFn,
-  remove: deleteProductFn,
-  restock: restockProductFn,
-}
-
-export const orderMutations = {
-  create: createOrderFn,
-  void: voidOrderFn,
-}
-
-export const shiftMutations = {
-  open: openShiftFn,
-  close: closeShiftFn,
 }

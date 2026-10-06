@@ -4,14 +4,15 @@ import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 import { IconBuildingBank, IconCash, IconQrcode } from '@tabler/icons-react'
 import { PAYMENT_LABELS, CHANNEL_LABELS } from '../data/products'
-import { clearCart, currentCartItems, useCart } from '../lib/cart'
+import { clearCart, flushCart, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
-import { createOrderFn } from '../lib/data.functions'
+import { checkoutFn } from '../lib/data.functions'
 import { discountValue, itemsTotal } from '../lib/totals'
 import { checkoutFormSchema, parseCheckoutForm } from '../lib/validation'
 import type { PaymentMethod, SalesChannel } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { Button } from '../components/ui/Button'
 
 const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
 const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
@@ -86,7 +87,7 @@ function CheckoutPage() {
           action={
             <Link
               to="/"
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+              className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               Kembali ke Kasir
             </Link>
@@ -130,9 +131,12 @@ function CheckoutPage() {
     setSubmitting(true)
     void (async () => {
       try {
-        const order = await createOrderFn({
-          data: { items: currentCartItems(), discount, checkout: rawCheckout },
-        })
+        // Push the local cart to the server, then settle it: the server finds
+        // the open cart, prices it from the live catalog, and settles it
+        // exactly once (ADR-0003/0004). A retry returns the original order, so
+        // the latch below is a UX nicety, not the integrity mechanism.
+        await flushCart()
+        const order = await checkoutFn({ data: { checkout: rawCheckout } })
         clearCart()
         await navigate({ to: '/sukses/$orderId', params: { orderId: order.id } })
       } catch (cause) {
@@ -145,12 +149,12 @@ function CheckoutPage() {
   }
 
   const cashSection = payment === 'tunai' && (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
       <h2 className="text-sm font-semibold text-slate-900">Uang Diterima</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           onClick={() => setCashInput(String(total))}
-          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-full border border-divider px-3 py-1.5 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
         >
           Uang pas
         </button>
@@ -158,7 +162,7 @@ function CheckoutPage() {
           <button
             key={option}
             onClick={() => setCashInput(String(option))}
-            className="tabular rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="tabular rounded-full border border-divider px-3 py-1.5 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
           >
             {formatIDR(option)}
           </button>
@@ -174,7 +178,7 @@ function CheckoutPage() {
         placeholder="0"
         aria-label="Uang diterima"
         data-testid="cash-input"
-        className="tabular mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-right text-lg font-semibold text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+        className="tabular mt-3 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-right text-lg font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
       />
       <div className="mt-2 flex items-center justify-between text-sm">
         <span className="text-slate-500">Kembalian</span>
@@ -192,7 +196,7 @@ function CheckoutPage() {
   )
 
   const discountSection = (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">Diskon</h2>
         <div className="flex rounded-lg border border-slate-200 p-0.5">
@@ -202,7 +206,7 @@ function CheckoutPage() {
               onClick={() => setDiscountMode(mode)}
               aria-pressed={discountMode === mode}
               className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
-                discountMode === mode ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                discountMode === mode ? 'bg-ink text-white' : 'text-body hover:bg-surface-muted'
               }`}
             >
               {mode === 'rupiah' ? 'Rp' : '%'}
@@ -220,7 +224,7 @@ function CheckoutPage() {
         placeholder={discountMode === 'persen' ? '10' : '2000'}
         aria-label="Nilai diskon"
         data-testid="discount-input"
-        className="tabular mt-3 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-right text-sm font-semibold text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+        className="tabular mt-3 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-right text-sm font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
       />
       {discount > 0 && (
         <p className="mt-1 text-right text-xs text-slate-500">
@@ -230,15 +234,17 @@ function CheckoutPage() {
     </section>
   )
 
-  const payButton = (className: string, label: ReactNode) => (
-    <button
+  const payButton = (size: 'md' | 'lg', className: string, label: ReactNode) => (
+    <Button
       onClick={placeOrder}
-      disabled={!canConfirm || submitting}
+      size={size}
+      busy={submitting}
+      disabled={!canConfirm}
       data-testid="confirm-order"
       className={className}
     >
       {label}
-    </button>
+    </Button>
   )
 
   return (
@@ -266,7 +272,7 @@ function CheckoutPage() {
 
       <div className="grid gap-4 md:grid-cols-[1fr_18rem] lg:grid-cols-[1fr_20rem]">
         <div className="space-y-4">
-          <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <section className="rounded-2xl border border-border-subtle bg-surface shadow-level1">
             <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">
               Rincian Produk
             </h2>
@@ -290,7 +296,7 @@ function CheckoutPage() {
             </ul>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
             <h2 className="text-sm font-semibold text-slate-900">Metode Pembayaran</h2>
             <div className="mt-3 grid gap-2 grid-cols-3">
               {PAYMENT_METHODS.map((method) => {
@@ -302,7 +308,7 @@ function CheckoutPage() {
                     aria-pressed={payment === method}
                     className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-4 text-sm font-medium transition-colors ${
                       payment === method
-                        ? 'border-brand-500 bg-brand-50 text-brand-700'
+                        ? 'border-primary bg-primary-subtle text-on-primary'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                     }`}
                   >
@@ -314,7 +320,7 @@ function CheckoutPage() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
             <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
             <div className="mt-3 grid gap-2 grid-cols-3">
               {CHANNELS.map((value) => (
@@ -325,7 +331,7 @@ function CheckoutPage() {
                   data-testid={`channel-${value}`}
                   className={`rounded-xl border-2 px-3 py-3 text-sm font-medium transition-colors ${
                     channel === value
-                      ? 'border-brand-500 bg-brand-50 text-brand-700'
+                      ? 'border-primary bg-primary-subtle text-on-primary'
                       : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                   }`}
                 >
@@ -344,7 +350,7 @@ function CheckoutPage() {
                 placeholder="Opsional"
                 autoComplete="off"
                 data-testid="cashier-input"
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                className="mt-1 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
               />
             </label>
           </section>
@@ -354,7 +360,7 @@ function CheckoutPage() {
         </div>
 
         <div className="hidden md:block lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
             <h2 className="text-sm font-semibold text-slate-900">Ringkasan Bayar</h2>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between text-slate-500">
@@ -377,14 +383,11 @@ function CheckoutPage() {
             <div className="my-3 border-t border-dashed border-slate-200" />
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-slate-900">Total Bayar</span>
-              <span data-testid="payable-total" className="tabular text-2xl font-bold text-brand-600">
+              <span data-testid="payable-total" className="tabular font-display text-4xl font-black leading-none text-on-primary">
                 {formatIDR(total)}
               </span>
             </div>
-            {payButton(
-              'mt-4 w-full rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-700 disabled:opacity-50',
-              submitting ? 'Menyimpan…' : 'Konfirmasi Pesanan',
-            )}
+            {payButton('lg', 'mt-4 w-full', 'Konfirmasi Pesanan')}
             <p className="mt-2 text-center text-xs text-slate-400">
               Pesanan tersimpan di server dan stok langsung berkurang.
             </p>
@@ -395,10 +398,11 @@ function CheckoutPage() {
       {/* Sticky pay bar on mobile */}
       <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
         {payButton(
-          'flex w-full items-center justify-between rounded-lg bg-brand-600 px-4 py-3 font-bold text-white disabled:opacity-50',
+          'md',
+          'w-full justify-between',
           <>
-            <span>{submitting ? 'Menyimpan…' : 'Konfirmasi Pesanan'}</span>
-            <span data-testid="mobile-payable-total" className="tabular">
+            <span>Konfirmasi Pesanan</span>
+            <span data-testid="mobile-payable-total" className="tabular font-display font-black">
               {formatIDR(total)}
             </span>
           </>,

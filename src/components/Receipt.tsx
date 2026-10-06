@@ -6,7 +6,7 @@ import type { Order } from '../types'
 
 export function Receipt({ order }: { order: Order }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border-subtle bg-surface p-5 shadow-level1">
       <div className="text-center">
         <p className="flex items-center justify-center gap-1.5 text-lg font-bold">
           <IconBuildingStore size={20} stroke={2} />
@@ -91,7 +91,7 @@ export function Receipt({ order }: { order: Order }) {
         )}
       </dl>
 
-      <p className="mt-5 text-center text-xs text-slate-400">Terima kasih telah berbelanja</p>
+      <p className="mt-5 text-center text-xs text-mute">Terima kasih telah berbelanja</p>
     </div>
   )
 }

@@ -16,7 +16,7 @@ export interface Product {
   barcode?: string
 }
 
-export type StockMovementReason = 'sale' | 'restock' | 'adjust' | 'void'
+export type StockMovementReason = 'sale' | 'restock' | 'adjust' | 'void' | 'refund'
 
 /** Append-only audit trail of every stock change. */
 export interface StockMovement {
@@ -66,7 +66,7 @@ export interface OrderItem {
   cost: number
 }
 
-export type OrderStatus = 'paid' | 'void'
+export type OrderStatus = 'paid' | 'void' | 'refunded'
 
 export interface Order {
   id: string
@@ -92,9 +92,14 @@ export interface Order {
   shiftId?: string
   voidedAt?: string
   voidReason?: string
+  /** Money returned after the original shift closed (ADR-0006). */
+  refundedAt?: string
+  refundReason?: string
+  /** The shift whose drawer actually paid the refund out. */
+  refundedInShiftId?: string
 }
 
-export type CartStatus = 'open' | 'parked'
+export type CartStatus = 'open' | 'parked' | 'checked_out'
 
 /** A server-side cart. Line items are price/HPP snapshots, like order items. */
 export interface Cart {

@@ -35,8 +35,3 @@ export const sessionSecret = createServerOnlyFn((): string =>
   process.env.SESSION_SECRET?.trim() || required('TURSO_ACCESS_TOKEN'),
 )
 
-/** Whether a real database is configured, for graceful degradation in dev. */
-export const hasDatabaseConfig = createServerOnlyFn((): boolean => {
-  const url = process.env.TURSO_URL
-  return typeof url === 'string' && url.trim() !== ''
-})

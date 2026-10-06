@@ -6,9 +6,11 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { IconBuildingStore } from '@tabler/icons-react'
 import { AppShell } from '~/components/AppShell'
 import { AuthScreen } from '~/components/AuthScreen'
 import { NotFoundPage } from '~/components/NotFoundPage'
+import { Spinner } from '~/components/ui/Spinner'
 import { useSession } from '~/lib/useSession'
 import appCss from '~/index.css?url'
 
@@ -40,7 +42,14 @@ function RootComponent() {
   // unresolved session shows a neutral shell instead.
   if (session === undefined) {
     return (
-      <div className="grid min-h-full place-items-center p-6 text-sm text-slate-500">Memuat…</div>
+      <div className="grid min-h-full place-items-center p-6">
+        <div className="flex flex-col items-center gap-4">
+          <span className="grid size-14 place-items-center rounded-md bg-primary text-on-primary">
+            <IconBuildingStore size={28} stroke={2} />
+          </span>
+          <Spinner size="lg" label="Memuat aplikasi…" />
+        </div>
+      </div>
     )
   }
 

@@ -27,8 +27,8 @@ export function PageHeader({
             {backLabel}
           </Link>
         )}
-        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
+        <h1 className="font-display text-2xl font-black leading-tight text-ink sm:text-3xl">{title}</h1>
+        {subtitle && <p className="mt-0.5 text-sm text-mute">{subtitle}</p>}
       </div>
       {action}
     </div>

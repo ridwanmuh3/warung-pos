@@ -108,7 +108,7 @@ export const orders = sqliteTable(
     paymentMethod: text('payment_method', { enum: ['tunai', 'qris', 'transfer'] }).notNull(),
     amountPaid: integer('amount_paid'),
     change: integer('change'),
-    status: text('status', { enum: ['paid', 'void'] })
+    status: text('status', { enum: ['paid', 'void', 'refunded'] })
       .notNull()
       .default('paid'),
     channel: text('channel', { enum: ['dine-in', 'bungkus', 'ojol'] })
@@ -118,13 +118,26 @@ export const orders = sqliteTable(
     shiftId: text('shift_id'),
     voidedAt: text('voided_at'),
     voidReason: text('void_reason'),
+    /**
+     * Refund (ADR-0006): money returned after the original shift closed.
+     * `refundedInShiftId` is the shift whose drawer actually paid out.
+     */
+    refundedAt: text('refunded_at'),
+    refundReason: text('refund_reason'),
+    refundedInShiftId: text('refunded_in_shift_id'),
     /** Owning user, when the order was placed while signed in. */
     userId: text('user_id').references(() => users.id),
+    /**
+     * The cart this order was checked out from (ADR-0004). Unique: one cart
+     * settles at most once, so a checkout retry can find its original order.
+     */
+    cartId: text('cart_id'),
     importBatchId: text('import_batch_id'),
   },
   (table) => [
     // Unique per tenant: each shop numbers its own orders from ORD-001.
     uniqueIndex('orders_tenant_number_unique').on(table.tenantId, table.orderNumber),
+    uniqueIndex('orders_cart_unique').on(table.cartId),
     index('orders_tenant_idx').on(table.tenantId),
     index('orders_created_at_idx').on(table.createdAt),
     index('orders_status_idx').on(table.status),
@@ -196,7 +209,7 @@ export const stockMovements = sqliteTable(
       .notNull()
       .references(() => products.id, { onDelete: 'cascade' }),
     delta: integer('delta').notNull(),
-    reason: text('reason', { enum: ['sale', 'restock', 'adjust', 'void'] }).notNull(),
+    reason: text('reason', { enum: ['sale', 'restock', 'adjust', 'void', 'refund'] }).notNull(),
     at: text('at').notNull(),
     orderId: text('order_id'),
     importBatchId: text('import_batch_id'),
@@ -222,11 +235,13 @@ export const carts = sqliteTable(
     userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    status: text('status', { enum: ['open', 'parked'] })
+    status: text('status', { enum: ['open', 'parked', 'checked_out'] })
       .notNull()
       .default('open'),
     /** Shown for parked carts, e.g. a customer name. */
     label: text('label'),
+    /** Set when checkout converted this cart into an order (ADR-0004). */
+    checkedOutAt: text('checked_out_at'),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
   },

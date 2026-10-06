@@ -24,10 +24,16 @@ export function formatTime(iso: string): string {
   return timeFormatter.format(new Date(iso))
 }
 
-/** Key used to bucket orders by local calendar day. */
+/** Key used to bucket orders by local calendar day. THE one implementation —
+ * every "which day does this belong to" question in the app goes through here. */
 export function dayKey(iso: string): string {
   const d = new Date(iso)
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+/** The reporting day for an ISO instant (or for now). Same bucketing as `dayKey`. */
+export function resolveReportingDay(iso?: string): string {
+  return dayKey(iso ?? new Date().toISOString())
 }
 
 /** Inverse of `dayKey`: rebuilds the local Date from a day key. */

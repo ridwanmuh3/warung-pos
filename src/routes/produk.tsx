@@ -26,6 +26,9 @@ import type { Product, ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { SelectField, TextField } from '../components/Field'
+import { Button } from '../components/ui/Button'
+import { Modal, ModalTitle } from '../components/ui/Modal'
+import { SkeletonRows } from '../components/ui/Skeleton'
 
 const EMOJI_CHOICES: Record<ProductCategory, string[]> = {
   makanan: ['🍜', '🍚', '🍗', '🍲', '🥖', '🍛', '🥘', '🍕'],
@@ -76,12 +79,13 @@ function draftFromProduct(product: Product): DraftState {
   }
 }
 
-function ProductForm({ draft, onChange, onSubmit, onCancel, error }: {
+function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy }: {
   draft: DraftState
   onChange: (draft: DraftState) => void
   onSubmit: () => void
   onCancel: () => void
   error?: string | null
+  busy?: boolean
 }) {
   const editing = draft.id !== null
   const priceNumber = Number(draft.price)
@@ -99,7 +103,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error }: {
         event.preventDefault()
         onSubmit()
       }}
-      className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="mb-5 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1"
     >
       {error && (
         <p
@@ -220,14 +224,10 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error }: {
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <button
-          type="submit"
-          disabled={!nameValid || !priceValid || !stockValid}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
-        >
+        <Button type="submit" size="sm" busy={busy} disabled={!nameValid || !priceValid || !stockValid}>
           <IconDeviceFloppy size={16} />
           {editing ? 'Simpan Perubahan' : 'Tambah Produk'}
-        </button>
+        </Button>
         {editing && (
           <button
             type="button"
@@ -267,7 +267,9 @@ function ProductsPage() {
   const filter = kategori ?? 'semua'
   const navigate = useNavigate({ from: Route.fullPath })
 
-  const { data: products, reload } = useProducts()
+  const { data: products, loading, reload } = useProducts()
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function resetCatalog() {
     await Promise.all(products.map((product) => deleteProductFn({ data: { id: product.id } })))
@@ -287,13 +289,20 @@ function ProductsPage() {
       return
     }
     setFormError(null)
+    setSaving(true)
 
-    if (draft.id) {
-      void updateProductFn({ data: { id: draft.id, draft } }).then(reload)
-    } else {
-      void createProductFn({ data: draft }).then(reload)
-    }
-    setDraft(EMPTY_DRAFT)
+    const mutation = draft.id
+      ? updateProductFn({ data: { id: draft.id, draft } })
+      : createProductFn({ data: draft })
+    void mutation
+      .then(() => {
+        setDraft(EMPTY_DRAFT)
+        reload()
+      })
+      .catch((cause: unknown) => {
+        setFormError(cause instanceof Error ? cause.message : 'Gagal menyimpan produk')
+      })
+      .finally(() => setSaving(false))
   }
 
   return (
@@ -340,6 +349,7 @@ function ProductsPage() {
           setFormError(null)
         }}
         error={formError}
+        busy={saving}
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -361,7 +371,7 @@ function ProductsPage() {
           aria-pressed={menipis === true}
           className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
             menipis
-              ? 'bg-amber-500 text-white'
+              ? 'bg-warning text-on-warning'
               : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -369,7 +379,9 @@ function ProductsPage() {
         </button>
       </div>
 
-      {visible.length === 0 ? (
+      {loading && products.length === 0 ? (
+        <SkeletonRows count={6} />
+      ) : visible.length === 0 ? (
         <EmptyState
           emoji="📦"
           title={menipis ? 'Tidak ada stok menipis' : 'Belum ada produk'}
@@ -386,7 +398,7 @@ function ProductsPage() {
             return (
               <li
                 key={product.id}
-                className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-surface p-3 shadow-sm"
               >
                 <span className="text-2xl" aria-hidden>
                   {product.emoji}
@@ -449,42 +461,42 @@ function ProductsPage() {
       )}
 
       {pendingDelete && (
-        <div className="no-print fixed inset-0 z-40 grid place-items-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
-            <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-600">
-                <IconAlertTriangle size={20} />
-              </span>
-              <div>
-                <h2 className="font-semibold text-slate-900">Hapus produk?</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  <span className="font-medium">{pendingDelete.name}</span> ({formatIDR(pendingDelete.price)})
-                  akan dihapus dari daftar produk. Riwayat penjualan lama tidak berubah.
-                </p>
-              </div>
+        <Modal onClose={() => setPendingDelete(null)}>
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-600">
+              <IconAlertTriangle size={20} />
+            </span>
+            <div>
+              <ModalTitle>Hapus produk?</ModalTitle>
+              <p className="mt-1 text-sm text-slate-600">
+                <span className="font-medium">{pendingDelete.name}</span> ({formatIDR(pendingDelete.price)})
+                akan dihapus dari daftar produk. Riwayat penjualan lama tidak berubah.
+              </p>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => setPendingDelete(null)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-              >
-                Batal
-              </button>
-              <button
-                onClick={() => {
-                  void deleteProductFn({ data: { id: pendingDelete.id } }).then(() => {
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setPendingDelete(null)}>
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              busy={deleting}
+              onClick={() => {
+                setDeleting(true)
+                void deleteProductFn({ data: { id: pendingDelete.id } })
+                  .then(() => {
                     if (draft.id === pendingDelete.id) setDraft(EMPTY_DRAFT)
                     setPendingDelete(null)
                     reload()
                   })
-                }}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-              >
-                Hapus
-              </button>
-            </div>
+                  .finally(() => setDeleting(false))
+              }}
+            >
+              Hapus
+            </Button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

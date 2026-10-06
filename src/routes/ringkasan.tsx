@@ -1,56 +1,36 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { IconArrowRight, IconShoppingCart } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CATEGORY_LABELS, CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { dayKey, formatDayLabel, formatIDR } from '../lib/format'
-import { busiestHour, channelBreakdown, hourHistogram, revenueTrend, topProducts } from '../lib/analytics'
-import { fetchReportingDay, streamCategoryBreakdown } from '../lib/reporting.functions'
+import { busiestHour, channelBreakdown, hourHistogram, revenueTrend, summarizeCategories, topProducts } from '../lib/reporting'
+import { resolveReportingDay } from '../lib/format'
 import { marginPercent } from '../lib/totals'
 import { useOrders, useProducts } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { ErrorState } from '../components/ErrorState'
 import { ShiftPanel } from '../components/ShiftPanel'
-import type { CategoryReportRow, OrderItem, PaymentMethod, ProductCategory } from '../types'
-
-function StatCard({
-  testId,
-  label,
-  value,
-  hint,
-}: {
-  testId: string
-  label: string
-  value: string
-  hint?: string
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p data-testid={testId} className="tabular mt-1 text-2xl font-bold text-slate-900">
-        {value}
-      </p>
-      {hint && <p className="mt-0.5 text-xs text-slate-400">{hint}</p>}
-    </div>
-  )
-}
+import { SkeletonRows, SkeletonStats } from '../components/ui/Skeleton'
+import { StatCard } from '../components/ui/StatCard'
+import type { OrderItem, PaymentMethod, ProductCategory } from '../types'
 
 export const Route = createFileRoute('/ringkasan')({
   component: SummaryPage,
   validateSearch: z.object({ day: z.string().optional().catch(undefined) }),
-  // Loader runs on the server and returns the authoritative reporting day; the
-  // per-route component is client-only because order data lives in localStorage.
+  // The reporting day resolves locally from the shared day-key rule; the
+  // component stays client-only because orders arrive via server functions.
   ssr: 'data-only',
   loaderDeps: ({ search }) => ({ day: search.day }),
-  loader: async ({ deps }) => {
-    const reportingDay = await fetchReportingDay({ data: { iso: undefined } })
-    return { reportingDay: deps.day ?? reportingDay }
+  loader: ({ deps }) => {
+    return { reportingDay: deps.day ?? resolveReportingDay() }
   },
 })
 
 function SummaryPage() {
   const { reportingDay } = Route.useLoaderData()
-  const { data: orders } = useOrders()
+  const { data: orders, loading: ordersLoading, error: ordersError, reload: reloadOrders } = useOrders()
   const { data: products } = useProducts()
 
   const today = reportingDay
@@ -116,24 +96,40 @@ function SummaryPage() {
     [stats.todayOrders, orders, reportingDay],
   )
 
+  // A negative margin is a loss; only that state earns color.
+  const margin = marginPercent(stats.profit, stats.revenue)
+
   if (orders.length === 0) {
     return (
       <div>
         <PageHeader title="Ringkasan Penjualan" />
-        <EmptyState
-          emoji="📊"
-          title="Belum ada data penjualan"
-          description="Ringkasan hari ini akan muncul setelah ada transaksi pertama."
-          action={
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-            >
-              <IconShoppingCart size={16} />
-              Buka Kasir
-            </Link>
-          }
-        />
+        {ordersLoading ? (
+          <>
+            <SkeletonStats count={4} />
+            <SkeletonRows count={4} className="mt-4" />
+          </>
+        ) : ordersError ? (
+          <ErrorState
+            title="Gagal memuat ringkasan"
+            description="Data penjualan tidak bisa diambil. Periksa koneksi internet lalu coba lagi."
+            onRetry={reloadOrders}
+          />
+        ) : (
+          <EmptyState
+            emoji="📊"
+            title="Belum ada data penjualan"
+            description="Ringkasan hari ini akan muncul setelah ada transaksi pertama."
+            action={
+              <Link
+                to="/"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+              >
+                <IconShoppingCart size={16} />
+                Buka Kasir
+              </Link>
+            }
+          />
+        )}
         {/* The drawer must be openable before the first sale, so the panel is not
             hidden behind the empty state. */}
         <div className="mt-4">
@@ -169,17 +165,18 @@ function SummaryPage() {
         <StatCard
           testId="stat-margin"
           label="Margin"
-          value={`${marginPercent(stats.profit, stats.revenue)}%`}
+          value={`${margin}%`}
           hint={
             stats.discountTotal > 0
               ? `Diskon ${formatIDR(stats.discountTotal)}`
               : 'Tanpa diskon'
           }
+          tone={margin < 0 ? 'danger' : 'neutral'}
         />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Penjualan per Metode</h2>
           {Object.keys(stats.byPayment).length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada transaksi hari ini.</p>
@@ -207,12 +204,12 @@ function SummaryPage() {
           )}
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Transaksi Terbesar</h2>
           {stats.best ? (
             <div className="mt-3">
               <p className="tabular text-sm font-bold text-slate-900">{stats.best.orderNumber}</p>
-              <p className="tabular mt-1 text-2xl font-bold text-brand-600">{formatIDR(stats.best.total)}</p>
+              <p className="tabular mt-1 font-display text-3xl font-black leading-none text-link">{formatIDR(stats.best.total)}</p>
               <ul className="mt-3 space-y-1 text-sm text-slate-600">
                 {stats.best.items.map((item) => (
                   <li key={item.productId} className="flex justify-between gap-2">
@@ -242,10 +239,10 @@ function SummaryPage() {
         <ShiftPanel />
       </div>
 
-      <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
         <h2 className="text-sm font-semibold text-slate-900">Rincian per Kategori</h2>
         <p className="mt-0.5 text-xs text-slate-400">
-          Dihitung di server dan dialirkan baris per baris.
+          Penjualan kotor per kategori hari ini.
         </p>
         <CategoryBreakdown
           key={`${reportingDay}:${todayItems.map((item) => `${item.productId}x${item.qty}`).join(',')}`}
@@ -255,7 +252,7 @@ function SummaryPage() {
       </section>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Produk Terlaris</h2>
           {patterns.top.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada penjualan hari ini.</p>
@@ -274,7 +271,7 @@ function SummaryPage() {
           )}
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Pola Jam</h2>
           <p className="mt-0.5 text-xs text-slate-400">
             {patterns.busiest
@@ -306,7 +303,7 @@ function SummaryPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
           {patterns.channels.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada transaksi hari ini.</p>
@@ -333,7 +330,7 @@ function SummaryPage() {
           )}
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Tren 7 Hari</h2>
           <ul className="mt-3 flex items-end justify-between gap-1.5" data-testid="revenue-trend">
             {patterns.trend.map((point) => {
@@ -362,13 +359,9 @@ function SummaryPage() {
   )
 }
 
-function BreakdownSkeleton() {
-  return <p className="mt-3 text-sm text-slate-500">Menghitung rincian kategori…</p>
-}
-
 /**
- * Consumes the streaming server function progressively: each category row is
- * rendered as soon as its chunk arrives instead of waiting for the whole report.
+ * Per-category gross sales for the day, computed locally from the same pure
+ * reporting module as every other widget — no streaming round-trip.
  */
 function CategoryBreakdown({
   items,
@@ -377,29 +370,14 @@ function CategoryBreakdown({
   items: OrderItem[]
   categoryOf: Record<string, ProductCategory>
 }) {
-  const [rows, setRows] = useState<CategoryReportRow[]>([])
-  const [totals, setTotals] = useState<{ revenue: number; itemsSold: number } | null>(null)
+  const rows = useMemo(() => summarizeCategories(items, categoryOf), [items, categoryOf])
 
-  useEffect(() => {
-    let cancelled = false
-
-    void (async () => {
-      const stream = await streamCategoryBreakdown({ data: { items, categoryOf } })
-      for await (const chunk of stream) {
-        if (cancelled) return
-        if (chunk.kind === 'row') setRows((prev) => [...prev, chunk.row])
-        else setTotals({ revenue: chunk.revenue, itemsSold: chunk.itemsSold })
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [items, categoryOf])
-
-  if (rows.length === 0 && totals === null) {
-    return <BreakdownSkeleton />
+  if (rows.length === 0) {
+    return <p className="mt-3 text-sm text-slate-500">Belum ada penjualan hari ini.</p>
   }
+
+  const revenue = rows.reduce((sum, row) => sum + row.revenue, 0)
+  const itemsSold = rows.reduce((sum, row) => sum + row.itemsSold, 0)
 
   return (
     <ul className="mt-3 space-y-2" data-testid="category-breakdown">
@@ -412,14 +390,12 @@ function CategoryBreakdown({
           <span className="tabular font-semibold text-slate-900">{formatIDR(row.revenue)}</span>
         </li>
       ))}
-      {totals && (
-        <li className="flex items-baseline justify-between border-t border-dashed border-slate-200 pt-2 text-sm">
-          <span className="font-semibold text-slate-900">Total</span>
-          <span className="tabular font-bold text-brand-600">
-            {formatIDR(totals.revenue)} · {totals.itemsSold} pcs
-          </span>
-        </li>
-      )}
+      <li className="flex items-baseline justify-between border-t border-dashed border-slate-200 pt-2 text-sm">
+        <span className="font-semibold text-slate-900">Total</span>
+        <span className="tabular font-bold text-brand-600">
+          {formatIDR(revenue)} · {itemsSold} pcs
+        </span>
+      </li>
     </ul>
   )
 }

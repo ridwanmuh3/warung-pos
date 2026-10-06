@@ -28,11 +28,6 @@ export function discountValue(subtotal: number, input: DiscountInput): number {
   return Math.min(Math.max(0, Math.round(raw)), subtotal)
 }
 
-/** Sum of item HPP snapshots. */
-export function itemsCost(items: OrderItem[]): number {
-  return items.reduce((sum, item) => sum + item.cost * item.qty, 0)
-}
-
 /** Gross profit as a percentage of revenue; 0 when there is no revenue. */
 export function marginPercent(profit: number, revenue: number): number {
   if (revenue <= 0) return 0

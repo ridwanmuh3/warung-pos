@@ -114,15 +114,6 @@ export const seedProductsFn = createServerFn({ method: 'POST' }).handler(
 
 /* -------------------------------- orders ------------------------------ */
 
-const orderItemSchema = z.object({
-  productId: z.string().min(1),
-  name: z.string().min(1),
-  emoji: z.string(),
-  price: z.number().int().min(0),
-  qty: z.number().int().min(1),
-  cost: z.number().int().min(0),
-})
-
 export const listOrdersFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<Order[]> => {
     const ctx = await requireMembership('cashier')
@@ -140,29 +131,30 @@ export const getOrderFn = createServerFn({ method: 'GET' })
     return data.getOrderById(ctx.tenantId, input.id)
   })
 
-export const createOrderFn = createServerFn({ method: 'POST' })
-  .validator(
-    z.object({
-      items: z.array(orderItemSchema).min(1, 'Keranjang masih kosong'),
-      discount: z.number().int().min(0),
-      checkout: checkoutFormSchema,
-    }),
-  )
+/**
+ * Settles the caller's open server cart (ADR-0003/0004). The client sends no
+ * cart id, no items, and no prices: the server finds the open cart, prices it
+ * from the live catalog, computes totals and change itself, and settles the
+ * cart exactly once. The checkout form payload is still re-validated here so
+ * a crafted request cannot bypass the input rules the UI applies.
+ */
+export const checkoutFn = createServerFn({ method: 'POST' })
+  .validator(z.object({ checkout: checkoutFormSchema }))
   .handler(async ({ data: input }): Promise<Order> => {
     const ctx = await requireMembership('cashier')
-    // The raw form payload is re-validated here with the domain schema, so a
-    // crafted request cannot bypass the rules the UI applies.
+    const cart = await data.getOpenCart(ctx.tenantId, ctx.userId)
+    if (!cart || cart.items.length === 0) {
+      throw new Error('Keranjang masih kosong')
+    }
     const checkout = parseCheckoutForm(input.checkout)
-    return data.createOrder(ctx.tenantId, {
-      items: input.items,
-      discount: input.discount,
+    // The validated discount intent travels; the rupiah value is computed
+    // server-side against the server's own subtotal (ADR-0003).
+    return data.checkoutCart(ctx.tenantId, ctx.userId, cart.id, {
+      discount: { amount: checkout.discountAmount, percent: checkout.discountPercent },
       paymentMethod: checkout.paymentMethod,
       amountPaid: checkout.paymentMethod === 'tunai' ? checkout.cashTendered : null,
-      change:
-        checkout.paymentMethod === 'tunai' ? (checkout.cashTendered ?? 0) - checkout.total : null,
       channel: checkout.channel,
       cashier: checkout.cashier ?? '',
-      userId: ctx.userId,
     })
   })
 
@@ -171,6 +163,14 @@ export const voidOrderFn = createServerFn({ method: 'POST' })
   .handler(async ({ data: input }): Promise<Order | undefined> => {
     const ctx = await requireMembership('manager')
     return data.voidOrder(ctx.tenantId, input.id, input.reason)
+  })
+
+/** Returns money for an order whose shift has closed (ADR-0006). */
+export const refundOrderFn = createServerFn({ method: 'POST' })
+  .validator(z.object({ id: z.string().min(1), reason: z.string().max(240) }))
+  .handler(async ({ data: input }): Promise<Order | undefined> => {
+    const ctx = await requireMembership('manager')
+    return data.refundOrder(ctx.tenantId, input.id, input.reason)
   })
 
 /* -------------------------------- shifts ------------------------------ */
@@ -199,6 +199,15 @@ export const openShiftFn = createServerFn({ method: 'POST' })
       openingCash: parsed.data.openingCash,
       userId: ctx.userId,
     })
+  })
+
+/** Orders feeding the drawer's expected-cash display: the open shift's sales
+ *  and its refunds, unwindowed (unlike the cashier's today-only order list). */
+export const listDrawerOrdersFn = createServerFn({ method: 'GET' })
+  .validator(z.object({ shiftId: z.string().min(1) }))
+  .handler(async ({ data: input }): Promise<Order[]> => {
+    const ctx = await requireMembership('cashier')
+    return data.listOrdersForDrawer(ctx.tenantId, input.shiftId)
   })
 
 export const closeShiftFn = createServerFn({ method: 'POST' })

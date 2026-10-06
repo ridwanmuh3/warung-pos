@@ -3,6 +3,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { IconUserPlus, IconUsers } from '@tabler/icons-react'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { Button } from '../components/ui/Button'
+import { SkeletonRows } from '../components/ui/Skeleton'
 import {
   inviteMemberFn,
   listMembersFn,
@@ -71,7 +73,7 @@ function MembersPage() {
         </p>
       )}
 
-      <section className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="mb-5 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
           <IconUserPlus size={16} stroke={2} />
           Undang Anggota
@@ -89,7 +91,7 @@ function MembersPage() {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="kasir@warung.id"
               data-testid="member-email"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
             />
           </label>
           <label htmlFor="member-role">
@@ -108,14 +110,15 @@ function MembersPage() {
               ))}
             </select>
           </label>
-          <button
+          <Button
             onClick={() => void invite()}
-            disabled={busy || email.trim() === ''}
+            busy={busy}
+            disabled={email.trim() === ''}
             data-testid="member-invite"
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+            size="sm"
           >
             Undang
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -125,7 +128,7 @@ function MembersPage() {
       </h2>
 
       {loading ? (
-        <p className="py-8 text-center text-sm text-slate-500">Memuat…</p>
+        <SkeletonRows count={4} />
       ) : members.length === 0 ? (
         <EmptyState emoji="👥" title="Belum ada anggota lain" description="Undang rekan kerja lewat form di atas." />
       ) : (
@@ -133,7 +136,7 @@ function MembersPage() {
           {members.map((member) => (
             <li
               key={member.membershipId}
-              className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+              className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-surface p-3 shadow-sm"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-900">{member.name}</p>

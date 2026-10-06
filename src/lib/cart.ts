@@ -8,7 +8,14 @@ export interface CartState {
   count: number
 }
 
-const STORAGE_KEY = 'warung-pos.cart.v1'
+/**
+ * Live cart key. v1 is owned by the legacy importer (`legacy.ts` treats it as
+ * pre-server data), so the live cart moved to v2 — sharing v1 made the live
+ * cart look importable and let "Selesai" wipe it. On first load we adopt any
+ * v1 cart written by this same app generation, then remove the v1 key.
+ */
+const STORAGE_KEY = 'warung-pos.cart.v2'
+const LEGACY_LIVE_KEY = 'warung-pos.cart.v1'
 
 const listeners = new Set<() => void>()
 
@@ -38,8 +45,10 @@ function normalizeItem(value: unknown): OrderItem | null {
 function loadItems(): OrderItem[] {
   if (typeof localStorage === 'undefined') return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    const parsed: unknown = raw ? JSON.parse(raw) : []
+    // One-time adoption of the pre-v2 live cart (see STORAGE_KEY note).
+    const adopted = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_LIVE_KEY)
+    localStorage.removeItem(LEGACY_LIVE_KEY)
+    const parsed: unknown = adopted ? JSON.parse(adopted) : []
     return Array.isArray(parsed)
       ? parsed.map(normalizeItem).filter((item): item is OrderItem => item !== null)
       : []

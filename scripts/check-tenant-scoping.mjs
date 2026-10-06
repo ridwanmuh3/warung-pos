@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -6,15 +6,25 @@ import { fileURLToPath } from 'node:url'
  * Tenant-scoping guard (Phase 8C).
  *
  * Multi-tenant isolation depends on one invariant: every query against a
- * tenant-scoped table filters by `tenantId`. This script reads
- * `src/lib/data.server.ts` and fails if a table is touched without that
- * predicate, so a query added later cannot silently leak data across shops.
+ * tenant-scoped table filters by `tenantId`. This script fails if a table is
+ * touched without that predicate, so a query added later cannot silently leak
+ * data across shops.
  */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const file = join(root, 'src/lib/data.server.ts')
 
-const source = readFileSync(file, 'utf8')
+/**
+ * The persistence layer is split by concern into `src/lib/data/*.server.ts`;
+ * the guard scans every one of them.
+ */
+const dir = join(root, 'src/lib/data')
+const files = readdirSync(dir)
+  .filter((name) => name.endsWith('.server.ts'))
+  .map((name) => join(dir, name))
+
+const source = files
+  .map((file) => readFileSync(file, 'utf8'))
+  .join('\n')
   .replace(/\/\*[\s\S]*?\*\//g, '')
   // eslint-disable-next-line no-useless-escape
   .replace(/(^|[^:])\/\/.*$/gm, '$1')

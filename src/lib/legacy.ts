@@ -62,7 +62,7 @@ const legacyOrderSchema = z.object({
   paymentMethod: z.enum(['tunai', 'qris', 'transfer']),
   amountPaid: z.number().nullable().catch(null),
   change: z.number().nullable().catch(null),
-  status: z.enum(['paid', 'void']).catch('paid'),
+  status: z.enum(['paid', 'void', 'refunded']).catch('paid'),
   channel: z.enum(['dine-in', 'bungkus', 'ojol']).catch('dine-in'),
   cashier: z.string().optional(),
   shiftId: z.string().optional(),
@@ -85,7 +85,7 @@ const legacyMovementSchema = z.object({
   id: z.string().min(1),
   productId: z.string().min(1),
   delta: z.number(),
-  reason: z.enum(['sale', 'restock', 'adjust', 'void']),
+  reason: z.enum(['sale', 'restock', 'adjust', 'void', 'refund']),
   at: z.string(),
   orderId: z.string().optional(),
 })

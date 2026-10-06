@@ -4,10 +4,14 @@ import { IconAlertTriangle, IconSearch, IconShoppingCart, IconX } from '@tabler/
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { dayKey, formatDayLabel, formatIDR, formatTime } from '../lib/format'
-import { listOrdersFn, voidOrderFn } from '../lib/data.functions'
+import { listOrdersFn, refundOrderFn, voidOrderFn } from '../lib/data.functions'
 import { useOrders } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { SkeletonRows } from '../components/ui/Skeleton'
+import { Button } from '../components/ui/Button'
+import { Modal, ModalTitle } from '../components/ui/Modal'
+import { Badge } from '../components/ui/Badge'
 import type { Order, PaymentMethod, SalesChannel } from '../types'
 
 const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
@@ -65,10 +69,14 @@ function OrdersPage() {
   const q = rawQ ?? ''
   const [pendingVoid, setPendingVoid] = useState<Order | null>(null)
   const [voidReason, setVoidReason] = useState('')
+  /** Server told us the shift is closed: offer a refund instead of a void (ADR-0006). */
+  const [needsRefund, setNeedsRefund] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionBusy, setActionBusy] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
 
   // Re-run the loader whenever the order set changes (new order, void, ...).
-  const { data: liveOrders } = useOrders()
+  const { data: liveOrders, loading: liveLoading } = useOrders()
   const router = useRouter()
   useEffect(() => {
     void router.invalidate()
@@ -94,7 +102,7 @@ function OrdersPage() {
           action={
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+              className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               <IconShoppingCart size={16} />
               Buka Kasir
@@ -125,7 +133,7 @@ function OrdersPage() {
             onChange={(event) => updateSearch({ q: event.target.value })}
             placeholder="Cari nomor pesanan atau nama produk…"
             aria-label="Cari pesanan"
-            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
           />
         </div>
 
@@ -170,7 +178,7 @@ function OrdersPage() {
           {day && (
             <button
               onClick={() => updateSearch({ day: undefined })}
-              className="inline-flex items-center gap-1 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
+              className="inline-flex items-center gap-1 rounded-full border-2 border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               {formatDayLabel(day)}
               <IconX size={12} stroke={2.5} />
@@ -179,7 +187,9 @@ function OrdersPage() {
         </div>
       </div>
 
-      {orders.length === 0 ? (
+      {orders.length === 0 && liveLoading ? (
+        <SkeletonRows count={6} />
+      ) : orders.length === 0 ? (
         <EmptyState
           emoji="🔍"
           title="Tidak ada pesanan cocok"
@@ -188,7 +198,7 @@ function OrdersPage() {
             hasFilters ? (
               <button
                 onClick={() => navigate({ search: {}, replace: true })}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
               >
                 Hapus semua filter
               </button>
@@ -198,7 +208,10 @@ function OrdersPage() {
       ) : (
         <div className="space-y-6">
           {groupByDay(orders).map(([key, dayOrders]) => {
-            const dayTotal = dayOrders.reduce((sum, order) => sum + order.total, 0)
+            // Day totals count money actually kept: paid orders only.
+            const dayTotal = dayOrders
+              .filter((order) => order.status === 'paid')
+              .reduce((sum, order) => sum + order.total, 0)
             return (
               <section key={key}>
                 <div className="mb-2 flex items-baseline justify-between gap-2">
@@ -218,7 +231,7 @@ function OrdersPage() {
                     <li key={order.id}>
                       <div
                         className={`flex items-center gap-3 rounded-xl border bg-white p-3 shadow-sm ${
-                          order.status === 'void' ? 'border-red-200 opacity-75' : 'border-slate-200'
+                          order.status !== 'paid' ? 'border-red-200 opacity-75' : 'border-slate-200'
                         }`}
                       >
                         <Link
@@ -228,21 +241,26 @@ function OrdersPage() {
                         >
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="tabular text-sm font-bold text-slate-900">{order.orderNumber}</span>
-                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                            <Badge variant="dark" className="px-1.5 py-0.5 text-[10px] font-medium">
                               {PAYMENT_LABELS[order.paymentMethod]}
-                            </span>
-                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                            </Badge>
+                            <Badge variant="primary" className="px-1.5 py-0.5 text-[10px] font-medium">
                               {CHANNEL_LABELS[order.channel]}
-                            </span>
+                            </Badge>
                             {order.status === 'void' && (
-                              <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+                              <Badge variant="danger" className="px-1.5 py-0.5 text-[10px]">
                                 BATAL
-                              </span>
+                              </Badge>
+                            )}
+                            {order.status === 'refunded' && (
+                              <Badge variant="warning" className="px-1.5 py-0.5 text-[10px]">
+                                REFUND
+                              </Badge>
                             )}
                             {order.discount > 0 && (
-                              <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
+                              <Badge variant="danger" className="px-1.5 py-0.5 text-[10px] font-medium">
                                 −{formatIDR(order.discount)}
-                              </span>
+                              </Badge>
                             )}
                           </div>
                           <p className="mt-0.5 truncate text-xs text-slate-500">
@@ -252,7 +270,7 @@ function OrdersPage() {
                         <div className="text-right">
                           <p
                             className={`tabular text-sm font-bold ${
-                              order.status === 'void' ? 'text-slate-400 line-through' : 'text-slate-900'
+                              order.status !== 'paid' ? 'text-slate-400 line-through' : 'text-slate-900'
                             }`}
                           >
                             {formatIDR(order.total)}
@@ -282,50 +300,80 @@ function OrdersPage() {
       )}
 
       {pendingVoid && (
-        <div className="no-print fixed inset-0 z-40 grid place-items-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
-            <div className="flex items-start gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-600">
-                <IconAlertTriangle size={20} />
-              </span>
-              <div>
-                <h2 className="font-semibold text-slate-900">Batalkan {pendingVoid.orderNumber}?</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Transaksi ditandai batal dan stok produknya dikembalikan. Transaksi tidak dihapus, jadi
-                  jejaknya tetap ada.
-                </p>
-              </div>
-            </div>
-            <input
-              value={voidReason}
-              onChange={(event) => setVoidReason(event.target.value)}
-              placeholder="Alasan (opsional)"
-              aria-label="Alasan pembatalan"
-              data-testid="void-reason"
-              className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            />
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => setPendingVoid(null)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-              >
-                Batal
-              </button>
-              <button
-                data-testid="void-confirm"
-                onClick={() => {
-                  void voidOrderFn({ data: { id: pendingVoid.id, reason: voidReason } }).then(() => {
-                    setPendingVoid(null)
-                    void router.invalidate()
-                  })
-                }}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-              >
-                Batalkan Transaksi
-              </button>
+        <Modal
+          onClose={() => {
+            setPendingVoid(null)
+            setNeedsRefund(false)
+            setActionError(null)
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-600">
+              <IconAlertTriangle size={20} />
+            </span>
+            <div>
+              <ModalTitle>
+                {needsRefund ? 'Kembalikan dana' : 'Batalkan'} {pendingVoid.orderNumber}?
+              </ModalTitle>
+              <p className="mt-1 text-sm text-slate-600">
+                {needsRefund
+                  ? 'Shift transaksi ini sudah ditutup, jadi uang dikembalikan dari laci kas yang sedang buka dan tercatat sebagai refund. Stok produk dikembalikan.'
+                  : 'Transaksi ditandai batal dan stok produknya dikembalikan. Transaksi tidak dihapus, jadi jejaknya tetap ada.'}
+              </p>
             </div>
           </div>
-        </div>
+          <input
+            value={voidReason}
+            onChange={(event) => setVoidReason(event.target.value)}
+            placeholder="Alasan (opsional)"
+            aria-label="Alasan pembatalan"
+            data-testid="void-reason"
+            className="mt-3 w-full rounded-sm border-2 border-border px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+          />
+          {actionError && <p className="mt-2 text-xs text-red-600">{actionError}</p>}
+          <div className="mt-4 flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setPendingVoid(null)
+                setNeedsRefund(false)
+                setActionError(null)
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              busy={actionBusy}
+              data-testid="void-confirm"
+              onClick={() => {
+                const action = needsRefund ? refundOrderFn : voidOrderFn
+                setActionBusy(true)
+                setActionError(null)
+                void action({ data: { id: pendingVoid.id, reason: voidReason } })
+                  .then(() => {
+                    setPendingVoid(null)
+                    setNeedsRefund(false)
+                    void router.invalidate()
+                  })
+                  .catch((cause: unknown) => {
+                    const message =
+                      cause instanceof Error ? cause.message : 'Gagal membatalkan transaksi'
+                    // A closed shift turns a void into a refund (ADR-0006).
+                    if (!needsRefund && message.toLowerCase().includes('refund')) {
+                      setNeedsRefund(true)
+                    }
+                    setActionError(message)
+                  })
+                  .finally(() => setActionBusy(false))
+              }}
+            >
+              {needsRefund ? 'Kembalikan Dana' : 'Batalkan Transaksi'}
+            </Button>
+          </div>
+        </Modal>
       )}
 
       {hasFilters && orders.length > 0 && (

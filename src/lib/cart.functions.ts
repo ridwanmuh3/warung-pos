@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import * as data from './data.server'
 import { requireMembership } from './tenant.server'
+import { orderItemSchema } from './validation'
 import type { Cart } from '../types'
 
 /**
@@ -12,15 +13,6 @@ import type { Cart } from '../types'
  * one-cashier-per-account reality of a warung.
  */
 
-const cartItemSchema = z.object({
-  productId: z.string().min(1),
-  name: z.string().min(1),
-  emoji: z.string(),
-  price: z.number().int().min(0),
-  qty: z.number().int().min(1),
-  cost: z.number().int().min(0),
-})
-
 export const getOpenCartFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<Cart | undefined> => {
     const ctx = await requireMembership('cashier')
@@ -29,7 +21,7 @@ export const getOpenCartFn = createServerFn({ method: 'GET' }).handler(
 )
 
 export const saveCartFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ items: z.array(cartItemSchema) }))
+  .validator(z.object({ items: z.array(orderItemSchema) }))
   .handler(async ({ data: input }): Promise<Cart> => {
     const ctx = await requireMembership('cashier')
     return data.saveCart(ctx.tenantId, ctx.userId, input.items)

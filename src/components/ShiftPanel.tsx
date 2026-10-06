@@ -1,9 +1,13 @@
-import { useState } from 'react'
 import { IconLockOpen, IconLock, IconAlertTriangle } from '@tabler/icons-react'
 import { formatDateTime, formatIDR } from '../lib/format'
 import { openingCashFormSchema, shiftCloseFormSchema } from '../lib/validation'
 import { closeShiftFn, openShiftFn } from '../lib/data.functions'
-import { useCurrentShift, useOrders, useShifts } from '../lib/useServerData'
+import { useEffect, useState } from 'react'
+import { useCurrentShift, useShifts } from '../lib/useServerData'
+import { listDrawerOrdersFn } from '../lib/data.functions'
+import { expectedDrawerCash } from '../lib/cashDrawer'
+import type { Order } from '../types'
+import { Button } from './ui/Button'
 
 /**
  * Cash-drawer shift panel: open the drawer with a float, then close it with a
@@ -11,19 +15,36 @@ import { useCurrentShift, useOrders, useShifts } from '../lib/useServerData'
  */
 export function ShiftPanel() {
   const { data: shifts, reload: reloadShifts } = useShifts()
-  const { data: orders, reload: reloadOrders } = useOrders()
   const { data: open, reload: reloadCurrent } = useCurrentShift()
+
+  // The drawer display uses the shift's own orders — not the cashier's
+  // today-only list — so refunds and cross-midnight shifts read correctly.
+  const [drawerOrders, setDrawerOrders] = useState<Order[]>([])
+  useEffect(() => {
+    if (!open) {
+      setDrawerOrders([])
+      return
+    }
+    let cancelled = false
+    void listDrawerOrdersFn({ data: { shiftId: open.id } }).then((rows) => {
+      if (!cancelled) setDrawerOrders(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [open, open?.id, shifts])
 
   const [openingCash, setOpeningCash] = useState('')
   const [countedCash, setCountedCash] = useState('')
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const lastClosed = shifts.find((shift) => shift.closedAt !== undefined)
 
   if (!open) {
     return (
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="shift-panel">
+      <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1" data-testid="shift-panel">
         <div className="flex items-center gap-2">
           <IconLockOpen size={18} stroke={2} className="text-slate-400" />
           <h2 className="text-sm font-semibold text-slate-900">Kas Belum Dibuka</h2>
@@ -44,10 +65,12 @@ export function ShiftPanel() {
               onChange={(event) => setOpeningCash(event.target.value)}
               placeholder="100000"
               data-testid="opening-cash"
-              className="tabular mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="tabular mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
             />
           </label>
-          <button
+          <Button
+            size="sm"
+            busy={busy}
             onClick={() => {
               const parsed = openingCashFormSchema.safeParse({ openingCash })
               if (!parsed.success) {
@@ -55,17 +78,19 @@ export function ShiftPanel() {
                 return
               }
               setError(null)
-              void openShiftFn({ data: parsed.data }).then(() => {
-                reloadShifts()
-                reloadCurrent()
-              })
-              setOpeningCash('')
+              setBusy(true)
+              void openShiftFn({ data: parsed.data })
+                .then(() => {
+                  reloadShifts()
+                  reloadCurrent()
+                  setOpeningCash('')
+                })
+                .finally(() => setBusy(false))
             }}
             data-testid="open-shift"
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
           >
             Buka Kas
-          </button>
+          </Button>
         </div>
         {error && (
           <p role="alert" data-testid="shift-error" className="mt-2 text-sm text-red-600">
@@ -100,28 +125,19 @@ export function ShiftPanel() {
     )
   }
 
-  // Expected drawer cash: float + cash sales − cash refunded by voids, all from
-  // the database. Computed here for display; the server recomputes on close.
-  const expected =
-    open.openingCash +
-    orders
-      .filter(
-        (order) =>
-          order.shiftId === open.id && order.status === 'paid' && order.paymentMethod === 'tunai',
-      )
-      .reduce((sum, order) => sum + order.total, 0) -
-    orders
-      .filter(
-        (order) =>
-          order.shiftId === open.id && order.status === 'void' && order.paymentMethod === 'tunai',
-      )
-      .reduce((sum, order) => sum + order.total, 0)
+  // The same rule the server closes with (cashDrawer.ts) — display and close
+  // can never drift.
+  const expected = expectedDrawerCash({
+    openingCash: open.openingCash,
+    orders: drawerOrders,
+    shiftId: open.id,
+  })
   const counted = Number(countedCash)
   const varianceValid = countedCash !== '' && Number.isFinite(counted)
   const variance = varianceValid ? Math.round(counted) - expected : 0
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" data-testid="shift-panel">
+    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1" data-testid="shift-panel">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <IconLock size={18} stroke={2} className="text-brand-600" />
@@ -156,7 +172,7 @@ export function ShiftPanel() {
             onChange={(event) => setCountedCash(event.target.value)}
             placeholder="0"
             data-testid="counted-cash"
-            className="tabular mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className="tabular mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
           />
         </label>
         <label htmlFor="shift-note" className="flex-1">
@@ -166,7 +182,7 @@ export function ShiftPanel() {
             value={note}
             onChange={(event) => setNote(event.target.value)}
             placeholder="Opsional"
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
           />
         </label>
       </div>
@@ -185,7 +201,10 @@ export function ShiftPanel() {
         </p>
       )}
 
-      <button
+      <Button
+        variant="dark"
+        size="sm"
+        busy={busy}
         onClick={() => {
           const parsed = shiftCloseFormSchema.safeParse({ countedCash, note })
           if (!parsed.success) {
@@ -193,20 +212,22 @@ export function ShiftPanel() {
             return
           }
           setError(null)
-          void closeShiftFn({ data: parsed.data }).then(() => {
-            reloadShifts()
-            reloadCurrent()
-            reloadOrders()
-          })
-          setCountedCash('')
-          setNote('')
+          setBusy(true)
+          void closeShiftFn({ data: parsed.data })
+            .then(() => {
+              reloadShifts()
+              reloadCurrent()
+              setCountedCash('')
+              setNote('')
+            })
+            .finally(() => setBusy(false))
         }}
         disabled={!varianceValid}
         data-testid="close-shift"
-        className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+        className="mt-3"
       >
         Tutup Kas
-      </button>
+      </Button>
       {error && (
         <p role="alert" data-testid="shift-error" className="mt-2 text-sm text-red-600">
           {error}

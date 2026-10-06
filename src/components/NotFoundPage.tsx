@@ -8,7 +8,7 @@ export function NotFoundPage() {
       title="Halaman tidak ditemukan"
       description="Alamat yang kamu buka tidak tersedia."
       action={
-        <Link to="/" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+        <Link to="/" className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover">
           Kembali ke Kasir
         </Link>
       }

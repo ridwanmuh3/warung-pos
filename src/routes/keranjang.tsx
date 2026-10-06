@@ -89,7 +89,7 @@ function ParkedCarts({
             <button
               onClick={() => onResume(cart.id)}
               disabled={busy}
-              className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+              className="rounded-full border-2 border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover disabled:border-primary-muted disabled:bg-primary-muted disabled:text-mute"
             >
               Lanjutkan
             </button>
@@ -174,7 +174,7 @@ function CartPage() {
           action={
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+              className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               <IconShoppingCart size={16} />
               Mulai Belanja
@@ -205,7 +205,7 @@ function CartPage() {
       <div className="grid gap-4 md:grid-cols-[1fr_18rem] lg:grid-cols-[1fr_20rem]">
         <ul className="space-y-2">
           {items.map((item) => (
-            <li key={item.productId} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <li key={item.productId} className="rounded-2xl border border-border-subtle bg-surface p-3 shadow-sm">
               <div className="flex items-center gap-3">
                 <span className="text-2xl" aria-hidden>
                   {item.emoji}
@@ -247,7 +247,7 @@ function CartPage() {
               <div className="space-y-2">
                 <Link
                   to="/checkout"
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-brand-700"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover active:scale-95"
                 >
                   Lanjut ke Detail Pesanan
                   <IconArrowRight size={16} stroke={2.5} />
@@ -288,7 +288,7 @@ function CartPage() {
       <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
         <Link
           to="/checkout"
-          className="flex items-center justify-between rounded-lg bg-brand-600 px-4 py-3 font-semibold text-white"
+          className="flex items-center justify-between rounded-full border-2 border-primary bg-primary px-5 py-3 font-semibold text-on-primary"
         >
           <span>Total · {count} item</span>
           <span className="tabular flex items-center gap-1">

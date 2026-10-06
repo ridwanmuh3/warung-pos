@@ -9,6 +9,7 @@
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
     "lint": "oxlint",
+    "test": "vitest run",
     "check:tenant": "node scripts/check-tenant-scoping.mjs",
     "db:push": "node --env-file=.env node_modules/drizzle-kit/bin.cjs push",
     "db:generate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs generate",
@@ -16,6 +17,8 @@
     "db:studio": "node --env-file=.env node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
     "@libsql/client": "^0.18.0",
     "@tabler/icons-react": "^3.48.0",
     "@tanstack/react-router": "^1.170.41",
@@ -36,6 +39,7 @@
     "oxlint": "^1.86.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
-    "vite": "^8.3.2"
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
   }
 }

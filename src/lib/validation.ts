@@ -109,6 +109,19 @@ export const email = z
   .pipe(z.email('Format email tidak valid'))
 
 export const paymentMethod = z.enum(['tunai', 'qris', 'transfer'])
+
+/**
+ * The ONE wire schema for a line-item snapshot (cart saves, legacy import).
+ * Display-only data: checkout re-prices from the catalog (ADR-0003).
+ */
+export const orderItemSchema = z.object({
+  productId: z.string().min(1),
+  name: z.string().min(1),
+  emoji: z.string(),
+  price: z.number().int().min(0),
+  qty: z.number().int().min(1),
+  cost: z.number().int().min(0),
+})
 export const salesChannel = z.enum(['dine-in', 'bungkus', 'ojol'])
 export const productCategory = z.enum(['makanan', 'minuman', 'snack'])
 export const dayKey = z.string().regex(/^\d{1,4}-\d{1,2}-\d{1,2}$/, 'Format tanggal tidak valid')
@@ -273,22 +286,3 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Kata sandi wajib diisi'),
 })
 export type LoginInput = z.infer<typeof loginSchema>
-
-/* ------------------------------------------------------------------ *
- * Result helper
- * ------------------------------------------------------------------ */
-
-export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errors: string[] }
-
-/**
- * Runs a schema and flattens failures into short, user-facing strings.
- * Used by form handlers that must show an inline error instead of throwing.
- */
-export function validate<T>(schema: z.ZodType<T>, input: unknown): ValidationResult<T> {
-  const parsed = schema.safeParse(input)
-  if (parsed.success) return { ok: true, value: parsed.data }
-  return {
-    ok: false,
-    errors: parsed.error.issues.map((issue) => issue.message),
-  }
-}
