@@ -36,10 +36,8 @@ export const sessionSecret = createServerOnlyFn((): string =>
 )
 
 export interface R2Env {
-  /** S3 API endpoint, used for signing. */
+  /** S3 API endpoint, used for signing and object access. */
   endpoint: string
-  /** Public read base URL; image `src` values are built from this. */
-  publicUrl: string
   bucket: string
   accessKeyId: string
   secretAccessKey: string
@@ -47,9 +45,20 @@ export interface R2Env {
 
 export const r2Env = createServerOnlyFn((): R2Env => ({
   endpoint: required('CLOUDFLARE_S3_URI'),
-  publicUrl: required('CLOUDFLARE_R2_DEV_URL'),
   bucket: required('CLOUDFLARE_BUCKET'),
   accessKeyId: required('CLOUDFLARE_ACCESS_KEY_ID'),
   secretAccessKey: required('CLOUDFLARE_SECRET_KEY'),
 }))
+
+/**
+ * Optional CDN / custom-domain base URL for images.
+ *
+ * When unset — the default — image reads go through this app's own `/img`
+ * proxy instead, because the `*.r2.dev` development domain is blocked on some
+ * shop networks while the app's own origin always works.
+ */
+export const r2PublicUrl = createServerOnlyFn((): string | null => {
+  const value = process.env.CLOUDFLARE_R2_PUBLIC_URL?.trim()
+  return value ? value.replace(/\/+$/, '') : null
+})
 

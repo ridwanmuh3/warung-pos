@@ -1,14 +1,22 @@
 import { createServerOnlyFn } from '@tanstack/react-start'
-import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { r2Env } from './env.server'
+import { r2Env, r2PublicUrl } from './env.server'
 
 /**
  * Cloudflare R2 access for product images.
  *
  * Uploads are presigned PUTs straight from the browser to R2 (the server only
- * signs, never proxies bytes). Reads go through the public dev URL; the S3
- * endpoint is used for signing and object management only.
+ * signs, never proxies the upload). Reads go through this app's own `/img`
+ * proxy by default — a public `*.r2.dev` domain is blocked on some shop
+ * networks — with an optional custom domain via `CLOUDFLARE_R2_PUBLIC_URL`.
+ * The S3 endpoint is used for signing and object access.
  */
 
 export const IMAGE_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
@@ -37,7 +45,7 @@ function s3Endpoint(uri: string, bucket: string): string {
 }
 
 /** Exposed for the unit test; not part of the runtime API. */
-export const __test = { s3Endpoint }
+export const __test = { s3Endpoint, isServableKey }
 
 const getClient = createServerOnlyFn((): S3Client => {
   if (client) return client
@@ -54,10 +62,54 @@ const getClient = createServerOnlyFn((): S3Client => {
   return client
 })
 
-/** Public URL for a stored image key. */
-export const imageUrl = createServerOnlyFn((key: string): string =>
-  `${r2Env().publicUrl.replace(/\/+$/, '')}/${key}`,
-)
+/**
+ * Base URL the browser prefixes onto an image key.
+ *
+ * Defaults to this app's `/img` proxy (see `src/routes/img/$.ts`) so images
+ * always load from the app's own origin. Set `CLOUDFLARE_R2_PUBLIC_URL` to a
+ * custom domain on the bucket to read straight from a CDN instead.
+ */
+export const imageBaseUrl = createServerOnlyFn((): string => r2PublicUrl() ?? '/img')
+
+/**
+ * A byte-for-byte image returned by {@link readImageObject}. `body` is backed
+ * by a plain `ArrayBuffer` so it can be handed straight to `new Response(...)`.
+ */
+export interface ImageObject {
+  body: Uint8Array<ArrayBuffer>
+  contentType: string
+  contentLength: number
+}
+
+/**
+ * Key prefixes the app creates and is therefore willing to serve back.
+ * Anything else (foreign prefixes, traversal) is refused, so the proxy cannot
+ * be pointed at arbitrary objects in the bucket.
+ */
+function isServableKey(key: string): boolean {
+  if (key === '' || key.startsWith('/') || key.includes('..')) return false
+  return key.startsWith('seed/') || key.startsWith('products/')
+}
+
+/**
+ * Reads a single image object for the same-origin proxy. Returns `null` when
+ * the key is not one the app stores, or the object is missing / not an image.
+ */
+export const readImageObject = createServerOnlyFn(async (key: string): Promise<ImageObject | null> => {
+  if (!isServableKey(key)) return null
+  const env = r2Env()
+  try {
+    const object = await getClient().send(new GetObjectCommand({ Bucket: env.bucket, Key: key }))
+    const contentType = object.ContentType ?? ''
+    if (!contentType.startsWith('image/') || !object.Body) return null
+    // Copy into an ArrayBuffer-backed view; the SDK's stream type is
+    // `Uint8Array<ArrayBufferLike>`, which `Response` does not accept.
+    const body = new Uint8Array(await object.Body.transformToByteArray())
+    return { body, contentType, contentLength: object.ContentLength ?? body.byteLength }
+  } catch {
+    return null
+  }
+})
 
 /**
  * Generates a tenant-scoped object key and a short-lived presigned PUT URL.

@@ -61,12 +61,14 @@ TURSO_ACCESS_TOKEN=<token>
 SESSION_SECRET=<random-secret>   # openssl rand -base64 48
 ```
 
-Untuk gambar produk, isi juga kredensial Cloudflare R2 (lihat `.env.example`). Bucket butuh aturan CORS untuk origin aplikasi; R2 menolak wildcard di `AllowedHeaders`, jadi daftarkan headernya secara literal:
+Untuk gambar produk, isi juga kredensial Cloudflare R2 (lihat `.env.example`). Upload memakai presigned PUT langsung dari browser, jadi bucket butuh aturan CORS untuk origin aplikasi; R2 menolak wildcard di `AllowedHeaders`, jadi daftarkan headernya secara literal:
 
 ```json
 { "AllowedOrigins": ["http://localhost:3000"], "AllowedMethods": ["GET", "PUT"],
   "AllowedHeaders": ["content-type"], "ExposeHeaders": ["ETag"] }
 ```
+
+Pembacaan gambar dilayani oleh aplikasi sendiri lewat proxy same-origin `/img/<key>`, bukan domain publik `*.r2.dev` (domain itu diblokir di sebagian jaringan). Isi `CLOUDFLARE_R2_PUBLIC_URL` hanya bila bucket punya custom domain / CDN yang ingin dipakai langsung.
 
 2. Pasang dependency dan buat skema database.
 

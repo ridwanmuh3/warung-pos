@@ -81,7 +81,7 @@ _Avoid_: work shift, cashier session
 ### Inventory
 
 **Product Image**:
-An optional mockup photo for a product, stored in Cloudflare R2 under an object *key* (e.g. `products/<tenantId>/<uuid>.jpg`); the database never holds a URL. The browser uploads directly to R2 via a server-signed presigned PUT, and reads through a public base URL. A missing key renders a placeholder. Like name and price, the key is snapshotted onto line items at sale time, so a later image swap cannot rewrite past receipts.
+An optional mockup photo for a product, stored in Cloudflare R2 under an object *key* (e.g. `products/<tenantId>/<uuid>.jpg`); the database never holds a URL. The browser uploads directly to R2 via a server-signed presigned PUT, and reads through the app's own same-origin `/img/<key>` proxy (a public `*.r2.dev` domain is blocked on some shop networks). A missing key renders a placeholder. Like name and price, the key is snapshotted onto line items at sale time, so a later image swap cannot rewrite past receipts.
 _Avoid_: photo, thumbnail, URL (the stored value is a key)
 
 **Stock-tracked Product**:

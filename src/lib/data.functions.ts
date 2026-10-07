@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import * as data from './data.server'
 import { requireMembership } from './tenant.server'
-import { IMAGE_CONTENT_TYPES, createUploadTarget, deleteObject, imageUrl, objectExists } from './r2.server'
+import { IMAGE_CONTENT_TYPES, createUploadTarget, deleteObject, imageBaseUrl, objectExists } from './r2.server'
 import {
   checkoutFormSchema,
   openingCashFormSchema,
@@ -115,9 +115,12 @@ async function verifiedImageKey(tenantId: string, key: string | null): Promise<s
   return key
 }
 
-/** Public image base URL, safe to expose: it prefixes every public-read image. */
+/**
+ * Base URL the browser prefixes onto an image key. Safe to expose: it is
+ * either this app's origin (the default `/img` proxy) or a public CDN base.
+ */
 export const getImageBaseUrlFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<string> => imageUrl('').replace(/\/+$/, ''),
+  async (): Promise<string> => imageBaseUrl(),
 )
 
 export const getImageUploadUrlFn = createServerFn({ method: 'POST' })

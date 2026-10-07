@@ -19,6 +19,7 @@ import { Route as ProdukRouteImport } from './routes/produk'
 import { Route as PulihkanRouteImport } from './routes/pulihkan'
 import { Route as RingkasanRouteImport } from './routes/ringkasan'
 import { Route as ApiHealthRouteImport } from './routes/api.health'
+import { Route as ImgSplatRouteImport } from './routes/img/$'
 import { Route as RiwayatIndexRouteImport } from './routes/riwayat.index'
 import { Route as RiwayatOrderIdRouteImport } from './routes/riwayat.$orderId'
 import { Route as SuksesOrderIdRouteImport } from './routes/sukses.$orderId'
@@ -73,6 +74,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImgSplatRoute = ImgSplatRouteImport.update({
+  id: '/img/$',
+  path: '/img/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RiwayatIndexRoute = RiwayatIndexRouteImport.update({
   id: '/riwayat/',
   path: '/riwayat/',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
   '/api/health': typeof ApiHealthRoute
+  '/img/$': typeof ImgSplatRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
   '/sukses/$orderId': typeof SuksesOrderIdRoute
   '/riwayat/': typeof RiwayatIndexRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
   '/api/health': typeof ApiHealthRoute
+  '/img/$': typeof ImgSplatRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
   '/sukses/$orderId': typeof SuksesOrderIdRoute
   '/riwayat': typeof RiwayatIndexRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
   '/api/health': typeof ApiHealthRoute
+  '/img/$': typeof ImgSplatRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
   '/sukses/$orderId': typeof SuksesOrderIdRoute
   '/riwayat/': typeof RiwayatIndexRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/pulihkan'
     | '/ringkasan'
     | '/api/health'
+    | '/img/$'
     | '/riwayat/$orderId'
     | '/sukses/$orderId'
     | '/riwayat/'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/pulihkan'
     | '/ringkasan'
     | '/api/health'
+    | '/img/$'
     | '/riwayat/$orderId'
     | '/sukses/$orderId'
     | '/riwayat'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/pulihkan'
     | '/ringkasan'
     | '/api/health'
+    | '/img/$'
     | '/riwayat/$orderId'
     | '/sukses/$orderId'
     | '/riwayat/'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   PulihkanRoute: typeof PulihkanRoute
   RingkasanRoute: typeof RingkasanRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  ImgSplatRoute: typeof ImgSplatRoute
   RiwayatOrderIdRoute: typeof RiwayatOrderIdRoute
   SuksesOrderIdRoute: typeof SuksesOrderIdRoute
   RiwayatIndexRoute: typeof RiwayatIndexRoute
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/img/$': {
+      id: '/img/$'
+      path: '/img/$'
+      fullPath: '/img/$'
+      preLoaderRoute: typeof ImgSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/riwayat/': {
       id: '/riwayat/'
       path: '/riwayat'
@@ -306,6 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   PulihkanRoute: PulihkanRoute,
   RingkasanRoute: RingkasanRoute,
   ApiHealthRoute: ApiHealthRoute,
+  ImgSplatRoute: ImgSplatRoute,
   RiwayatOrderIdRoute: RiwayatOrderIdRoute,
   SuksesOrderIdRoute: SuksesOrderIdRoute,
   RiwayatIndexRoute: RiwayatIndexRoute,
