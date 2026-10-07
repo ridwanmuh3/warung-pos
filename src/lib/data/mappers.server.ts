@@ -27,7 +27,7 @@ export function toProduct(row: ProductRow): Product {
     price: row.price,
     cost: row.cost,
     category: row.category,
-    emoji: row.emoji,
+    imageKey: row.imageKey,
     stock: row.stock,
     lowStockThreshold: row.lowStockThreshold,
     ...(row.sku ? { sku: row.sku } : {}),
@@ -38,11 +38,11 @@ export function toProduct(row: ProductRow): Product {
 export type OrderRow = typeof orders.$inferSelect
 export type OrderItemRow = typeof orderItems.$inferSelect
 
-export function toLineItem(row: { productId: string; name: string; emoji: string; price: number; qty: number; cost: number }): OrderItem {
+export function toLineItem(row: { productId: string; name: string; imageKey: string | null; price: number; qty: number; cost: number }): OrderItem {
   return {
     productId: row.productId,
     name: row.name,
-    emoji: row.emoji,
+    imageKey: row.imageKey,
     price: row.price,
     qty: row.qty,
     cost: row.cost,

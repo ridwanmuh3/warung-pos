@@ -11,6 +11,7 @@ import { useOrders, useProducts } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
+import { ProductImage } from '../components/ProductImage'
 import { ShiftPanel } from '../components/ShiftPanel'
 import { SkeletonRows, SkeletonStats } from '../components/ui/Skeleton'
 import { StatCard } from '../components/ui/StatCard'
@@ -261,7 +262,7 @@ function SummaryPage() {
               {patterns.top.map((row, index) => (
                 <li key={row.productId} className="flex items-center gap-3 text-sm">
                   <span className="tabular w-4 text-xs font-semibold text-slate-400">{index + 1}</span>
-                  <span aria-hidden>{row.emoji}</span>
+                  <ProductImage imageKey={row.imageKey} alt={row.name} className="size-7" iconSize={14} />
                   <span className="min-w-0 flex-1 truncate font-medium text-slate-700">{row.name}</span>
                   <span className="tabular text-xs text-slate-400">{row.qty} pcs</span>
                   <span className="tabular font-semibold text-slate-900">{formatIDR(row.revenue)}</span>

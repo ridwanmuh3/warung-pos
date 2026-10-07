@@ -30,7 +30,8 @@ export const LEGACY_KEYS = {
 const legacyItemSchema = z.object({
   productId: z.string().min(1),
   name: z.string().min(1),
-  emoji: z.string().catch('📦'),
+  /** Pre-image era rows carried an emoji; imports land with no image. */
+  imageKey: z.string().nullable().catch(null),
   price: z.number(),
   qty: z.number().int().min(1),
   cost: z.number().min(0).catch(0),
@@ -41,7 +42,7 @@ const legacyProductSchema = z.object({
   name: z.string().min(1),
   price: z.number(),
   category: z.enum(['makanan', 'minuman', 'snack']),
-  emoji: z.string().catch('📦'),
+  imageKey: z.string().nullable().catch(null),
   cost: z.number().min(0).catch(0),
   stock: z.number().nullable().catch(null),
   lowStockThreshold: z.number().catch(5),

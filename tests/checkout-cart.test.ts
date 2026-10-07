@@ -28,7 +28,7 @@ async function seedProduct(id: string, price: number, cost: number, stock: numbe
     price,
     cost,
     category: 'makanan',
-    emoji: '🍚',
+    imageKey: null,
     stock,
     lowStockThreshold: 5,
     sku: id,
@@ -51,7 +51,7 @@ describe('checkout consumes the open cart (ADR-0004)', () => {
   it('converts the open cart into an order and closes the cart', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 2 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 2 },
     ])
 
     const order = await data.checkoutCart(TENANT, USER, cart.id, checkoutInput)
@@ -65,7 +65,7 @@ describe('checkout consumes the open cart (ADR-0004)', () => {
   it('settles one cart exactly once: a retry returns the original order', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 2 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 2 },
     ])
 
     const first = await data.checkoutCart(TENANT, USER, cart.id, checkoutInput)
@@ -83,7 +83,7 @@ describe('checkout consumes the open cart (ADR-0004)', () => {
   it('rejects checking out a parked cart', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 1 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 1 },
     ])
     await data.parkCart(TENANT, USER, 'Meja 3')
     const [parked] = await data.listParkedCarts(TENANT, USER)
@@ -94,7 +94,7 @@ describe('checkout consumes the open cart (ADR-0004)', () => {
   it('a checked-out cart cannot be resurrected by resumeCart', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 1 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 1 },
     ])
     await data.checkoutCart(TENANT, USER, cart.id, checkoutInput)
 

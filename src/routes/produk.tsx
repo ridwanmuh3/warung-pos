@@ -8,6 +8,7 @@ import {
   IconPlus,
   IconRefresh,
   IconTrash,
+  IconUpload,
   IconX,
 } from '@tabler/icons-react'
 import { CATEGORY_LABELS } from '../data/products'
@@ -16,6 +17,7 @@ import { productDraftSchema } from '../lib/validation'
 import {
   createProductFn,
   deleteProductFn,
+  getImageUploadUrlFn,
   listProductsFn,
   restockProductFn,
   seedProductsFn,
@@ -26,15 +28,13 @@ import type { Product, ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { SelectField, TextField } from '../components/Field'
+import { ProductImage } from '../components/ProductImage'
 import { Button } from '../components/ui/Button'
 import { Modal, ModalTitle } from '../components/ui/Modal'
 import { SkeletonRows } from '../components/ui/Skeleton'
 
-const EMOJI_CHOICES: Record<ProductCategory, string[]> = {
-  makanan: ['🍜', '🍚', '🍗', '🍲', '🥖', '🍛', '🥘', '🍕'],
-  minuman: ['🧋', '☕', '💧', '🥑', '🥛', '🧃', '🍵', '🥤'],
-  snack: ['🍟', '🍪', '🍥', '🥔', '🍫', '🥨', '🍿', '🍬'],
-}
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 interface DraftState {
   id: string | null
@@ -43,7 +43,8 @@ interface DraftState {
   /** Purchase price (HPP). */
   cost: string
   category: ProductCategory
-  emoji: string
+  /** R2 object key, or null for the placeholder. */
+  imageKey: string | null
   /** Empty string means "not stock-tracked". */
   stock: string
   lowStockThreshold: string
@@ -57,7 +58,7 @@ const EMPTY_DRAFT: DraftState = {
   price: '',
   cost: '',
   category: 'makanan',
-  emoji: '🍜',
+  imageKey: null,
   stock: '',
   lowStockThreshold: '5',
   sku: '',
@@ -71,7 +72,7 @@ function draftFromProduct(product: Product): DraftState {
     price: String(product.price),
     cost: product.cost > 0 ? String(product.cost) : '',
     category: product.category,
-    emoji: product.emoji,
+    imageKey: product.imageKey,
     stock: product.stock === null ? '' : String(product.stock),
     lowStockThreshold: String(product.lowStockThreshold),
     sku: product.sku ?? '',
@@ -79,13 +80,88 @@ function draftFromProduct(product: Product): DraftState {
   }
 }
 
-function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy }: {
+function ImagePicker({ draft, onChange, onError }: {
+  draft: DraftState
+  onChange: (draft: DraftState) => void
+  onError: (message: string | null) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+
+  async function upload(file: File) {
+    if (!IMAGE_TYPES.has(file.type)) {
+      onError('Format gambar harus JPG, PNG, atau WebP')
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      onError('Ukuran gambar maksimal 5MB')
+      return
+    }
+    setUploading(true)
+    onError(null)
+    try {
+      const { key, uploadUrl } = await getImageUploadUrlFn({
+        data: { contentType: file.type as 'image/jpeg' | 'image/png' | 'image/webp' },
+      })
+      const response = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+      if (!response.ok) throw new Error('Gagal mengunggah gambar')
+      onChange({ ...draft, imageKey: key })
+    } catch (cause) {
+      onError(cause instanceof Error ? cause.message : 'Gagal mengunggah gambar')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="mt-3">
+      <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Gambar</span>
+      <div className="mt-1 flex items-center gap-3">
+        <ProductImage imageKey={draft.imageKey} alt={draft.name || 'Produk'} className="size-16" iconSize={24} />
+        <label
+          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 ${uploading ? 'pointer-events-none opacity-50' : ''}`}
+        >
+          <IconUpload size={16} />
+          {uploading ? 'Mengunggah…' : draft.imageKey ? 'Ganti gambar' : 'Unggah gambar'}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            disabled={uploading}
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) void upload(file)
+              event.target.value = ''
+            }}
+          />
+        </label>
+        {draft.imageKey && (
+          <button
+            type="button"
+            onClick={() => onChange({ ...draft, imageKey: null })}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+          >
+            <IconX size={14} />
+            Hapus
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-slate-400">JPG, PNG, atau WebP · maksimal 5MB</p>
+    </div>
+  )
+}
+
+function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError }: {
   draft: DraftState
   onChange: (draft: DraftState) => void
   onSubmit: () => void
   onCancel: () => void
   error?: string | null
   busy?: boolean
+  onError: (message: string | null) => void
 }) {
   const editing = draft.id !== null
   const priceNumber = Number(draft.price)
@@ -138,7 +214,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy }: {
           id="product-category"
           label="Kategori"
           value={draft.category}
-          onChange={(e) => onChange({ ...draft, category: e.target.value as ProductCategory, emoji: EMOJI_CHOICES[e.target.value as ProductCategory][0] })}
+          onChange={(e) => onChange({ ...draft, category: e.target.value as ProductCategory })}
         >
           {(Object.keys(CATEGORY_LABELS) as ProductCategory[]).map((category) => (
             <option key={category} value={category}>
@@ -202,26 +278,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy }: {
         />
       </div>
 
-      <div className="mt-3">
-        <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Ikon</span>
-        <div className="mt-1 flex flex-wrap gap-1.5">
-          {EMOJI_CHOICES[draft.category].map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => onChange({ ...draft, emoji })}
-              className={`grid size-10 place-items-center rounded-lg border-2 text-lg transition-colors ${
-                draft.emoji === emoji
-                  ? 'border-brand-500 bg-brand-50'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-              aria-pressed={draft.emoji === emoji}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-      </div>
+      <ImagePicker draft={draft} onChange={onChange} onError={onError} />
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button type="submit" size="sm" busy={busy} disabled={!nameValid || !priceValid || !stockValid}>
@@ -350,6 +407,7 @@ function ProductsPage() {
         }}
         error={formError}
         busy={saving}
+        onError={setFormError}
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -400,9 +458,7 @@ function ProductsPage() {
                 key={product.id}
                 className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-surface p-3 shadow-sm"
               >
-                <span className="text-2xl" aria-hidden>
-                  {product.emoji}
-                </span>
+                <ProductImage imageKey={product.imageKey} alt={product.name} className="size-11" iconSize={20} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
                   <p className="text-xs text-slate-500">

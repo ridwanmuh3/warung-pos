@@ -58,7 +58,7 @@ erDiagram
     integer price
     integer cost
     text category
-    text emoji
+    text image_key
     integer stock
     integer low_stock_threshold
     text sku
@@ -100,7 +100,7 @@ erDiagram
     text order_id FK
     text product_id
     text name
-    text emoji
+    text image_key
     integer price
     integer cost
     integer qty
@@ -153,7 +153,7 @@ erDiagram
     text cart_id FK
     text product_id
     text name
-    text emoji
+    text image_key
     integer price
     integer cost
     integer qty

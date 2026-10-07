@@ -3,6 +3,7 @@ import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { formatDateTime, formatIDR } from '../lib/format'
 import { lineSubtotal } from '../lib/totals'
 import type { Order } from '../types'
+import { ProductImage } from './ProductImage'
 
 export function Receipt({ order }: { order: Order }) {
   return (
@@ -22,13 +23,16 @@ export function Receipt({ order }: { order: Order }) {
 
       <ul className="space-y-2 text-sm">
         {order.items.map((item) => (
-          <li key={item.productId}>
-            <div className="flex justify-between gap-3">
-              <span className="font-medium text-slate-900">{item.name}</span>
-              <span className="tabular font-semibold text-slate-900">{formatIDR(lineSubtotal(item))}</span>
-            </div>
-            <div className="tabular text-xs text-slate-500">
-              {formatIDR(item.price)} × {item.qty}
+          <li key={item.productId} className="flex items-start gap-2.5">
+            <ProductImage imageKey={item.imageKey} alt={item.name} className="size-9" iconSize={16} />
+            <div className="min-w-0 flex-1">
+              <div className="flex justify-between gap-3">
+                <span className="font-medium text-slate-900">{item.name}</span>
+                <span className="tabular font-semibold text-slate-900">{formatIDR(lineSubtotal(item))}</span>
+              </div>
+              <div className="tabular text-xs text-slate-500">
+                {formatIDR(item.price)} × {item.qty}
+              </div>
             </div>
           </li>
         ))}

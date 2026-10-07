@@ -73,7 +73,8 @@ export const products = sqliteTable(
     /** Purchase price (HPP). */
     cost: integer('cost').notNull().default(0),
     category: text('category', { enum: ['makanan', 'minuman', 'snack'] }).notNull(),
-    emoji: text('emoji').notNull().default('📦'),
+    /** R2 object key for the product image; NULL shows a placeholder. */
+    imageKey: text('image_key'),
     /** NULL means "not stock-tracked". */
     stock: integer('stock'),
     lowStockThreshold: integer('low_stock_threshold').notNull().default(5),
@@ -155,7 +156,7 @@ export const orderItems = sqliteTable(
     productId: text('product_id').notNull(),
     /** Snapshots taken at sale time. */
     name: text('name').notNull(),
-    emoji: text('emoji').notNull().default('📦'),
+    imageKey: text('image_key'),
     price: integer('price').notNull(),
     cost: integer('cost').notNull().default(0),
     qty: integer('qty').notNull(),
@@ -260,7 +261,7 @@ export const cartItems = sqliteTable(
       .references(() => carts.id, { onDelete: 'cascade' }),
     productId: text('product_id').notNull(),
     name: text('name').notNull(),
-    emoji: text('emoji').notNull().default('📦'),
+    imageKey: text('image_key'),
     price: integer('price').notNull(),
     cost: integer('cost').notNull().default(0),
     qty: integer('qty').notNull(),

@@ -20,7 +20,7 @@ export interface ImportProduct {
   price: number
   cost: number
   category: ProductCategory
-  emoji: string
+  imageKey: string | null
   stock: number | null
   lowStockThreshold: number
   sku?: string
@@ -120,7 +120,7 @@ export const importBatch = createServerOnlyFn(
               price: item.price,
               cost: item.cost,
               category: item.category,
-              emoji: item.emoji,
+              imageKey: item.imageKey,
               stock: item.stock,
               lowStockThreshold: item.lowStockThreshold,
               sku: item.sku ?? null,
@@ -172,7 +172,7 @@ export const importBatch = createServerOnlyFn(
               orderId: order.id,
               productId: item.productId,
               name: item.name,
-              emoji: item.emoji,
+              imageKey: item.imageKey,
               price: item.price,
               cost: item.cost,
               qty: item.qty,

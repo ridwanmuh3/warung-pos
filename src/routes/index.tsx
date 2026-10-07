@@ -9,6 +9,7 @@ import { useProducts } from '../lib/useServerData'
 import type { ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { ProductImage } from '../components/ProductImage'
 import { SkeletonGrid } from '../components/ui/Skeleton'
 
 const FILTERS: Array<{ value: ProductCategory | 'semua'; label: string }> = [
@@ -191,9 +192,7 @@ function MenuPage() {
                     {qty}
                   </span>
                 )}
-                <span className="text-3xl" aria-hidden>
-                  {product.emoji}
-                </span>
+                <ProductImage imageKey={product.imageKey} alt={product.name} className="aspect-square w-full rounded-xl" iconSize={28} />
                 <span className="mt-2 line-clamp-2 text-sm font-semibold text-slate-900">{product.name}</span>
                 <span className="tabular mt-1 text-sm font-bold text-brand-600">
                   {formatIDR(product.price)}

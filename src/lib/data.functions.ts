@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import * as data from './data.server'
 import { requireMembership } from './tenant.server'
+import { IMAGE_CONTENT_TYPES, createUploadTarget, deleteObject, imageUrl, objectExists } from './r2.server'
 import {
   checkoutFormSchema,
   openingCashFormSchema,
@@ -42,12 +43,13 @@ export const createProductFn = createServerFn({ method: 'POST' })
   .validator(productDraftSchema)
   .handler(async ({ data: draft }): Promise<Product> => {
     const ctx = await requireMembership('manager')
+    const imageKey = await verifiedImageKey(ctx.tenantId, draft.imageKey)
     return data.createProduct(ctx.tenantId, {
       name: draft.name,
       price: draft.price,
       cost: draft.cost,
       category: draft.category,
-      emoji: draft.emoji,
+      imageKey,
       stock: draft.stock,
       lowStockThreshold: draft.lowStockThreshold,
       sku: draft.sku ?? '',
@@ -65,24 +67,64 @@ export const updateProductFn = createServerFn({ method: 'POST' })
   .handler(async ({ data: input }): Promise<void> => {
     const ctx = await requireMembership('manager')
     const draft = input.draft
+    const imageKey = await verifiedImageKey(ctx.tenantId, draft.imageKey)
+    const before = (await data.listProducts(ctx.tenantId)).find((product) => product.id === input.id)
     await data.updateProduct(ctx.tenantId, input.id, {
       name: draft.name,
       price: draft.price,
       cost: draft.cost,
       category: draft.category,
-      emoji: draft.emoji,
+      imageKey,
       stock: draft.stock,
       lowStockThreshold: draft.lowStockThreshold,
       sku: draft.sku ?? '',
       barcode: draft.barcode ?? '',
     })
+    // Clean up the replaced upload once the new key is safely stored.
+    // ponytail: only `products/<tenantId>/` keys are deleted; seed keys are shared.
+    const oldKey = before?.imageKey
+    if (oldKey && oldKey !== imageKey && oldKey.startsWith(`products/${ctx.tenantId}/`)) {
+      await deleteObject(oldKey)
+    }
   })
 
 export const deleteProductFn = createServerFn({ method: 'POST' })
   .validator(z.object({ id: z.string().min(1) }))
   .handler(async ({ data: input }): Promise<void> => {
     const ctx = await requireMembership('manager')
+    const before = (await data.listProducts(ctx.tenantId)).find((product) => product.id === input.id)
     await data.removeProduct(ctx.tenantId, input.id)
+    if (before?.imageKey?.startsWith(`products/${ctx.tenantId}/`)) {
+      await deleteObject(before.imageKey)
+    }
+  })
+
+/* ---------------------------- product images --------------------------- */
+
+/**
+ * Image keys the server will store: null, a shared `seed/` key, or a verified
+ * upload owned by this tenant. Any other key is rejected so a crafted request
+ * cannot point a product at another tenant's object.
+ */
+async function verifiedImageKey(tenantId: string, key: string | null): Promise<string | null> {
+  if (key === null) return null
+  if (key.startsWith('seed/')) return key
+  if (!key.startsWith(`products/${tenantId}/`) || !(await objectExists(key))) {
+    throw new Error('Gambar tidak ditemukan di penyimpanan; unggah ulang')
+  }
+  return key
+}
+
+/** Public image base URL, safe to expose: it prefixes every public-read image. */
+export const getImageBaseUrlFn = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<string> => imageUrl('').replace(/\/+$/, ''),
+)
+
+export const getImageUploadUrlFn = createServerFn({ method: 'POST' })
+  .validator(z.object({ contentType: z.enum(IMAGE_CONTENT_TYPES) }))
+  .handler(async ({ data: input }): Promise<{ key: string; uploadUrl: string }> => {
+    const ctx = await requireMembership('manager')
+    return createUploadTarget(ctx.tenantId, input.contentType)
   })
 
 export const restockProductFn = createServerFn({ method: 'POST' })

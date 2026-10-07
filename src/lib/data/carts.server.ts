@@ -72,7 +72,7 @@ export const saveCart = createServerOnlyFn(
         cartId,
         productId: item.productId,
         name: item.name,
-        emoji: item.emoji,
+        imageKey: item.imageKey,
         price: item.price,
         cost: item.cost,
         qty: item.qty,

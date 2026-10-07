@@ -90,7 +90,7 @@ export const checkoutCart = createServerOnlyFn(
     if (lines.length === 0) throw new Error('Keranjang masih kosong')
 
     return db.transaction(async (tx) => {
-      // ADR-0003: the server prices the order. Name, emoji, price, and HPP all
+      // ADR-0003: the server prices the order. Name, image, price, and HPP all
       // come from the live catalog; the cart's snapshots are display-only.
       const catalog = await tx
         .select()
@@ -110,7 +110,7 @@ export const checkoutCart = createServerOnlyFn(
         return {
           productId: product.id,
           name: product.name,
-          emoji: product.emoji,
+          imageKey: product.imageKey,
           price: product.price,
           cost: product.cost,
           qty: line.qty,
@@ -181,7 +181,7 @@ export const checkoutCart = createServerOnlyFn(
           orderId: order.id,
           productId: line.productId,
           name: line.name,
-          emoji: line.emoji,
+          imageKey: line.imageKey,
           price: line.price,
           cost: line.cost,
           qty: line.qty,

@@ -40,7 +40,7 @@ export const createProduct = createServerOnlyFn(
         price: product.price,
         cost: product.cost,
         category: product.category,
-        emoji: product.emoji,
+        imageKey: product.imageKey,
         stock: product.stock,
         lowStockThreshold: product.lowStockThreshold,
         sku: product.sku ?? null,
@@ -59,7 +59,7 @@ export const updateProduct = createServerOnlyFn(
     if (changes.price !== undefined) values.price = changes.price
     if (changes.cost !== undefined) values.cost = changes.cost
     if (changes.category !== undefined) values.category = changes.category
-    if (changes.emoji !== undefined) values.emoji = changes.emoji
+    if (changes.imageKey !== undefined) values.imageKey = changes.imageKey
     if (changes.stock !== undefined) values.stock = changes.stock
     if (changes.lowStockThreshold !== undefined) values.lowStockThreshold = changes.lowStockThreshold
     if (changes.sku !== undefined) values.sku = changes.sku === '' ? null : changes.sku
@@ -101,7 +101,7 @@ export const seedProductsIfEmpty = createServerOnlyFn(
         price: item.price,
         cost: item.cost,
         category: item.category,
-        emoji: item.emoji,
+        imageKey: item.imageKey,
         stock: item.stock,
         lowStockThreshold: item.lowStockThreshold,
         sku: item.sku ?? null,

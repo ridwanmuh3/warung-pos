@@ -5,7 +5,8 @@ export interface Product {
   name: string
   price: number
   category: ProductCategory
-  emoji: string
+  /** R2 object key for the product image; `null` shows a placeholder. */
+  imageKey: string | null
   /** Purchase price (HPP). 0 means unknown. */
   cost: number
   /** On-hand quantity. `null` means the product is not stock-tracked. */
@@ -44,7 +45,7 @@ export interface CategoryReportRow {
 export interface ProductSalesRow {
   productId: string
   name: string
-  emoji: string
+  imageKey: string | null
   qty: number
   revenue: number
 }
@@ -59,7 +60,7 @@ export interface HourBucket {
 export interface OrderItem {
   productId: string
   name: string
-  emoji: string
+  imageKey: string | null
   price: number
   qty: number
   /** HPP snapshot at sale time, so historical margin never shifts when cost is edited. */

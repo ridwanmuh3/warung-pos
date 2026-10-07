@@ -121,7 +121,7 @@ export function addToCart(product: Product): void {
           {
             productId: product.id,
             name: product.name,
-            emoji: product.emoji,
+            imageKey: product.imageKey,
             price: product.price,
             qty: 1,
             // Snapshot HPP now so a later catalog edit cannot rewrite history.

@@ -38,7 +38,7 @@ export function topProducts(orders: Order[], limit = 5): ProductSalesRow[] {
       const row = rows.get(item.productId) ?? {
         productId: item.productId,
         name: item.name,
-        emoji: item.emoji,
+        imageKey: item.imageKey,
         qty: 0,
         revenue: 0,
       }

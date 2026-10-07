@@ -25,7 +25,7 @@ _Avoid_: operator, staff
 ### Sales
 
 **Order**:
-A completed sale: numbered, priced, and paid (or later voided). Line items are snapshots taken at sale time (name, price, cost, emoji), so a later catalog edit can never rewrite history.
+A completed sale: numbered, priced, and paid (or later voided). Line items are snapshots taken at sale time (name, price, cost, imageKey), so a later catalog edit can never rewrite history.
 _Avoid_: transaction, purchase, bill
 
 **Order Number**:

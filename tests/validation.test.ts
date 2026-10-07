@@ -66,7 +66,7 @@ describe('productDraftSchema', () => {
       price: '5000',
       cost: '3000',
       category: 'minuman',
-      emoji: '☕',
+      imageKey: null,
       stock: '',
       lowStockThreshold: '5',
       sku: '',

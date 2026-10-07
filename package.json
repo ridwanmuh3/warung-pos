@@ -11,12 +11,15 @@
     "lint": "oxlint",
     "test": "vitest run",
     "check:tenant": "node scripts/check-tenant-scoping.mjs",
+    "seed:images": "node --env-file=.env scripts/seed-images.mjs",
     "db:push": "node --env-file=.env node_modules/drizzle-kit/bin.cjs push",
     "db:generate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs migrate",
     "db:studio": "node --env-file=.env node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
+    "@aws-sdk/s3-request-presigner": "^3.1146.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/inter": "^5.3.0",
     "@libsql/client": "^0.18.0",

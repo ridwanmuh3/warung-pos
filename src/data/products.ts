@@ -18,20 +18,15 @@ export const CHANNEL_LABELS: Record<SalesChannel, string> = {
   ojol: 'Ojol / Online',
 }
 
-/** Seed catalog. Copied into localStorage on first run; editable thereafter. */
+/**
+ * Seed catalog, one product per mockup image in `src/assets/`. The matching
+ * image must exist in R2 under `seed/<filename>` — run `pnpm seed:images` to
+ * upload it. Seeded into a tenant on first use; editable thereafter.
+ */
 export const DEFAULT_PRODUCTS: Product[] = [
-  { id: 'p1', name: 'Indomie Goreng', price: 3500, category: 'makanan', emoji: '🍜', cost: 2500, stock: 40, lowStockThreshold: 10, sku: 'MKN-001', barcode: '8991002101010' },
-  { id: 'p2', name: 'Nasi Goreng', price: 18000, category: 'makanan', emoji: '🍚', cost: 11000, stock: 15, lowStockThreshold: 5, sku: 'MKN-002' },
-  { id: 'p3', name: 'Ayam Bakal', price: 25000, category: 'makanan', emoji: '🍗', cost: 17000, stock: 12, lowStockThreshold: 4, sku: 'MKN-003' },
-  { id: 'p4', name: 'Mie Ayam Bakso', price: 16000, category: 'makanan', emoji: '🍲', cost: 10000, stock: 20, lowStockThreshold: 5, sku: 'MKN-004' },
-  { id: 'p5', name: 'Roti Bakar Cokelat', price: 12000, category: 'makanan', emoji: '🥖', cost: 7000, stock: 18, lowStockThreshold: 6, sku: 'MKN-005' },
-  { id: 'p6', name: 'Es Teh Manis', price: 4000, category: 'minuman', emoji: '🧋', cost: 1200, stock: 60, lowStockThreshold: 15, sku: 'MNM-001', barcode: '8991002101027' },
-  { id: 'p7', name: 'Kopi Kapal Api', price: 5000, category: 'minuman', emoji: '☕', cost: 3000, stock: 50, lowStockThreshold: 12, sku: 'MNM-002' },
-  { id: 'p8', name: 'Air Mineral 600ml', price: 4000, category: 'minuman', emoji: '💧', cost: 2500, stock: 48, lowStockThreshold: 12, sku: 'MNM-003', barcode: '8991002101034' },
-  { id: 'p9', name: 'Jus Alpukat', price: 15000, category: 'minuman', emoji: '🥑', cost: 9000, stock: 10, lowStockThreshold: 4, sku: 'MNM-004' },
-  { id: 'p10', name: 'Susu Ultra 250ml', price: 6000, category: 'minuman', emoji: '🥛', cost: 4500, stock: 24, lowStockThreshold: 8, sku: 'MNM-005' },
-  { id: 'p11', name: 'Chitato 68g', price: 11000, category: 'snack', emoji: '🍟', cost: 8000, stock: 30, lowStockThreshold: 8, sku: 'SNK-001', barcode: '8991002101041' },
-  { id: 'p12', name: 'Oreo Sandwich', price: 8000, category: 'snack', emoji: '🍪', cost: 6000, stock: 36, lowStockThreshold: 10, sku: 'SNK-002', barcode: '8991002101058' },
-  { id: 'p13', name: 'Telur Gulung', price: 3000, category: 'snack', emoji: '🍥', cost: 1500, stock: 25, lowStockThreshold: 8, sku: 'SNK-003' },
-  { id: 'p14', name: 'Keripik Kentang', price: 9000, category: 'snack', emoji: '🥔', cost: 6500, stock: 8, lowStockThreshold: 10, sku: 'SNK-004' },
+  { id: 'p1', name: 'Indomie Goreng', price: 3500, category: 'makanan', imageKey: 'seed/indomie-goreng.png', cost: 2500, stock: 40, lowStockThreshold: 10, sku: 'MKN-001', barcode: '8991002101010' },
+  { id: 'p2', name: 'Aqua 600ml', price: 4000, category: 'minuman', imageKey: 'seed/aqua.jpg', cost: 2500, stock: 48, lowStockThreshold: 12, sku: 'MNM-003', barcode: '8991002101034' },
+  { id: 'p3', name: 'Chitato 68g', price: 11000, category: 'snack', imageKey: 'seed/chitato.jpg', cost: 8000, stock: 30, lowStockThreshold: 8, sku: 'SNK-001', barcode: '8991002101041' },
+  { id: 'p4', name: 'Cadbury Dairy Milk', price: 15000, category: 'snack', imageKey: 'seed/diary-milk.jpeg', cost: 11000, stock: 24, lowStockThreshold: 8, sku: 'SNK-005', barcode: '8991002101065' },
+  { id: 'p5', name: 'Oat Milk 1L', price: 32000, category: 'minuman', imageKey: 'seed/oatmilk.jpeg', cost: 24000, stock: 15, lowStockThreshold: 5, sku: 'MNM-006', barcode: '8991002101072' },
 ]

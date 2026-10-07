@@ -1,6 +1,6 @@
 # Order and cart line items are sale-time snapshots
 
-Every row written to `order_items` (and `cart_items`) copies `name`, `emoji`, `price`, and `cost` (HPP) from the product at the moment of sale. Line items never reference the live catalog for display or math.
+Every row written to `order_items` (and `cart_items`) copies `name`, `imageKey`, `price`, and `cost` (HPP) from the product at the moment of sale. Line items never reference the live catalog for display or math.
 
 **Why:** a warung edits its catalog constantly — prices rise, costs change, products are recategorized or deleted. If orders joined back to the catalog, editing a product would silently rewrite every historical receipt, margin report, and Z-report. Snapshots make history immutable by construction.
 

@@ -27,7 +27,7 @@ async function seedProduct(sku: string, price: number, cost: number, stock: numb
     price,
     cost,
     category: 'makanan',
-    emoji: '🍚',
+    imageKey: null,
     stock,
     lowStockThreshold: 5,
     sku,
@@ -37,14 +37,14 @@ async function seedProduct(sku: string, price: number, cost: number, stock: numb
 /** Rings up a one-item order through the real checkout path. */
 async function ringUp(
   productId: string,
-  opts: { name: string; emoji: string; price: number; cost: number; qty?: number },
+  opts: { name: string; imageKey: string | null; price: number; cost: number; qty?: number },
   paymentMethod: 'tunai' | 'qris' = 'tunai',
 ) {
   const cart = await data.saveCart(TENANT, USER, [
     {
       productId,
       name: opts.name,
-      emoji: opts.emoji,
+      imageKey: opts.imageKey,
       price: opts.price,
       cost: opts.cost,
       qty: opts.qty ?? 1,

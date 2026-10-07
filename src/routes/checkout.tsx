@@ -12,6 +12,7 @@ import { checkoutFormSchema, parseCheckoutForm } from '../lib/validation'
 import type { PaymentMethod, SalesChannel } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { ProductImage } from '../components/ProductImage'
 import { Button } from '../components/ui/Button'
 
 const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
@@ -279,9 +280,7 @@ function CheckoutPage() {
             <ul className="divide-y divide-slate-100">
               {items.map((item) => (
                 <li key={item.productId} className="flex items-center gap-3 px-4 py-3">
-                  <span className="text-xl" aria-hidden>
-                    {item.emoji}
-                  </span>
+                  <ProductImage imageKey={item.imageKey} alt={item.name} className="size-9" iconSize={16} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-900">{item.name}</p>
                     <p className="tabular text-xs text-slate-500">

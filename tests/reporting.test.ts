@@ -9,7 +9,7 @@ function makeOrder(overrides: Partial<Order>): Order {
     orderNumber: 'ORD-001',
     createdAt: '2026-10-06T10:00:00.000Z',
     items: [
-      { productId: 'p1', name: 'Nasi Goreng', emoji: '🍚', price: 18000, cost: 11000, qty: 1 },
+      { productId: 'p1', name: 'Nasi Goreng', imageKey: null, price: 18000, cost: 11000, qty: 1 },
     ],
     subtotal: 18000,
     discount: 0,
@@ -99,9 +99,9 @@ describe('summarizeCategories', () => {
   it('aggregates gross sales per category, skipping unknown products', () => {
     const rows = summarizeCategories(
       [
-        { productId: 'p1', name: 'Nasi', emoji: '🍚', price: 18000, cost: 0, qty: 2 },
-        { productId: 'p2', name: 'Teh', emoji: '🧋', price: 4000, cost: 0, qty: 1 },
-        { productId: 'ghost', name: 'X', emoji: '❓', price: 1000, cost: 0, qty: 5 },
+        { productId: 'p1', name: 'Nasi', imageKey: null, price: 18000, cost: 0, qty: 2 },
+        { productId: 'p2', name: 'Teh', imageKey: null, price: 4000, cost: 0, qty: 1 },
+        { productId: 'ghost', name: 'X', imageKey: null, price: 1000, cost: 0, qty: 5 },
       ],
       { p1: 'makanan', p2: 'minuman' },
     )

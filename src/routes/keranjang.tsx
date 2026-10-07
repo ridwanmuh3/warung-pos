@@ -23,6 +23,7 @@ import { PageHeader } from '../components/PageHeader'
 import { TotalPanel } from '../components/TotalPanel'
 import { lineSubtotal, itemsTotal } from '../lib/totals'
 import { EmptyState } from '../components/EmptyState'
+import { ProductImage } from '../components/ProductImage'
 
 function QtyStepper({ item }: { item: OrderItem }) {
   return (
@@ -207,9 +208,7 @@ function CartPage() {
           {items.map((item) => (
             <li key={item.productId} className="rounded-2xl border border-border-subtle bg-surface p-3 shadow-sm">
               <div className="flex items-center gap-3">
-                <span className="text-2xl" aria-hidden>
-                  {item.emoji}
-                </span>
+                <ProductImage imageKey={item.imageKey} alt={item.name} className="size-11" iconSize={20} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
                   <p className="tabular text-xs text-slate-500">

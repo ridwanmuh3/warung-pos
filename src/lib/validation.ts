@@ -117,7 +117,7 @@ export const paymentMethod = z.enum(['tunai', 'qris', 'transfer'])
 export const orderItemSchema = z.object({
   productId: z.string().min(1),
   name: z.string().min(1),
-  emoji: z.string(),
+  imageKey: z.string().nullable(),
   price: z.number().int().min(0),
   qty: z.number().int().min(1),
   cost: z.number().int().min(0),
@@ -169,7 +169,8 @@ export const productDraftSchema = z.object({
   price: numberField(priceRupiah),
   cost: numberField(rupiah),
   category: productCategory,
-  emoji: cleanText(8).transform((value) => value ?? '📦'),
+  /** R2 object key; null removes the image. */
+  imageKey: z.string().max(200).nullable().optional().default(null),
   stock: z
     .string()
     .transform((value) => value.trim())

@@ -28,7 +28,7 @@ async function seedProduct(sku: string, price: number, cost: number, stock: numb
     price,
     cost,
     category: 'makanan',
-    emoji: '🍚',
+    imageKey: null,
     stock,
     lowStockThreshold: 5,
     sku,
@@ -51,7 +51,7 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
   it('charges the catalog price, not the price the cart was parked at', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 2 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 2 },
     ])
     // The price rises while the cart sits open.
     await data.updateProduct(TENANT, product.id, { price: 12000, cost: 7000 })
@@ -71,7 +71,7 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     // A crafted cart line: Rp100 for a Rp9.000 product.
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 100, cost: 0, qty: 3 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 100, cost: 0, qty: 3 },
     ])
 
     const order = await data.checkoutCart(TENANT, USER, cart.id, baseCheckout)
@@ -83,7 +83,7 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
   it('computes change from the server total and rejects insufficient cash', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 2 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 2 },
     ])
     // Price rises to 12.000 after the cashier typed the tendered amount.
     await data.updateProduct(TENANT, product.id, { price: 12000 })
@@ -117,8 +117,8 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
     const kept = await seedProduct('MKN-001', 9000, 5000, 10)
     const deleted = await seedProduct('MKN-002', 3000, 1000, 4)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: kept.id, name: kept.name, emoji: kept.emoji, price: 9000, cost: 5000, qty: 1 },
-      { productId: deleted.id, name: deleted.name, emoji: deleted.emoji, price: 3000, cost: 1000, qty: 2 },
+      { productId: kept.id, name: kept.name, imageKey: kept.imageKey, price: 9000, cost: 5000, qty: 1 },
+      { productId: deleted.id, name: deleted.name, imageKey: deleted.imageKey, price: 3000, cost: 1000, qty: 2 },
     ])
     await data.removeProduct(TENANT, deleted.id)
 
@@ -135,7 +135,7 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
   it('clamps the discount against the server-computed subtotal', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 1 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 1 },
     ])
 
     const order = await data.checkoutCart(TENANT, USER, cart.id, {
@@ -150,7 +150,7 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
   it('computes a percent discount against the server subtotal, taking precedence over amount', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     const cart = await data.saveCart(TENANT, USER, [
-      { productId: product.id, name: product.name, emoji: product.emoji, price: 9000, cost: 5000, qty: 2 },
+      { productId: product.id, name: product.name, imageKey: product.imageKey, price: 9000, cost: 5000, qty: 2 },
     ])
 
     const order = await data.checkoutCart(TENANT, USER, cart.id, {

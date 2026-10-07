@@ -20,7 +20,7 @@ const productSchema = z.object({
   price: z.number().int().min(0),
   cost: z.number().int().min(0),
   category: z.enum(['makanan', 'minuman', 'snack']),
-  emoji: z.string(),
+  imageKey: z.string().nullable(),
   stock: z.number().int().nullable(),
   lowStockThreshold: z.number().int().min(0),
   sku: z.string().optional(),
