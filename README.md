@@ -17,6 +17,7 @@ Setiap toko adalah satu **tenant**. Satu user bisa tergabung ke beberapa tenant 
 | [React 19](https://react.dev/) | Library UI |
 | [TypeScript](https://www.typescriptlang.org/) | Type safety |
 | [Turso](https://turso.tech/) / libSQL | Database SQLite terkelola |
+| [Cloudflare R2](https://developers.cloudflare.com/r2/) | Penyimpanan gambar produk (S3-compatible) |
 | [Drizzle ORM](https://orm.drizzle.team/) | Query builder + migrasi skema |
 | [Zod v4](https://zod.dev/) | Validasi input di klien dan server |
 | [Tailwind CSS v4](https://tailwindcss.com/) | Styling |
@@ -33,7 +34,7 @@ Setiap toko adalah satu **tenant**. Satu user bisa tergabung ke beberapa tenant 
 - **Keranjang (`/keranjang`)** — ubah jumlah, hapus item, lihat total berjalan, dan dapatkan peringatan bila harga produk berubah. Keranjang bertahan saat refresh.
 - **Checkout (`/checkout`)** — pilih metode bayar (Tunai / QRIS / Transfer), jenis pesanan (Makan di Sini / Bungkus / Ojol), isi nama kasir, dan pasang diskon (Rp atau %). Untuk tunai, ada tombol uang cepat dan kembalian otomatis.
 - **Struk (`/sukses/:id`)** — tampilkan subtotal, diskon, tunai diterima, dan kembalian; struk bisa dicetak.
-- **Kelola Produk (`/produk`)** — tambah, ubah, hapus produk dengan harga, HPP, stok, batas menipis, SKU, dan barcode; restock cepat; filter kategori dan stok menipis.
+- **Kelola Produk (`/produk`)** — tambah, ubah, hapus produk dengan harga, HPP, stok, batas menipis, SKU, barcode, dan gambar mockup (unggah ke Cloudflare R2); restock cepat; filter kategori dan stok menipis.
 - **Riwayat (`/riwayat`)** — kelompokkan pesanan per hari, cari, filter metode/jenis/hari, dan void atau refund transaksi. Void mengembalikan stok dan tetap menyimpan jejaknya.
 - **Ringkasan (`/ringkasan`)** — omzet, laba kotor, HPP terjual, margin, jumlah transaksi, penjualan per metode, rincian per kategori, produk terlaris, jam tersibuk, dan tren omzet 7 hari.
 - **Laporan (`/laporan`)** — laporan per hari dengan pemilih tanggal, rekonsiliasi kas per shift, daftar transaksi dengan drill-down ke struk, ekspor CSV, dan Z-Report siap cetak.
@@ -60,6 +61,13 @@ TURSO_ACCESS_TOKEN=<token>
 SESSION_SECRET=<random-secret>   # openssl rand -base64 48
 ```
 
+Untuk gambar produk, isi juga kredensial Cloudflare R2 (lihat `.env.example`). Bucket butuh aturan CORS untuk origin aplikasi; R2 menolak wildcard di `AllowedHeaders`, jadi daftarkan headernya secara literal:
+
+```json
+{ "AllowedOrigins": ["http://localhost:3000"], "AllowedMethods": ["GET", "PUT"],
+  "AllowedHeaders": ["content-type"], "ExposeHeaders": ["ETag"] }
+```
+
 2. Pasang dependency dan buat skema database.
 
 ```bash
@@ -67,7 +75,13 @@ pnpm install
 pnpm db:push
 ```
 
-3. Jalankan dev server.
+3. Unggah gambar seed ke R2 (sekali saja; `src/assets/` → `seed/<nama-file>`).
+
+```bash
+pnpm seed:images
+```
+
+4. Jalankan dev server.
 
 ```bash
 pnpm dev        # http://localhost:3000
@@ -82,5 +96,6 @@ pnpm build      # build klien + server ke .output/
 pnpm start      # jalankan build produksi: node .output/server/index.mjs
 pnpm test       # Vitest
 pnpm lint       # oxlint
+pnpm seed:images # unggah gambar seed ke R2
 pnpm db:studio  # buka Drizzle Studio
 ```

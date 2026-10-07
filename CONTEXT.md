@@ -80,6 +80,10 @@ _Avoid_: work shift, cashier session
 
 ### Inventory
 
+**Product Image**:
+An optional mockup photo for a product, stored in Cloudflare R2 under an object *key* (e.g. `products/<tenantId>/<uuid>.jpg`); the database never holds a URL. The browser uploads directly to R2 via a server-signed presigned PUT, and reads through a public base URL. A missing key renders a placeholder. Like name and price, the key is snapshotted onto line items at sale time, so a later image swap cannot rewrite past receipts.
+_Avoid_: photo, thumbnail, URL (the stored value is a key)
+
 **Stock-tracked Product**:
 A product with a numeric `stock`. Sales decrement it, voids and refunds restore it. On-hand may go negative (see Oversell). A product with `stock: null` is *not stock-tracked*: it sells forever without inventory bookkeeping. These are different states, not "null means zero".
 _Avoid_: inventory item
