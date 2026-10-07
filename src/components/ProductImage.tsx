@@ -22,9 +22,11 @@ export function ProductImage({
   iconSize?: number
 }) {
   const url = useImageUrl(imageKey)
-  const [failed, setFailed] = useState(false)
+  // Track *which* url failed, not a boolean: a new key must be given a fresh
+  // chance instead of inheriting the previous image's error.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
 
-  if (!url || failed) {
+  if (!url || url === failedUrl) {
     return (
       <span
         className={`grid shrink-0 place-items-center overflow-hidden rounded-lg border border-divider bg-surface-muted text-mute ${className}`}
@@ -44,7 +46,7 @@ export function ProductImage({
         alt={alt}
         loading="lazy"
         className="size-full object-cover"
-        onError={() => setFailed(true)}
+        onError={() => setFailedUrl(url)}
       />
     </span>
   )

@@ -22,12 +22,29 @@ const EXT_BY_TYPE: Record<ImageContentType, string> = {
 
 let client: S3Client | undefined
 
+/**
+ * The S3 API endpoint without a bucket path.
+ *
+ * `CLOUDFLARE_S3_URI` is often copied from the dashboard as
+ * `https://<account>.r2.cloudflarestorage.com/<bucket>`. The SDK already
+ * addresses the bucket (virtual-hosted style), so a trailing `/<bucket>`
+ * would nest every object one level deeper — keys like
+ * `<bucket>/products/...` that the public URL can never resolve.
+ */
+function s3Endpoint(uri: string, bucket: string): string {
+  const trimmed = uri.replace(/\/+$/, '')
+  return trimmed.endsWith(`/${bucket}`) ? trimmed.slice(0, -bucket.length - 1) : trimmed
+}
+
+/** Exposed for the unit test; not part of the runtime API. */
+export const __test = { s3Endpoint }
+
 const getClient = createServerOnlyFn((): S3Client => {
   if (client) return client
   const env = r2Env()
   client = new S3Client({
     region: 'auto',
-    endpoint: env.endpoint,
+    endpoint: s3Endpoint(env.endpoint, env.bucket),
     credentials: { accessKeyId: env.accessKeyId, secretAccessKey: env.secretAccessKey },
     // AWS SDK v3 adds a CRC32-of-empty-body to presigned PUTs by default. R2
     // ignores it, but it makes the URL misleading; sign only what R2 requires.
