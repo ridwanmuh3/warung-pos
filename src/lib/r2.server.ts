@@ -29,6 +29,10 @@ const getClient = createServerOnlyFn((): S3Client => {
     region: 'auto',
     endpoint: env.endpoint,
     credentials: { accessKeyId: env.accessKeyId, secretAccessKey: env.secretAccessKey },
+    // AWS SDK v3 adds a CRC32-of-empty-body to presigned PUTs by default. R2
+    // ignores it, but it makes the URL misleading; sign only what R2 requires.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   })
   return client
 })
