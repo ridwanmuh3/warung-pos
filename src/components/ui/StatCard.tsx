@@ -10,6 +10,12 @@
  *   each figure together with its name instead of as loose paragraphs.
  *
  * `tone` colors the figure only, and only where the sign carries meaning.
+ *
+ * `emphasis` tints one card so the figure that leads the report is findable at
+ * a glance. It is spent on a single card per screen — a lime surface on every
+ * card would read as decoration and flatten the hierarchy it exists to build.
+ * On the tint, the label and hint derive from the surface hue rather than from
+ * gray, and print drops back to a plain surface so the tint costs no ink.
  */
 
 export type StatTone = 'neutral' | 'positive' | 'warning' | 'danger'
@@ -33,6 +39,7 @@ export function StatCard({
   value,
   hint,
   tone = 'neutral',
+  emphasis = false,
 }: {
   testId: string
   label: string
@@ -40,11 +47,19 @@ export function StatCard({
   hint?: string
   /** Semantic color for the figure. Defaults to the neutral ink color. */
   tone?: StatTone
+  /** Leads the report: lime surface, green-derived label and hint. One per screen. */
+  emphasis?: boolean
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+    <div
+      className={`min-w-0 rounded-2xl p-4 shadow-level1 ${emphasis ? 'bg-primary-subtle print:bg-surface' : 'bg-surface'}`}
+    >
       <dl className="min-w-0">
-        <dt className="break-words text-xs font-medium uppercase tracking-wide text-slate-500">
+        <dt
+          className={`break-words text-xs font-medium uppercase tracking-wide ${
+            emphasis ? 'text-brand-700' : 'text-slate-500'
+          }`}
+        >
           {label}
         </dt>
         <dd
@@ -54,7 +69,13 @@ export function StatCard({
           {value}
         </dd>
         {hint && (
-          <dd className="mt-0.5 break-words text-xs text-mute [overflow-wrap:anywhere]">{hint}</dd>
+          <dd
+            className={`mt-0.5 break-words text-xs [overflow-wrap:anywhere] ${
+              emphasis ? 'text-brand-900' : 'text-mute'
+            }`}
+          >
+            {hint}
+          </dd>
         )}
       </dl>
     </div>

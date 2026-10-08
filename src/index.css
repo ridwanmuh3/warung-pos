@@ -102,6 +102,17 @@
   --color-amber-600: #8a6d00;
   --color-amber-700: #6b5400;
 
+  /* ----------------------- semantic: data viz ------------------------ */
+  /* Non-text graphics need 3:1 against their own track. The lime primary is
+   * an action color (1.3:1 on the track), so data marks sit on the deep green
+   * instead and the lime is spent where it reads: actions and the one figure
+   * that leads a report. `zero` is deliberately a neutral — "no sales" must
+   * not look like "a little sales". */
+  --color-data: #2d7a1a;
+  --color-data-emphasis: #226014;
+  --color-data-track: #f0f1ee;
+  --color-data-zero: #d5d9d2;
+
   /* ------------------------ semantic: shape -------------------------- */
   --radius-sm: 10px;
   --radius-md: 16px;

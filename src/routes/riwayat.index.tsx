@@ -3,7 +3,7 @@ import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-r
 import { IconAlertTriangle, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
-import { dayKey, formatDayLabel, formatIDR, formatTime } from '../lib/format'
+import { dayKey, formatDayLabel, formatIDR, formatTime, isDayKey } from '../lib/format'
 import { listOrdersFn, refundOrderFn, voidOrderFn } from '../lib/data.functions'
 import { useOrders } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
@@ -21,7 +21,9 @@ const orderSearchSchema = z.object({
   q: z.string().optional().catch(undefined),
   method: z.enum(['tunai', 'qris', 'transfer']).optional().catch(undefined),
   channel: z.enum(['dine-in', 'bungkus', 'ojol']).optional().catch(undefined),
-  day: z.string().optional().catch(undefined),
+  // Same guard as the report screens: a malformed `?day=` falls back to "all
+  // days" instead of throwing inside the day formatter.
+  day: z.string().refine(isDayKey, 'Tanggal tidak valid').optional().catch(undefined),
 })
 
 const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]

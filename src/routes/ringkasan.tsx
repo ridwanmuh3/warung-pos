@@ -3,7 +3,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { IconArrowRight, IconShoppingCart } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CATEGORY_LABELS, CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
-import { dayKey, formatDayLabel, formatIDR } from '../lib/format'
+import { dayKey, formatDayLabel, formatIDR, isDayKey } from '../lib/format'
 import { busiestHour, channelBreakdown, hourHistogram, revenueTrend, summarizeCategories, topProducts } from '../lib/reporting'
 import { resolveReportingDay } from '../lib/format'
 import { marginPercent } from '../lib/totals'
@@ -14,12 +14,23 @@ import { ErrorState } from '../components/ErrorState'
 import { ProductImage } from '../components/ProductImage'
 import { ShiftPanel } from '../components/ShiftPanel'
 import { SkeletonRows, SkeletonStats } from '../components/ui/Skeleton'
+import { ShareBar } from '../components/ui/ShareBar'
 import { StatCard } from '../components/ui/StatCard'
 import type { OrderItem, PaymentMethod, ProductCategory } from '../types'
 
+/** Y-axis ticks for the trend: at 10px, "3,5 jt" beats a seven-digit rupiah. */
+const compactIDR = new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 })
+
+/** Largest-transaction panel: enough lines to be useful, bounded so it stays a panel. */
+const BEST_ITEMS_SHOWN = 5
+
 export const Route = createFileRoute('/ringkasan')({
   component: SummaryPage,
-  validateSearch: z.object({ day: z.string().optional().catch(undefined) }),
+  // A hand-edited `?day=` must fall back to today instead of reaching the day
+  // formatters with an Invalid Date.
+  validateSearch: z.object({
+    day: z.string().refine(isDayKey, 'Tanggal tidak valid').optional().catch(undefined),
+  }),
   // The reporting day resolves locally from the shared day-key rule; the
   // component stays client-only because orders arrive via server functions.
   ssr: 'data-only',
@@ -97,6 +108,23 @@ function SummaryPage() {
     [stats.todayOrders, orders, reportingDay],
   )
 
+  // The payment mix reads largest-first; the aggregate arrives in whatever
+  // order the orders were stored in.
+  const paymentRows = useMemo(
+    () =>
+      Object.entries(stats.byPayment)
+        .filter(
+          (entry): entry is [PaymentMethod, { count: number; total: number }] =>
+            entry[1] !== undefined,
+        )
+        .sort((a, b) => b[1].total - a[1].total),
+    [stats.byPayment],
+  )
+
+  // Peaks are computed once for the whole chart, not once per row.
+  const hourPeak = Math.max(...patterns.hours.map((bucket) => bucket.orders), 1)
+  const trendPeak = Math.max(...patterns.trend.map((point) => point.revenue), 1)
+
   // A negative margin is a loss; only that state earns color.
   const margin = marginPercent(stats.profit, stats.revenue)
 
@@ -154,6 +182,7 @@ function SummaryPage() {
               ? `${stats.todayOrders.length} transaksi · ${stats.voidCount} dibatalkan`
               : `${stats.todayOrders.length} transaksi`
           }
+          emphasis
         />
         <StatCard testId="stat-transaksi" label="Transaksi" value={String(stats.todayOrders.length)} hint="Pesanan selesai" />
         <StatCard testId="stat-item" label="Item Terjual" value={String(stats.itemCount)} hint="Total pcs" />
@@ -161,7 +190,15 @@ function SummaryPage() {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <StatCard testId="stat-laba" label="Laba Kotor" value={formatIDR(stats.profit)} hint="Omzet − Modal" />
+        <StatCard
+          testId="stat-laba"
+          label="Laba Kotor"
+          value={formatIDR(stats.profit)}
+          hint="Omzet − Modal"
+          // Same convention as the cash variance: green means money kept, red
+          // means money gone. A flat zero stays neutral.
+          tone={stats.profit > 0 ? 'positive' : stats.profit < 0 ? 'danger' : 'neutral'}
+        />
         <StatCard testId="stat-hpp" label="Modal Terjual" value={formatIDR(stats.costTotal)} hint="Harga beli barang" />
         <StatCard
           testId="stat-margin"
@@ -179,28 +216,27 @@ function SummaryPage() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Penjualan per Metode</h2>
-          {Object.keys(stats.byPayment).length === 0 ? (
+          {paymentRows.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada transaksi hari ini.</p>
           ) : (
-            <ul className="mt-3 space-y-2">
-              {Object.entries(stats.byPayment).map(([method, value]) => {
-                if (!value) return null
-                const share = stats.revenue > 0 ? Math.round((value.total / stats.revenue) * 100) : 0
-                return (
-                  <li key={method}>
-                    <div className="flex items-baseline justify-between text-sm">
-                      <span className="font-medium text-slate-700">
-                        {PAYMENT_LABELS[method as PaymentMethod]}{' '}
-                        <span className="text-xs text-slate-400">({value.count}×)</span>
-                      </span>
-                      <span className="tabular font-semibold text-slate-900">{formatIDR(value.total)}</span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-brand-500" style={{ width: `${share}%` }} />
-                    </div>
-                  </li>
-                )
-              })}
+            <ul className="mt-3 space-y-2.5" data-testid="payment-mix">
+              {paymentRows.map(([method, value]) => (
+                <li key={method}>
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate font-medium text-slate-700">
+                      {/* An unknown method from older data shows its own key, never "undefined". */}
+                      {PAYMENT_LABELS[method] ?? method}{' '}
+                      <span className="tabular text-xs text-slate-400">({value.count}×)</span>
+                    </span>
+                    <span className="tabular shrink-0 font-semibold text-slate-900">
+                      {formatIDR(value.total)}
+                    </span>
+                  </div>
+                  <ShareBar
+                    share={stats.revenue > 0 ? Math.round((value.total / stats.revenue) * 100) : 0}
+                  />
+                </li>
+              ))}
             </ul>
           )}
         </section>
@@ -212,19 +248,25 @@ function SummaryPage() {
               <p className="tabular text-sm font-bold text-slate-900">{stats.best.orderNumber}</p>
               <p className="tabular mt-1 font-display text-3xl font-black leading-none text-link">{formatIDR(stats.best.total)}</p>
               <ul className="mt-3 space-y-1 text-sm text-slate-600">
-                {stats.best.items.map((item) => (
+                {stats.best.items.slice(0, BEST_ITEMS_SHOWN).map((item) => (
                   <li key={item.productId} className="flex justify-between gap-2">
                     <span className="truncate">
                       {item.name} <span className="tabular text-xs text-slate-400">×{item.qty}</span>
                     </span>
-                    <span className="tabular">{formatIDR(item.price * item.qty)}</span>
+                    <span className="tabular shrink-0">{formatIDR(item.price * item.qty)}</span>
                   </li>
                 ))}
+                {/* A thirty-line order must not turn this panel into the page. */}
+                {stats.best.items.length > BEST_ITEMS_SHOWN && (
+                  <li className="text-xs text-slate-500">
+                    +{stats.best.items.length - BEST_ITEMS_SHOWN} item lain di struk
+                  </li>
+                )}
               </ul>
               <Link
                 to="/riwayat/$orderId"
                 params={{ orderId: stats.best.id }}
-                className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"
+                className="mt-3 inline-flex min-h-6 items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"
               >
                 Lihat struk
                 <IconArrowRight size={14} stroke={2.5} />
@@ -282,15 +324,14 @@ function SummaryPage() {
           {patterns.hours.length > 0 && (
             <ul className="mt-3 space-y-1.5" data-testid="hour-histogram">
               {patterns.hours.map((bucket) => {
-                const peak = Math.max(...patterns.hours.map((b) => b.orders))
-                const width = peak > 0 ? Math.round((bucket.orders / peak) * 100) : 0
+                const width = Math.round((bucket.orders / hourPeak) * 100)
                 return (
                   <li key={bucket.hour} className="flex items-center gap-2 text-xs">
                     <span className="tabular w-10 shrink-0 text-slate-500">
                       {String(bucket.hour).padStart(2, '0')}:00
                     </span>
-                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                      <span className="block h-full rounded-full bg-brand-500" style={{ width: `${width}%` }} />
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-data-track">
+                      <span className="block h-full rounded-full bg-data" style={{ width: `${width}%` }} />
                     </span>
                     <span className="tabular w-6 shrink-0 text-right font-semibold text-slate-700">
                       {bucket.orders}
@@ -309,46 +350,64 @@ function SummaryPage() {
           {patterns.channels.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada transaksi hari ini.</p>
           ) : (
-            <ul className="mt-3 space-y-2" data-testid="channel-breakdown">
-              {patterns.channels.map((row) => {
-                const share = stats.revenue > 0 ? Math.round((row.revenue / stats.revenue) * 100) : 0
-                return (
-                  <li key={row.channel}>
-                    <div className="flex items-baseline justify-between text-sm">
-                      <span className="font-medium text-slate-700">
-                        {CHANNEL_LABELS[row.channel]}{' '}
-                        <span className="text-xs text-slate-400">({row.orders}×)</span>
-                      </span>
-                      <span className="tabular font-semibold text-slate-900">{formatIDR(row.revenue)}</span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-slate-900" style={{ width: `${share}%` }} />
-                    </div>
-                  </li>
-                )
-              })}
+            <ul className="mt-3 space-y-2.5" data-testid="channel-breakdown">
+              {patterns.channels.map((row) => (
+                <li key={row.channel}>
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate font-medium text-slate-700">
+                      {CHANNEL_LABELS[row.channel] ?? row.channel}{' '}
+                      <span className="tabular text-xs text-slate-400">({row.orders}×)</span>
+                    </span>
+                    <span className="tabular shrink-0 font-semibold text-slate-900">
+                      {formatIDR(row.revenue)}
+                    </span>
+                  </div>
+                  <ShareBar
+                    share={stats.revenue > 0 ? Math.round((row.revenue / stats.revenue) * 100) : 0}
+                  />
+                </li>
+              ))}
             </ul>
           )}
         </section>
 
         <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
           <h2 className="text-sm font-semibold text-slate-900">Tren 7 Hari</h2>
-          <ul className="mt-3 flex items-end justify-between gap-1.5" data-testid="revenue-trend">
+          <p className="mt-0.5 text-xs text-slate-500">
+            Omzet per hari. Hari terpilih paling gelap, hari tanpa penjualan abu-abu.
+          </p>
+          <ul
+            className="mt-3 flex items-end justify-between gap-1.5"
+            data-testid="revenue-trend"
+            aria-label="Omzet tujuh hari terakhir"
+          >
             {patterns.trend.map((point) => {
-              const peak = Math.max(...patterns.trend.map((p) => p.revenue), 1)
-              const height = Math.max(4, Math.round((point.revenue / peak) * 72))
+              // A zero day keeps a stub bar so the row never collapses, but it
+              // must not read as a small sale: neutral color, no label.
+              const height =
+                point.revenue > 0 ? Math.max(6, Math.round((point.revenue / trendPeak) * 72)) : 4
               return (
                 <li key={point.day} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="tabular text-[10px] text-slate-400">
-                    {point.revenue > 0 ? Math.round(point.revenue / 1000) : ''}
+                  <span className="tabular text-[10px] text-slate-500">
+                    {point.revenue > 0 ? compactIDR.format(point.revenue) : ''}
                   </span>
                   <span
-                    className={`w-full rounded-t ${point.day === reportingDay ? 'bg-brand-600' : 'bg-brand-300'}`}
+                    className={`w-full rounded-t ${
+                      point.revenue <= 0
+                        ? 'bg-data-zero'
+                        : point.day === reportingDay
+                          ? 'bg-data-emphasis'
+                          : 'bg-data'
+                    }`}
                     style={{ height: `${height}px` }}
                     title={`${formatDayLabel(point.day)}: ${formatIDR(point.revenue)}`}
                   />
-                  <span className="tabular text-[10px] text-slate-400">
+                  <span className="tabular text-[10px] text-slate-500">
                     {point.day.split('-')[2]}
+                  </span>
+                  {/* The bar is a picture of a number: hand the number to a screen reader. */}
+                  <span className="sr-only">
+                    {formatDayLabel(point.day)}: {formatIDR(point.revenue)}
                   </span>
                 </li>
               )
@@ -381,14 +440,20 @@ function CategoryBreakdown({
   const itemsSold = rows.reduce((sum, row) => sum + row.itemsSold, 0)
 
   return (
-    <ul className="mt-3 space-y-2" data-testid="category-breakdown">
+    <ul className="mt-3 space-y-2.5" data-testid="category-breakdown">
       {rows.map((row) => (
-        <li key={row.category} className="flex items-baseline justify-between text-sm">
-          <span className="font-medium text-slate-700">
-            {CATEGORY_LABELS[row.category]}{' '}
-            <span className="text-xs text-slate-400">({row.itemsSold} pcs)</span>
-          </span>
-          <span className="tabular font-semibold text-slate-900">{formatIDR(row.revenue)}</span>
+        <li key={row.category}>
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="min-w-0 truncate font-medium text-slate-700">
+              {/* A category the catalog no longer knows shows its own key. */}
+              {CATEGORY_LABELS[row.category] ?? row.category}{' '}
+              <span className="tabular text-xs text-slate-400">({row.itemsSold} pcs)</span>
+            </span>
+            <span className="tabular shrink-0 font-semibold text-slate-900">
+              {formatIDR(row.revenue)}
+            </span>
+          </div>
+          <ShareBar share={revenue > 0 ? Math.round((row.revenue / revenue) * 100) : 0} />
         </li>
       ))}
       <li className="flex items-baseline justify-between border-t border-dashed border-slate-200 pt-2 text-sm">
