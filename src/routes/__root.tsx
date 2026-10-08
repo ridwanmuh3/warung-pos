@@ -55,8 +55,11 @@ function RootComponent() {
 
   // Access gate: without a session every route renders the sign-in screen.
   // The decision is made from the server session, not a client flag.
-  if (!session && !isAuthRoute) {
-    return <AuthScreen initialMode="login" redirectTo={pathname} />
+  if (!session) {
+    // Auth pages stand on their own: no header, tab bar, or footer while the
+    // visitor has no session. `/masuk` still renders its own route component
+    // so search params (`mode`, `redirect`) keep working.
+    return isAuthRoute ? <Outlet /> : <AuthScreen initialMode="login" redirectTo={pathname} />
   }
 
   return (
