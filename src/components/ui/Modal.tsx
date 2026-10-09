@@ -20,7 +20,7 @@ export function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`z-[400] flex w-full max-w-sm flex-col rounded-3xl bg-surface p-6 text-ink shadow-level3 ${className}`}
+        className={`z-[400] flex max-h-[calc(100dvh-2rem)] w-full max-w-sm flex-col overflow-y-auto rounded-3xl bg-surface p-6 text-ink shadow-level3 ${className}`}
         {...props}
       >
         {children}

@@ -179,7 +179,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
         event.preventDefault()
         onSubmit()
       }}
-      className="mb-5 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1"
+      className="mb-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5"
     >
       {error && (
         <p
@@ -410,7 +410,7 @@ function ProductsPage() {
         onError={setFormError}
       />
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {(['semua', ...(Object.keys(CATEGORY_LABELS) as ProductCategory[])] as const).map((value) => (
           <button
             key={value}
@@ -486,7 +486,7 @@ function ProductsPage() {
                       onClick={() => {
                         void restockProductFn({ data: { id: product.id, delta: 10 } }).then(reload)
                       }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                       aria-label={`Tambah stok ${product.name} 10`}
                     >
                       <IconPlus size={12} stroke={2.5} />

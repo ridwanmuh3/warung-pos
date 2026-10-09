@@ -16,12 +16,12 @@ export function PageHeader({
   action?: ReactNode
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+    <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div>
         {backTo && (
           <Link
             to={backTo}
-            className="mb-1 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
+            className="mb-0.5 inline-flex min-h-7 items-center gap-1 py-1 text-sm text-slate-500 hover:text-slate-800"
           >
             <IconChevronLeft size={14} stroke={2} />
             {backLabel}

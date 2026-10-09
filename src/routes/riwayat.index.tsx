@@ -142,7 +142,7 @@ function OrdersPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => updateSearch({ method: undefined })}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-full px-3.5 py-2 text-xs font-medium transition-colors ${
               method === undefined
                 ? 'bg-slate-900 text-white'
                 : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -154,7 +154,7 @@ function OrdersPage() {
             <button
               key={value}
               onClick={() => updateSearch({ method: method === value ? undefined : value })}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`rounded-full px-3.5 py-2 text-xs font-medium transition-colors ${
                 method === value
                   ? 'bg-slate-900 text-white'
                   : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -168,7 +168,7 @@ function OrdersPage() {
               key={value}
               onClick={() => updateSearch({ channel: channel === value ? undefined : value })}
               data-testid={`filter-channel-${value}`}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`rounded-full px-3.5 py-2 text-xs font-medium transition-colors ${
                 channel === value
                   ? 'bg-slate-900 text-white'
                   : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -180,7 +180,7 @@ function OrdersPage() {
           {day && (
             <button
               onClick={() => updateSearch({ day: undefined })}
-              className="inline-flex items-center gap-1 rounded-full border-2 border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+              className="inline-flex items-center gap-1 rounded-full border-2 border-primary bg-primary px-3.5 py-2 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               {formatDayLabel(day)}
               <IconX size={12} stroke={2.5} />
@@ -219,7 +219,7 @@ function OrdersPage() {
                 <div className="mb-2 flex items-baseline justify-between gap-2">
                   <button
                     onClick={() => updateSearch({ day: day === key ? undefined : key })}
-                    className={`text-sm font-semibold transition-colors ${
+                    className={`py-1 text-sm font-semibold transition-colors ${
                       day === key ? 'text-brand-700 underline' : 'text-slate-700 hover:text-brand-700'
                     }`}
                     title="Filter hanya hari ini"
@@ -286,7 +286,7 @@ function OrdersPage() {
                               setVoidReason('')
                             }}
                             data-testid={`void-${order.orderNumber}`}
-                            className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                           >
                             Batalkan
                           </button>

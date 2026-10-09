@@ -110,7 +110,7 @@ function RestorePage() {
         </p>
       )}
 
-      <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+      <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">Data ditemukan</h2>
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
           {[

@@ -77,7 +77,7 @@ function MenuPage() {
   }
 
   return (
-    <div className="pb-44 md:pb-0">
+    <div className="pb-14 md:pb-0">
       <PageHeader
         title="Kasir"
         subtitle="Pilih produk yang dibeli pelanggan"
@@ -112,20 +112,22 @@ function MenuPage() {
           placeholder="Cari nama, SKU, atau scan barcode…"
           aria-label="Cari produk"
           data-testid="menu-search"
-          className="w-full rounded-sm border-2 border-border bg-surface py-2 pl-9 pr-9 text-sm text-ink outline-none transition duration-150 ease-out placeholder:text-mute focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+          className="w-full rounded-sm border-2 border-border bg-surface py-2 pl-9 pr-11 text-sm text-ink outline-none transition duration-150 ease-out placeholder:text-mute focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
         />
         {query !== '' && (
           <button
             onClick={() => setSearch({ cari: '' })}
             aria-label="Hapus pencarian"
-            className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100"
+            className="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100"
           >
             <IconX size={14} stroke={2.5} />
           </button>
         )}
       </div>
 
-      <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Full-bleed filter rail: the negative margin mirrors the shell gutter so the
+          chips scroll edge to edge without a nested scroll container. */}
+      <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {FILTERS.map((filter) => (
           <button
             key={filter.value}

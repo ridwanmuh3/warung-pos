@@ -52,7 +52,7 @@ export function StatCard({
 }) {
   return (
     <div
-      className={`min-w-0 rounded-2xl p-4 shadow-level1 ${emphasis ? 'bg-primary-subtle print:bg-surface' : 'bg-surface'}`}
+      className={`min-w-0 rounded-2xl p-4 shadow-level1 sm:p-5 ${emphasis ? 'bg-primary-subtle print:bg-surface' : 'bg-surface'}`}
     >
       <dl className="min-w-0">
         <dt

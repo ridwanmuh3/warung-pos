@@ -150,12 +150,12 @@ function CheckoutPage() {
   }
 
   const cashSection = payment === 'tunai' && (
-    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
       <h2 className="text-sm font-semibold text-slate-900">Uang Diterima</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           onClick={() => setCashInput(String(total))}
-          className="rounded-full border border-divider px-3 py-1.5 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
+          className="rounded-full border border-divider px-3.5 py-2 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
         >
           Uang pas
         </button>
@@ -163,7 +163,7 @@ function CheckoutPage() {
           <button
             key={option}
             onClick={() => setCashInput(String(option))}
-            className="tabular rounded-full border border-divider px-3 py-1.5 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
+            className="tabular rounded-full border border-divider px-3.5 py-2 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
           >
             {formatIDR(option)}
           </button>
@@ -197,7 +197,7 @@ function CheckoutPage() {
   )
 
   const discountSection = (
-    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">Diskon</h2>
         <div className="flex rounded-lg border border-slate-200 p-0.5">
@@ -206,7 +206,7 @@ function CheckoutPage() {
               key={mode}
               onClick={() => setDiscountMode(mode)}
               aria-pressed={discountMode === mode}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
                 discountMode === mode ? 'bg-ink text-white' : 'text-body hover:bg-surface-muted'
               }`}
             >
@@ -249,7 +249,7 @@ function CheckoutPage() {
   )
 
   return (
-    <div className="pb-44 md:pb-0">
+    <div className="pb-14 md:pb-0">
       <PageHeader
         title="Detail Pesanan"
         subtitle="Periksa kembali sebelum konfirmasi"
@@ -261,7 +261,7 @@ function CheckoutPage() {
         <div
           role="alert"
           data-testid="checkout-errors"
-          className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4"
         >
           <ul className="space-y-0.5">
             {formErrors.map((message) => (
@@ -274,12 +274,12 @@ function CheckoutPage() {
       <div className="grid gap-4 md:grid-cols-[1fr_18rem] lg:grid-cols-[1fr_20rem]">
         <div className="space-y-4">
           <section className="rounded-2xl border border-border-subtle bg-surface shadow-level1">
-            <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">
+            <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900 sm:px-5">
               Rincian Produk
             </h2>
             <ul className="divide-y divide-slate-100">
               {items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-3 px-4 py-3">
+                <li key={item.productId} className="flex items-center gap-3 px-4 py-3 sm:px-5">
                   <ProductImage imageKey={item.imageKey} alt={item.name} className="size-9" iconSize={16} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-900">{item.name}</p>
@@ -295,7 +295,7 @@ function CheckoutPage() {
             </ul>
           </section>
 
-          <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+          <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900">Metode Pembayaran</h2>
             <div className="mt-3 grid gap-2 grid-cols-3">
               {PAYMENT_METHODS.map((method) => {
@@ -319,7 +319,7 @@ function CheckoutPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+          <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
             <div className="mt-3 grid gap-2 grid-cols-3">
               {CHANNELS.map((value) => (
@@ -359,7 +359,7 @@ function CheckoutPage() {
         </div>
 
         <div className="hidden md:block lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+          <div className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900">Ringkasan Bayar</h2>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between text-slate-500">

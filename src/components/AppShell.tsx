@@ -53,7 +53,7 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                         <div className="h-full w-1/4 animate-nav-progress rounded-full bg-primary" />
                     </div>
                 )}
-                <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 md:justify-normal">
+                <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 md:justify-normal lg:px-8">
                     <Link to="/" className="flex items-center gap-2 font-display font-black text-ink">
                         <span className="grid size-8 place-items-center rounded-md bg-primary text-on-primary">
                             <IconBuildingStore size={18} stroke={2} />
@@ -68,11 +68,14 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                                 <Link
                                     key={to}
                                     to={to}
-                                    className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${active ? 'bg-ink text-white' : 'text-body hover:bg-surface-muted'
+                                    aria-label={label}
+                                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${active ? 'bg-ink text-white' : 'text-body hover:bg-surface-muted'
                                         }`}
                                 >
                                     <Icon size={16} stroke={2} />
-                                    <span className="hidden md:inline">{label}</span>
+                                    {/* Labels return on wide screens: five labelled tabs plus
+                                        the cart and account actions cannot fit a tablet row. */}
+                                    <span className="hidden lg:inline">{label}</span>
                                 </Link>
                             )
                         })}
@@ -185,11 +188,13 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                 </div>
             </header>
 
-            <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-24 md:pb-6">{children}</main>
+            {/* Gutters step up with the viewport so the reading column keeps its air
+                on tablets; the bottom padding clears the mobile tab bar once. */}
+            <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-20 sm:px-6 sm:pt-8 md:pb-8 lg:px-8">{children}</main>
 
             {/* Mobile bottom tab bar */}
             <nav className="no-print safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
-                <div className="mx-auto flex max-w-5xl items-stretch justify-around px-2 pt-1.5">
+                <div className="mx-auto flex max-w-5xl items-stretch justify-around px-3 pt-1.5 sm:px-6">
                     {NAV_ITEMS.map(({ to, label, Icon }) => {
                         const active = to === '/' ? pathname === '/' : pathname.startsWith(to)
                         return (
@@ -207,7 +212,7 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                 </div>
             </nav>
 
-            <footer className="no-print hidden border-t border-divider py-4 text-center text-xs text-mute md:block">
+            <footer className="no-print hidden border-t border-divider px-4 py-4 text-center text-xs text-mute sm:px-6 md:block lg:px-8">
                 &copy; 2026. Crafted by ridwanmuh3
             </footer>
         </div>

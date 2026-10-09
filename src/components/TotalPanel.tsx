@@ -24,7 +24,7 @@ export function TotalPanel({
   const total = subtotal - discount
 
   return (
-    <div className={`rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 ${className}`}>
+    <div className={`rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5 ${className}`}>
       <div className="flex items-center justify-between text-sm text-slate-500">
         <span>Jumlah item</span>
         <span className="tabular font-medium text-slate-700">{itemCount} pcs</span>

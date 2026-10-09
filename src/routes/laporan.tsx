@@ -134,7 +134,7 @@ function ReportPage() {
             {formatDayLabel(value)}
           </button>
         ))}
-        <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600">
+        <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-600">
           <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pilih</span>
           <input
             type="date"
@@ -231,8 +231,8 @@ function ReportPage() {
             </div>
           )}
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+          <div className="mt-4 grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+            <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
               <h2 className="text-sm font-semibold text-slate-900">Pembayaran</h2>
               {paymentRows.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-500">
@@ -262,7 +262,7 @@ function ReportPage() {
               )}
             </section>
 
-            <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+            <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
               <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
               {channelRows.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-500">
@@ -294,7 +294,7 @@ function ReportPage() {
           </div>
 
           {report.shifts.length > 0 && (
-            <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+            <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
               <h2 className="text-sm font-semibold text-slate-900">Rekonsiliasi Kas</h2>
               <ul className="mt-3 space-y-2" data-testid="report-shifts">
                 {report.shifts.map((shift) => (
@@ -323,7 +323,7 @@ function ReportPage() {
             </section>
           )}
 
-          <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+          <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-sm font-semibold text-slate-900">
                 Transaksi ({report.orders.length})
@@ -379,13 +379,13 @@ function ReportPage() {
             </ul>
           </section>
 
-          <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+          <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900">Laporan Harian</h2>
               <button
                 onClick={() => downloadTextFile(`z-report-${day}.txt`, zReportText(report, dayLabel))}
                 data-testid="download-zreport"
-                className="no-print inline-flex min-h-6 items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+                className="no-print inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
               >
                 Unduh
                 <IconArrowRight size={12} stroke={2.5} />

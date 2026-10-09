@@ -30,15 +30,15 @@ function QtyStepper({ item }: { item: OrderItem }) {
     <div className="flex items-center gap-1 rounded-lg border border-slate-200">
       <button
         onClick={() => setQty(item.productId, item.qty - 1)}
-        className="grid size-9 place-items-center rounded-l-lg text-slate-600 transition-colors hover:bg-slate-100"
+        className="grid size-10 place-items-center rounded-l-lg text-slate-600 transition-colors hover:bg-slate-100"
         aria-label={`Kurangi jumlah ${item.name}`}
       >
         <IconMinus size={16} stroke={2.5} />
       </button>
-      <span className="tabular w-7 text-center text-sm font-semibold">{item.qty}</span>
+      <span className="tabular w-8 text-center text-sm font-semibold">{item.qty}</span>
       <button
         onClick={() => setQty(item.productId, item.qty + 1)}
-        className="grid size-9 place-items-center rounded-r-lg text-slate-600 transition-colors hover:bg-slate-100"
+        className="grid size-10 place-items-center rounded-r-lg text-slate-600 transition-colors hover:bg-slate-100"
         aria-label={`Tambah jumlah ${item.name}`}
       >
         <IconPlus size={16} stroke={2.5} />
@@ -66,7 +66,7 @@ function ParkedCarts({
 }) {
   if (parked.length === 0) return null
   return (
-    <section className="mb-5">
+    <section className="mb-4">
       <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
         <IconArchive size={16} stroke={2} />
         Keranjang Tersimpan
@@ -90,14 +90,14 @@ function ParkedCarts({
             <button
               onClick={() => onResume(cart.id)}
               disabled={busy}
-              className="rounded-full border-2 border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover disabled:border-primary-muted disabled:bg-primary-muted disabled:text-mute"
+              className="rounded-full border-2 border-primary bg-primary px-3.5 py-2 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover disabled:border-primary-muted disabled:bg-primary-muted disabled:text-mute"
             >
               Lanjutkan
             </button>
             <button
               onClick={() => onDiscard(cart.id)}
               disabled={busy}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
             >
               Hapus
             </button>
@@ -187,13 +187,13 @@ function CartPage() {
   }
 
   return (
-    <div className="pb-44 md:pb-0">
+    <div className="pb-14 md:pb-0">
       <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/" backLabel="Tambah produk" />
 
       <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
 
       {staleNames.length > 0 && (
-        <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 sm:p-4">
           <IconAlertTriangle size={18} stroke={2} className="mt-0.5 shrink-0" />
           <p>
             Harga berubah sejak item masuk keranjang:{' '}
@@ -225,7 +225,7 @@ function CartPage() {
                   <QtyStepper item={item} />
                   <button
                     onClick={() => removeFromCart(item.productId)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                   >
                     <IconTrash size={14} stroke={2.2} />
                     Hapus

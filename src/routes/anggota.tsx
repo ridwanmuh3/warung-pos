@@ -73,7 +73,7 @@ function MembersPage() {
         </p>
       )}
 
-      <section className="mb-5 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+      <section className="mb-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
           <IconUserPlus size={16} stroke={2} />
           Undang Anggota

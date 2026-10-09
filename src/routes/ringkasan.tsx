@@ -213,8 +213,8 @@ function SummaryPage() {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900">Penjualan per Metode</h2>
           {paymentRows.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada transaksi hari ini.</p>
@@ -241,7 +241,7 @@ function SummaryPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900">Transaksi Terbesar</h2>
           {stats.best ? (
             <div className="mt-3">
@@ -266,7 +266,7 @@ function SummaryPage() {
               <Link
                 to="/riwayat/$orderId"
                 params={{ orderId: stats.best.id }}
-                className="mt-3 inline-flex min-h-6 items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"
+                className="mt-3 inline-flex min-h-8 items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"
               >
                 Lihat struk
                 <IconArrowRight size={14} stroke={2.5} />
@@ -282,7 +282,7 @@ function SummaryPage() {
         <ShiftPanel />
       </div>
 
-      <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+      <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">Rincian per Kategori</h2>
         <p className="mt-0.5 text-xs text-slate-400">
           Penjualan kotor per kategori hari ini.
@@ -294,8 +294,8 @@ function SummaryPage() {
         />
       </section>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900">Produk Terlaris</h2>
           {patterns.top.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada penjualan hari ini.</p>
@@ -314,7 +314,7 @@ function SummaryPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900">Pola Jam</h2>
           <p className="mt-0.5 text-xs text-slate-400">
             {patterns.busiest
@@ -344,8 +344,8 @@ function SummaryPage() {
         </section>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
           {patterns.channels.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Belum ada transaksi hari ini.</p>
@@ -371,7 +371,7 @@ function SummaryPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1">
+        <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
           <h2 className="text-sm font-semibold text-slate-900">Tren 7 Hari</h2>
           <p className="mt-0.5 text-xs text-slate-500">
             Omzet per hari. Hari terpilih paling gelap, hari tanpa penjualan abu-abu.
@@ -386,9 +386,11 @@ function SummaryPage() {
               // must not read as a small sale: neutral color, no label.
               const height =
                 point.revenue > 0 ? Math.max(6, Math.round((point.revenue / trendPeak) * 72)) : 4
+              // `min-w-0` keeps a seven-column row inside a 320px phone: without it
+              // each column floors at its label's width and the row overflows.
               return (
-                <li key={point.day} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="tabular text-[10px] text-slate-500">
+                <li key={point.day} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                  <span className="tabular w-full truncate text-center text-[10px] text-slate-500">
                     {point.revenue > 0 ? compactIDR.format(point.revenue) : ''}
                   </span>
                   <span
@@ -402,7 +404,7 @@ function SummaryPage() {
                     style={{ height: `${height}px` }}
                     title={`${formatDayLabel(point.day)}: ${formatIDR(point.revenue)}`}
                   />
-                  <span className="tabular text-[10px] text-slate-500">
+                  <span className="tabular w-full text-center text-[10px] text-slate-500">
                     {point.day.split('-')[2]}
                   </span>
                   {/* The bar is a picture of a number: hand the number to a screen reader. */}

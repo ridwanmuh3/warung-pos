@@ -44,7 +44,7 @@ export function ShiftPanel() {
 
   if (!open) {
     return (
-      <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1" data-testid="shift-panel">
+      <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5" data-testid="shift-panel">
         <div className="flex items-center gap-2">
           <IconLockOpen size={18} stroke={2} className="text-slate-400" />
           <h2 className="text-sm font-semibold text-slate-900">Kas Belum Dibuka</h2>
@@ -137,7 +137,7 @@ export function ShiftPanel() {
   const variance = varianceValid ? Math.round(counted) - expected : 0
 
   return (
-    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1" data-testid="shift-panel">
+    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5" data-testid="shift-panel">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <IconLock size={18} stroke={2} className="text-brand-600" />
