@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 import {
   IconAlertTriangle,
   IconDeviceFloppy,
   IconPencil,
   IconPlus,
-  IconRefresh,
   IconTrash,
   IconUpload,
   IconX,
@@ -20,10 +19,10 @@ import {
   getImageUploadUrlFn,
   listProductsFn,
   restockProductFn,
-  seedProductsFn,
   updateProductFn,
 } from '../lib/data.functions'
 import { useProducts } from '../lib/useServerData'
+import { useTenant } from '../lib/useTenant'
 import type { Product, ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
@@ -171,6 +170,9 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
   const nameValid = draft.name.trim() !== ''
   const stockNumber = Number(draft.stock)
   const stockValid = draft.stock === '' || (Number.isInteger(stockNumber) && stockNumber >= 0)
+  // The four fields that genuinely change the sale. HPP, thresholds, SKU, and
+  // barcode stay one tap away instead of forming a nine-field wall.
+  const advancedOpen = draft.cost !== '' || draft.sku !== '' || draft.barcode !== ''
 
   return (
     <form
@@ -179,7 +181,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
         event.preventDefault()
         onSubmit()
       }}
-      className="mb-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5"
+      className="mt-4"
     >
       {error && (
         <p
@@ -190,10 +192,10 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
           {error}
         </p>
       )}
-      <div className="grid gap-3 sm:grid-cols-[1fr_10rem_9rem]">
+      <div className="grid gap-3 sm:grid-cols-[1fr_9rem]">
         <TextField
           id="product-name"
-          label={editing ? 'Edit Produk' : 'Produk Baru'}
+          label="Nama produk"
           value={draft.name}
           onChange={(e) => onChange({ ...draft, name: e.target.value })}
           placeholder="Contoh: Es Jeruk"
@@ -201,7 +203,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
         />
         <TextField
           id="product-price"
-          label="Harga"
+          label="Harga jual"
           type="number"
           min={1}
           step={1}
@@ -210,6 +212,9 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
           onChange={(e) => onChange({ ...draft, price: e.target.value })}
           placeholder="10000"
         />
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <SelectField
           id="product-category"
           label="Kategori"
@@ -222,25 +227,10 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
             </option>
           ))}
         </SelectField>
-      </div>
-
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <TextField
-          id="product-cost"
-          label="Modal"
-          hint="harga beli"
-          type="number"
-          min={0}
-          step={100}
-          inputMode="numeric"
-          value={draft.cost}
-          onChange={(e) => onChange({ ...draft, cost: e.target.value })}
-          placeholder="0"
-        />
         <TextField
           id="product-stock"
           label="Stok"
-          hint="kosongkan = tidak dilacak"
+          hint="kosong = tanpa stok"
           type="number"
           min={0}
           step={1}
@@ -249,55 +239,64 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
           onChange={(e) => onChange({ ...draft, stock: e.target.value })}
           placeholder="∞"
         />
-        <TextField
-          id="product-threshold"
-          label="Batas Menipis"
-          type="number"
-          min={0}
-          step={1}
-          inputMode="numeric"
-          value={draft.lowStockThreshold}
-          onChange={(e) => onChange({ ...draft, lowStockThreshold: e.target.value })}
-          placeholder="5"
-        />
-        <TextField
-          id="product-sku"
-          label="SKU"
-          value={draft.sku}
-          onChange={(e) => onChange({ ...draft, sku: e.target.value })}
-          placeholder="MKN-006"
-          autoComplete="off"
-        />
-        <TextField
-          id="product-barcode"
-          label="Barcode"
-          value={draft.barcode}
-          onChange={(e) => onChange({ ...draft, barcode: e.target.value })}
-          placeholder="899…"
-          autoComplete="off"
-        />
       </div>
 
       <ImagePicker draft={draft} onChange={onChange} onError={onError} />
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <details className="mt-3 rounded-lg border border-slate-200 p-3" open={advancedOpen}>
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Opsi lanjutan
+        </summary>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <TextField
+            id="product-cost"
+            label="Harga beli (HPP)"
+            type="number"
+            min={0}
+            step={100}
+            inputMode="numeric"
+            value={draft.cost}
+            onChange={(e) => onChange({ ...draft, cost: e.target.value })}
+            placeholder="0"
+          />
+          <TextField
+            id="product-threshold"
+            label="Batas stok menipis"
+            type="number"
+            min={0}
+            step={1}
+            inputMode="numeric"
+            value={draft.lowStockThreshold}
+            onChange={(e) => onChange({ ...draft, lowStockThreshold: e.target.value })}
+            placeholder="5"
+          />
+          <TextField
+            id="product-sku"
+            label="SKU"
+            value={draft.sku}
+            onChange={(e) => onChange({ ...draft, sku: e.target.value })}
+            placeholder="MKN-006"
+            autoComplete="off"
+          />
+          <TextField
+            id="product-barcode"
+            label="Barcode"
+            value={draft.barcode}
+            onChange={(e) => onChange({ ...draft, barcode: e.target.value })}
+            placeholder="899…"
+            autoComplete="off"
+          />
+        </div>
+      </details>
+
+      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+        <Button type="button" variant="secondary" size="sm" onClick={onCancel}>
+          Batal
+        </Button>
         <Button type="submit" size="sm" busy={busy} disabled={!nameValid || !priceValid || !stockValid}>
           <IconDeviceFloppy size={16} />
           {editing ? 'Simpan Perubahan' : 'Tambah Produk'}
         </Button>
-        {editing && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
-            <IconX size={16} />
-            Batal
-          </button>
-        )}
-        {editing && priceValid && (
-          <span className="tabular text-xs text-slate-500">Harga baru: {formatIDR(priceNumber)}</span>
-        )}
       </div>
     </form>
   )
@@ -318,26 +317,46 @@ export const Route = createFileRoute('/produk')({
 
 function ProductsPage() {
   const [draft, setDraft] = useState<DraftState>(EMPTY_DRAFT)
+  const [formOpen, setFormOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Product | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [restockTarget, setRestockTarget] = useState<Product | null>(null)
+  const [restockQty, setRestockQty] = useState('10')
+  const [restockError, setRestockError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const { kategori, menipis } = Route.useSearch()
   const filter = kategori ?? 'semua'
   const navigate = useNavigate({ from: Route.fullPath })
+  const tenant = useTenant()
+  const canManage = tenant.context?.role === 'owner' || tenant.context?.role === 'manager'
 
   const { data: products, loading, reload } = useProducts()
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-
-  async function resetCatalog() {
-    await Promise.all(products.map((product) => deleteProductFn({ data: { id: product.id } })))
-    await seedProductsFn()
-    reload()
-  }
+  const [restocking, setRestocking] = useState(false)
 
   const lowStock = products.filter((p) => p.stock !== null && p.stock <= p.lowStockThreshold)
   const visible = products
     .filter((p) => filter === 'semua' || p.category === filter)
     .filter((p) => !menipis || (p.stock !== null && p.stock <= p.lowStockThreshold))
+
+  function openCreate() {
+    setDraft(EMPTY_DRAFT)
+    setFormError(null)
+    setFormOpen(true)
+  }
+
+  function openEdit(product: Product) {
+    setDraft(draftFromProduct(product))
+    setFormError(null)
+    setFormOpen(true)
+  }
+
+  function closeForm() {
+    setFormOpen(false)
+    setDraft(EMPTY_DRAFT)
+    setFormError(null)
+  }
 
   function submit() {
     const parsed = productDraftSchema.safeParse(draft)
@@ -353,7 +372,7 @@ function ProductsPage() {
       : createProductFn({ data: draft })
     void mutation
       .then(() => {
-        setDraft(EMPTY_DRAFT)
+        closeForm()
         reload()
       })
       .catch((cause: unknown) => {
@@ -362,53 +381,55 @@ function ProductsPage() {
       .finally(() => setSaving(false))
   }
 
+  const restockAmount = Number(restockQty)
+  const restockValid = Number.isInteger(restockAmount) && restockAmount > 0
+
   return (
     <div>
       <PageHeader
-        title="Kelola Produk"
-        subtitle="Tambah, ubah, atau hapus produk yang dijual"
+        title="Produk"
+        subtitle={
+          canManage
+            ? 'Tambah, ubah, atau atur stok produk yang dijual'
+            : 'Daftar produk yang dijual di warung ini'
+        }
         action={
-          <button
-            onClick={() => {
-              if (confirm('Kembalikan produk ke daftar awal? Perubahan produk akan hilang.')) {
-                void resetCatalog()
-              }
-            }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
-            <IconRefresh size={16} />
-            Reset
-          </button>
+          canManage ? (
+            <Button size="sm" onClick={openCreate} data-testid="product-add">
+              <IconPlus size={16} stroke={2.5} />
+              Produk
+            </Button>
+          ) : undefined
         }
       />
 
-      {lowStock.length > 0 && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          <IconAlertTriangle size={18} stroke={2} className="mt-0.5 shrink-0" />
-          <div>
-            <p className="font-semibold">{lowStock.length} produk perlu restock</p>
-            <p className="mt-0.5">
-              {lowStock.map((p) => `${p.name} (${p.stock})`).join(', ')}
-            </p>
-          </div>
-        </div>
+      {!canManage && (
+        <p className="mb-4 rounded-lg border border-divider bg-surface-muted px-3 py-2 text-xs text-slate-600">
+          Hanya pemilik dan manajer yang bisa mengubah produk. Hubungi mereka bila ada harga atau stok
+          yang perlu diperbaiki.
+        </p>
       )}
 
-      <ProductForm
-        draft={draft}
-        onChange={(next) => {
-          setDraft(next)
-          setFormError(null)
-        }}
-        onSubmit={submit}
-        onCancel={() => {
-          setDraft(EMPTY_DRAFT)
-          setFormError(null)
-        }}
-        error={formError}
-        busy={saving}
-        onError={setFormError}
-      />
+      {lowStock.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <IconAlertTriangle size={18} stroke={2} className="mt-0.5 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{lowStock.length} produk perlu restock</p>
+            <p className="mt-0.5 truncate text-xs">
+              {lowStock.slice(0, 3).map((p) => `${p.name} (${p.stock})`).join(', ')}
+              {lowStock.length > 3 ? `, +${lowStock.length - 3} lainnya` : ''}
+            </p>
+          </div>
+          {!menipis && (
+            <button
+              onClick={() => navigate({ search: (prev) => ({ ...prev, menipis: true }), replace: true })}
+              className="text-xs font-semibold underline underline-offset-2 hover:text-amber-900"
+            >
+              Tampilkan
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {(['semua', ...(Object.keys(CATEGORY_LABELS) as ProductCategory[])] as const).map((value) => (
@@ -446,7 +467,24 @@ function ProductsPage() {
           description={
             menipis
               ? 'Semua produk terlacak masih di atas batas menipis.'
-              : 'Tambahkan produk pertama lewat form di atas.'
+              : canManage
+                ? 'Tambahkan produk pertama. Cukup nama dan harga; foto, stok, dan barcode bisa menyusul.'
+                : 'Belum ada produk di warung ini. Minta pemilik atau manajer menambahkannya.'
+          }
+          action={
+            menipis ? undefined : canManage ? (
+              <Button size="sm" onClick={openCreate} data-testid="product-empty-add">
+                <IconPlus size={16} stroke={2.5} />
+                Tambah Produk
+              </Button>
+            ) : (
+              <Link
+                to="/panduan"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-border px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+              >
+                Lihat Panduan
+              </Link>
+            )
           }
         />
       ) : (
@@ -481,43 +519,79 @@ function ProductsPage() {
                   >
                     {product.stock === null ? '∞' : `${product.stock} pcs`}
                   </span>
-                  {product.stock !== null && (
+                  {canManage && product.stock !== null && (
                     <button
                       onClick={() => {
-                        void restockProductFn({ data: { id: product.id, delta: 10 } }).then(reload)
+                        setRestockTarget(product)
+                        setRestockQty('10')
+                        setRestockError(null)
                       }}
                       className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                      aria-label={`Tambah stok ${product.name} 10`}
+                      aria-label={`Tambah stok ${product.name}`}
+                      data-testid={`restock-${product.id}`}
                     >
                       <IconPlus size={12} stroke={2.5} />
-                      10
+                      Stok
                     </button>
                   )}
                 </div>
 
                 <span className="tabular hidden text-sm font-bold text-brand-600 sm:block">{formatIDR(product.price)}</span>
-                <button
-                  onClick={() => setDraft(draftFromProduct(product))}
-                  className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                  aria-label={`Edit ${product.name}`}
-                >
-                  <IconPencil size={16} />
-                </button>
-                <button
-                  onClick={() => setPendingDelete(product)}
-                  className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                  aria-label={`Hapus ${product.name}`}
-                >
-                  <IconTrash size={16} />
-                </button>
+                {canManage && (
+                  <>
+                    <button
+                      onClick={() => openEdit(product)}
+                      className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      aria-label={`Edit ${product.name}`}
+                    >
+                      <IconPencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeleteError(null)
+                        setPendingDelete(product)
+                      }}
+                      className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                      aria-label={`Hapus ${product.name}`}
+                    >
+                      <IconTrash size={16} />
+                    </button>
+                  </>
+                )}
               </li>
             )
           })}
         </ul>
       )}
 
+      {formOpen && canManage && (
+        <Modal onClose={closeForm} className="max-w-lg">
+          <ModalTitle>{draft.id ? 'Edit Produk' : 'Produk Baru'}</ModalTitle>
+          <p className="mt-1 text-sm text-slate-500">
+            {draft.id ? 'Perubahan harga tidak mengubah struk yang sudah tercetak.' : 'Isi yang perlu saja; opsi lain bisa dibuka nanti.'}
+          </p>
+          <ProductForm
+            draft={draft}
+            onChange={(next) => {
+              setDraft(next)
+              setFormError(null)
+            }}
+            onSubmit={submit}
+            onCancel={closeForm}
+            error={formError}
+            busy={saving}
+            onError={setFormError}
+          />
+        </Modal>
+      )}
+
       {pendingDelete && (
-        <Modal onClose={() => setPendingDelete(null)}>
+        <Modal
+          onClose={() => {
+            setPendingDelete(null)
+            setDeleteError(null)
+          }}
+        >
           <div className="flex items-start gap-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-600">
               <IconAlertTriangle size={20} />
@@ -530,8 +604,20 @@ function ProductsPage() {
               </p>
             </div>
           </div>
+          {deleteError && (
+            <p role="alert" className="mt-2 text-xs text-red-600">
+              {deleteError}
+            </p>
+          )}
           <div className="mt-4 flex justify-end gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setPendingDelete(null)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setPendingDelete(null)
+                setDeleteError(null)
+              }}
+            >
               Batal
             </Button>
             <Button
@@ -542,14 +628,98 @@ function ProductsPage() {
                 setDeleting(true)
                 void deleteProductFn({ data: { id: pendingDelete.id } })
                   .then(() => {
-                    if (draft.id === pendingDelete.id) setDraft(EMPTY_DRAFT)
+                    if (draft.id === pendingDelete.id) closeForm()
                     setPendingDelete(null)
                     reload()
+                  })
+                  .catch((cause: unknown) => {
+                    setDeleteError(cause instanceof Error ? cause.message : 'Gagal menghapus produk')
                   })
                   .finally(() => setDeleting(false))
               }}
             >
               Hapus
+            </Button>
+          </div>
+        </Modal>
+      )}
+
+      {restockTarget && (
+        <Modal
+          onClose={() => {
+            setRestockTarget(null)
+            setRestockError(null)
+          }}
+        >
+          <ModalTitle>Tambah Stok</ModalTitle>
+          <p className="mt-1 text-sm text-slate-600">
+            {restockTarget.name} · sekarang{' '}
+            <span className="tabular font-semibold text-slate-900">{restockTarget.stock} pcs</span>
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[1, 5, 10, 20].map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                onClick={() => setRestockQty(String(amount))}
+                aria-pressed={restockQty === String(amount)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  restockQty === String(amount)
+                    ? 'border-primary bg-primary-subtle text-on-primary'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                +{amount}
+              </button>
+            ))}
+          </div>
+          <label htmlFor="restock-qty" className="mt-3 block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Jumlah masuk</span>
+            <input
+              id="restock-qty"
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              value={restockQty}
+              onChange={(event) => setRestockQty(event.target.value)}
+              data-testid="restock-qty"
+              className="tabular mt-1 w-full rounded-sm border-2 border-border px-3 py-2 text-right text-lg font-semibold outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+            />
+          </label>
+          {restockValid && restockTarget.stock !== null && (
+            <p className="tabular mt-2 text-right text-xs text-slate-500">
+              Stok menjadi {restockTarget.stock + restockAmount} pcs
+            </p>
+          )}
+          {restockError && (
+            <p role="alert" className="mt-2 text-xs text-red-600">
+              {restockError}
+            </p>
+          )}
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setRestockTarget(null)}>
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              busy={restocking}
+              disabled={!restockValid}
+              data-testid="restock-confirm"
+              onClick={() => {
+                setRestocking(true)
+                void restockProductFn({ data: { id: restockTarget.id, delta: restockAmount } })
+                  .then(() => {
+                    setRestockTarget(null)
+                    reload()
+                  })
+                  .catch((cause: unknown) => {
+                    setRestockError(cause instanceof Error ? cause.message : 'Gagal menambah stok')
+                  })
+                  .finally(() => setRestocking(false))
+              }}
+            >
+              Tambah Stok
             </Button>
           </div>
         </Modal>

@@ -58,9 +58,18 @@ export const createTenantForUser = createServerOnlyFn(
 )
 
 /** Default shop for a brand-new account. */
-export const provisionDefaultTenant = createServerOnlyFn(async (userId: string): Promise<string> => {
-  return createTenantForUser(userId, 'Warung Saya')
-})
+export const provisionDefaultTenant = createServerOnlyFn(
+  async (userId: string, name = 'Warung Saya'): Promise<string> => {
+    return createTenantForUser(userId, name)
+  },
+)
+
+/** Renames the active shop. Ownership is checked by the RPC wrapper. */
+export const renameTenant = createServerOnlyFn(
+  async (tenantId: string, name: string): Promise<void> => {
+    await getDb().update(tenants).set({ name }).where(eq(tenants.id, tenantId))
+  },
+)
 
 async function membershipsForUser(userId: string): Promise<MembershipSummary[]> {
   const rows = await getDb()

@@ -19,9 +19,12 @@ export const CHANNEL_LABELS: Record<SalesChannel, string> = {
 }
 
 /**
- * Seed catalog, one product per mockup image in `src/assets/`. The matching
- * image must exist in R2 under `seed/<filename>` — run `pnpm seed:images` to
- * upload it. Seeded into a tenant on first use; editable thereafter.
+ * Template catalog for the future practice sandbox. The matching images live
+ * in R2 under `seed/<filename>` (`pnpm seed:images` uploads them).
+ *
+ * Never insert these rows into a live tenant: a new shop starts with an empty
+ * catalog and the owner adds real products (ADR-0007). Keeping the template
+ * client-side means practice can be added later without touching sales data.
  */
 export const DEFAULT_PRODUCTS: Product[] = [
   { id: 'p1', name: 'Indomie Goreng', price: 3500, category: 'makanan', imageKey: 'seed/indomie-goreng.png', cost: 2500, stock: 40, lowStockThreshold: 10, sku: 'MKN-001', barcode: '8991002101010' },

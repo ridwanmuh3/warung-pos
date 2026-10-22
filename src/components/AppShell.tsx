@@ -1,12 +1,12 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
+    IconBook,
     IconBuildingStore,
-    IconChartBar,
     IconDatabaseImport,
     IconFileText,
-    IconHistory,
     IconLogout,
     IconPackage,
+    IconSettings,
     IconShoppingCart,
     IconUser,
     IconUsers,
@@ -22,8 +22,6 @@ import { useTenant } from '../lib/useTenant'
 const NAV_ITEMS = [
     { to: '/', label: 'Kasir', Icon: IconShoppingCart },
     { to: '/produk', label: 'Produk', Icon: IconPackage },
-    { to: '/riwayat', label: 'Riwayat', Icon: IconHistory },
-    { to: '/ringkasan', label: 'Ringkasan', Icon: IconChartBar },
     { to: '/laporan', label: 'Laporan', Icon: IconFileText },
 ] as const
 
@@ -158,6 +156,39 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                                         </Link>
                                     )}
 
+                                    <Link
+                                        to="/pengaturan"
+                                        onClick={() => setMenuOpen(false)}
+                                        role="menuitem"
+                                        data-testid="account-settings-link"
+                                        className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                    >
+                                        <IconSettings size={16} stroke={2} />
+                                        Pengaturan
+                                    </Link>
+
+                                    <Link
+                                        to="/riwayat"
+                                        onClick={() => setMenuOpen(false)}
+                                        role="menuitem"
+                                        data-testid="account-history-link"
+                                        className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                    >
+                                        <IconFileText size={16} stroke={2} />
+                                        Riwayat Transaksi
+                                    </Link>
+
+                                    <Link
+                                        to="/panduan"
+                                        onClick={() => setMenuOpen(false)}
+                                        role="menuitem"
+                                        data-testid="account-guide-link"
+                                        className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                    >
+                                        <IconBook size={16} stroke={2} />
+                                        Panduan Penggunaan
+                                    </Link>
+
                                     {legacyAvailable && (
                                         <Link
                                             to="/pulihkan"
@@ -190,7 +221,12 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
 
             {/* Gutters step up with the viewport so the reading column keeps its air
                 on tablets; the bottom padding clears the mobile tab bar once. */}
-            <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-20 sm:px-6 sm:pt-8 md:pb-8 lg:px-8">{children}</main>
+            <main
+                className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-20 sm:px-6 sm:pt-8 md:pb-8 lg:px-8"
+                data-route={pathname === '/panduan' ? 'guide' : undefined}
+            >
+                {children}
+            </main>
 
             {/* Mobile bottom tab bar */}
             <nav className="no-print safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">

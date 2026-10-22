@@ -53,6 +53,7 @@ export async function register(input: {
   email: string
   password: string
   confirmPassword: string
+  warungName?: string
 }): Promise<AuthResponse> {
   const result = await registerFn({ data: input })
   if (result.ok) {

@@ -77,11 +77,13 @@ pnpm install
 pnpm db:push
 ```
 
-3. Unggah gambar seed ke R2 (sekali saja; `src/assets/` → `seed/<nama-file>`).
+3. (Opsional) Unggah gambar contoh ke R2 (sekali saja; `src/assets/` → `seed/<nama-file>`).
 
 ```bash
 pnpm seed:images
 ```
+
+Gambar ini hanya disiapkan untuk mode latihan yang akan datang. Katalog warung baru **mulai kosong**; pemilik menambahkan produk nyata lewat halaman Produk, dipandu checklist dan `/panduan`.
 
 4. Jalankan dev server.
 
@@ -91,6 +93,8 @@ pnpm dev        # http://localhost:3000
 
 Instalasi baru (0 akun) otomatis diarahkan ke mode Daftar.
 
+Katalog warung baru **mulai kosong**. Setelah daftar, ikuti checklist tiga langkah di halaman Kasir (nama, produk pertama, buka kas), atau buka **Panduan** dari menu akun/header Kasir. Panduan berisi langkah untuk kasir, pelayan, pemilik, dan manajer, serta bisa dicetak untuk ditempel di dekat kasir.
+
 ### Perintah lain
 
 ```bash
@@ -98,6 +102,6 @@ pnpm build      # build klien + server ke .output/
 pnpm start      # jalankan build produksi: node .output/server/index.mjs
 pnpm test       # Vitest
 pnpm lint       # oxlint
-pnpm seed:images # unggah gambar seed ke R2
+pnpm seed:images # (opsional) unggah gambar contoh untuk mode latihan mendatang
 pnpm db:studio  # buka Drizzle Studio
 ```

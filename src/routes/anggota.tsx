@@ -18,7 +18,7 @@ const ROLE_LABELS: Record<Role, string> = {
   cashier: 'Kasir',
 }
 
-const ROLES: Role[] = ['owner', 'manager', 'cashier']
+const ROLES: Role[] = ['manager', 'cashier']
 
 export const Route = createFileRoute('/anggota')({
   component: MembersPage,
@@ -142,23 +142,31 @@ function MembersPage() {
                 <p className="truncate text-sm font-semibold text-slate-900">{member.name}</p>
                 <p className="truncate text-xs text-slate-500">{member.email}</p>
               </div>
-              <select
-                value={member.role}
-                onChange={(event) => {
-                  void updateMemberRoleFn({
-                    data: { membershipId: member.membershipId, role: event.target.value as Role },
-                  }).then(reload)
-                }}
-                aria-label={`Peran ${member.name}`}
-                data-testid={`member-role-${member.userId}`}
-                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-brand-500"
-              >
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>
-                    {ROLE_LABELS[role]}
-                  </option>
-                ))}
-              </select>
+              {member.role === 'owner' ? (
+                /* The owner cannot be demoted from this screen: one wrong
+                   dropdown would lock the shop out of its own settings. */
+                <span className="rounded-full bg-primary-subtle px-3 py-1.5 text-xs font-semibold text-on-primary">
+                  Pemilik
+                </span>
+              ) : (
+                <select
+                  value={member.role}
+                  onChange={(event) => {
+                    void updateMemberRoleFn({
+                      data: { membershipId: member.membershipId, role: event.target.value as Role },
+                    }).then(reload)
+                  }}
+                  aria-label={`Peran ${member.name}`}
+                  data-testid={`member-role-${member.userId}`}
+                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-brand-500"
+                >
+                  {ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {ROLE_LABELS[role]}
+                    </option>
+                  ))}
+                </select>
+              )}
             </li>
           ))}
         </ul>

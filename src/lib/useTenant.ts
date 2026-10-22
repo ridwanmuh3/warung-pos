@@ -7,6 +7,8 @@ export interface TenantState {
   memberships: MembershipSummary[]
   loading: boolean
   switchTenant: (tenantId: string) => Promise<void>
+  /** Re-reads the active shop, e.g. after the owner renames it. */
+  reload: () => void
 }
 
 /**
@@ -20,6 +22,7 @@ export function useTenant(): TenantState {
   const [context, setContext] = useState<TenantContext | null>(null)
   const [memberships, setMemberships] = useState<MembershipSummary[]>([])
   const [loading, setLoading] = useState(true)
+  const [nonce, setNonce] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -38,7 +41,9 @@ export function useTenant(): TenantState {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [nonce])
+
+  const reload = useCallback(() => setNonce((value) => value + 1), [])
 
   const switchTenant = useCallback(async (tenantId: string) => {
     await switchTenantFn({ data: { tenantId } })
@@ -46,5 +51,5 @@ export function useTenant(): TenantState {
     if (typeof window !== 'undefined') window.location.assign('/')
   }, [])
 
-  return { context, memberships, loading, switchTenant }
+  return { context, memberships, loading, switchTenant, reload }
 }

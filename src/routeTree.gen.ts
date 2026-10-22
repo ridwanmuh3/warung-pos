@@ -15,6 +15,8 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as LaporanRouteImport } from './routes/laporan'
 import { Route as MasukRouteImport } from './routes/masuk'
+import { Route as PanduanRouteImport } from './routes/panduan'
+import { Route as PengaturanRouteImport } from './routes/pengaturan'
 import { Route as ProdukRouteImport } from './routes/produk'
 import { Route as PulihkanRouteImport } from './routes/pulihkan'
 import { Route as RingkasanRouteImport } from './routes/ringkasan'
@@ -52,6 +54,16 @@ const LaporanRoute = LaporanRouteImport.update({
 const MasukRoute = MasukRouteImport.update({
   id: '/masuk',
   path: '/masuk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PanduanRoute = PanduanRouteImport.update({
+  id: '/panduan',
+  path: '/panduan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PengaturanRoute = PengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProdukRoute = ProdukRouteImport.update({
@@ -102,6 +114,8 @@ export interface FileRoutesByFullPath {
   '/keranjang': typeof KeranjangRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
+  '/panduan': typeof PanduanRoute
+  '/pengaturan': typeof PengaturanRoute
   '/produk': typeof ProdukRoute
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
@@ -118,6 +132,8 @@ export interface FileRoutesByTo {
   '/keranjang': typeof KeranjangRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
+  '/panduan': typeof PanduanRoute
+  '/pengaturan': typeof PengaturanRoute
   '/produk': typeof ProdukRoute
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
@@ -135,6 +151,8 @@ export interface FileRoutesById {
   '/keranjang': typeof KeranjangRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
+  '/panduan': typeof PanduanRoute
+  '/pengaturan': typeof PengaturanRoute
   '/produk': typeof ProdukRoute
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
@@ -153,6 +171,8 @@ export interface FileRouteTypes {
     | '/keranjang'
     | '/laporan'
     | '/masuk'
+    | '/panduan'
+    | '/pengaturan'
     | '/produk'
     | '/pulihkan'
     | '/ringkasan'
@@ -169,6 +189,8 @@ export interface FileRouteTypes {
     | '/keranjang'
     | '/laporan'
     | '/masuk'
+    | '/panduan'
+    | '/pengaturan'
     | '/produk'
     | '/pulihkan'
     | '/ringkasan'
@@ -185,6 +207,8 @@ export interface FileRouteTypes {
     | '/keranjang'
     | '/laporan'
     | '/masuk'
+    | '/panduan'
+    | '/pengaturan'
     | '/produk'
     | '/pulihkan'
     | '/ringkasan'
@@ -202,6 +226,8 @@ export interface RootRouteChildren {
   KeranjangRoute: typeof KeranjangRoute
   LaporanRoute: typeof LaporanRoute
   MasukRoute: typeof MasukRoute
+  PanduanRoute: typeof PanduanRoute
+  PengaturanRoute: typeof PengaturanRoute
   ProdukRoute: typeof ProdukRoute
   PulihkanRoute: typeof PulihkanRoute
   RingkasanRoute: typeof RingkasanRoute
@@ -254,6 +280,20 @@ declare module '@tanstack/react-router' {
       path: '/masuk'
       fullPath: '/masuk'
       preLoaderRoute: typeof MasukRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/panduan': {
+      id: '/panduan'
+      path: '/panduan'
+      fullPath: '/panduan'
+      preLoaderRoute: typeof PanduanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pengaturan': {
+      id: '/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/pengaturan'
+      preLoaderRoute: typeof PengaturanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/produk': {
@@ -322,6 +362,8 @@ const rootRouteChildren: RootRouteChildren = {
   KeranjangRoute: KeranjangRoute,
   LaporanRoute: LaporanRoute,
   MasukRoute: MasukRoute,
+  PanduanRoute: PanduanRoute,
+  PengaturanRoute: PengaturanRoute,
   ProdukRoute: ProdukRoute,
   PulihkanRoute: PulihkanRoute,
   RingkasanRoute: RingkasanRoute,

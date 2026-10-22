@@ -43,6 +43,7 @@ export function AuthScreen({
     const session = useSession()
     const [mode, setMode] = useState<Mode>(initialMode)
     const [name, setName] = useState('')
+    const [warungName, setWarungName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -77,7 +78,7 @@ export function AuthScreen({
         setErrors([])
         const result =
             mode === 'register'
-                ? await register({ name, email, password, confirmPassword })
+                ? await register({ name, email, password, confirmPassword, warungName })
                 : await login({ email, password })
 
         if (!result.ok) {
@@ -165,6 +166,24 @@ export function AuthScreen({
                                     placeholder="Budi"
                                     autoComplete="name"
                                     data-testid="auth-name"
+                                    className={inputClass}
+                                />
+                            </span>
+                        </label>
+                    )}
+
+                    {mode === 'register' && (
+                        <label htmlFor="auth-warung" className="mt-3 block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama Warung</span>
+                            <span className="relative mt-1 block">
+                                <IconBuildingStore size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    id="auth-warung"
+                                    value={warungName}
+                                    onChange={(event) => setWarungName(event.target.value)}
+                                    placeholder="Warung Bu Siti"
+                                    autoComplete="organization"
+                                    data-testid="auth-warung"
                                     className={inputClass}
                                 />
                             </span>
@@ -263,7 +282,7 @@ export function AuthScreen({
                 </form>
 
                 <p className="mt-4 text-center text-xs text-mute">
-                    Kata sandi disimpan terenkripsi di server, bukan teks biasa.
+                    Kata sandi disimpan sebagai hash di server, bukan teks biasa.
                 </p>
             </div>
         </Shell>

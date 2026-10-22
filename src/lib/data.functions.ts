@@ -148,15 +148,6 @@ export const listStockMovementsFn = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-/** Restores the seed catalog. Only inserts when the tenant's catalog is empty. */
-export const seedProductsFn = createServerFn({ method: 'POST' }).handler(
-  async (): Promise<number> => {
-    const ctx = await requireMembership('manager')
-    const { DEFAULT_PRODUCTS } = await import('../data/products')
-    return data.seedProductsIfEmpty(ctx.tenantId, DEFAULT_PRODUCTS)
-  },
-)
-
 /* -------------------------------- orders ------------------------------ */
 
 export const listOrdersFn = createServerFn({ method: 'GET' }).handler(

@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
-import { IconAlertTriangle, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
+import { IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { dayKey, formatDayLabel, formatIDR, formatTime, isDayKey } from '../lib/format'
-import { listOrdersFn, refundOrderFn, voidOrderFn } from '../lib/data.functions'
+import { listOrdersFn } from '../lib/data.functions'
 import { useOrders } from '../lib/useServerData'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { SkeletonRows } from '../components/ui/Skeleton'
-import { Button } from '../components/ui/Button'
-import { Modal, ModalTitle } from '../components/ui/Modal'
 import { Badge } from '../components/ui/Badge'
 import type { Order, PaymentMethod, SalesChannel } from '../types'
 
@@ -69,12 +67,6 @@ function OrdersPage() {
   const { orders, storedCount, netTotal } = Route.useLoaderData()
   const { q: rawQ, method, channel, day } = Route.useSearch()
   const q = rawQ ?? ''
-  const [pendingVoid, setPendingVoid] = useState<Order | null>(null)
-  const [voidReason, setVoidReason] = useState('')
-  /** Server told us the shift is closed: offer a refund instead of a void (ADR-0006). */
-  const [needsRefund, setNeedsRefund] = useState(false)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [actionBusy, setActionBusy] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
 
   // Re-run the loader whenever the order set changes (new order, void, ...).
@@ -119,7 +111,7 @@ function OrdersPage() {
     <div>
       <PageHeader
         title="Riwayat Pesanan"
-        subtitle={`${orders.length} dari ${storedCount} transaksi · bersih ${formatIDR(netTotal)}`}
+        subtitle={`${orders.length} dari ${storedCount} transaksi · omzet lunas ${formatIDR(netTotal)}`}
       />
 
       <div className="mb-4 space-y-2">
@@ -139,22 +131,26 @@ function OrdersPage() {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Two labelled rows instead of one undifferentiated chain: "Tunai" is a
+            payment method and "Bungkus" is a channel, and mixing them made the
+            filter unreadable. */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-mute">Metode</span>
           <button
             onClick={() => updateSearch({ method: undefined })}
-            className={`rounded-full px-3.5 py-2 text-xs font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               method === undefined
                 ? 'bg-slate-900 text-white'
                 : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
             }`}
           >
-            Semua metode
+            Semua
           </button>
           {PAYMENT_METHODS.map((value) => (
             <button
               key={value}
               onClick={() => updateSearch({ method: method === value ? undefined : value })}
-              className={`rounded-full px-3.5 py-2 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 method === value
                   ? 'bg-slate-900 text-white'
                   : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -163,12 +159,26 @@ function OrdersPage() {
               {PAYMENT_LABELS[value]}
             </button>
           ))}
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-mute">Jenis</span>
+          <button
+            onClick={() => updateSearch({ channel: undefined })}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              channel === undefined
+                ? 'bg-slate-900 text-white'
+                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            Semua
+          </button>
           {CHANNELS.map((value) => (
             <button
               key={value}
               onClick={() => updateSearch({ channel: channel === value ? undefined : value })}
               data-testid={`filter-channel-${value}`}
-              className={`rounded-full px-3.5 py-2 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 channel === value
                   ? 'bg-slate-900 text-white'
                   : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -180,7 +190,7 @@ function OrdersPage() {
           {day && (
             <button
               onClick={() => updateSearch({ day: undefined })}
-              className="inline-flex items-center gap-1 rounded-full border-2 border-primary bg-primary px-3.5 py-2 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border-2 border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               {formatDayLabel(day)}
               <IconX size={12} stroke={2.5} />
@@ -279,18 +289,6 @@ function OrdersPage() {
                           </p>
                           <p className="tabular text-xs text-slate-400">{formatTime(order.createdAt)}</p>
                         </div>
-                        {order.status === 'paid' && (
-                          <button
-                            onClick={() => {
-                              setPendingVoid(order)
-                              setVoidReason('')
-                            }}
-                            data-testid={`void-${order.orderNumber}`}
-                            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                          >
-                            Batalkan
-                          </button>
-                        )}
                       </div>
                     </li>
                   ))}
@@ -299,83 +297,6 @@ function OrdersPage() {
             )
           })}
         </div>
-      )}
-
-      {pendingVoid && (
-        <Modal
-          onClose={() => {
-            setPendingVoid(null)
-            setNeedsRefund(false)
-            setActionError(null)
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-600">
-              <IconAlertTriangle size={20} />
-            </span>
-            <div>
-              <ModalTitle>
-                {needsRefund ? 'Kembalikan dana' : 'Batalkan'} {pendingVoid.orderNumber}?
-              </ModalTitle>
-              <p className="mt-1 text-sm text-slate-600">
-                {needsRefund
-                  ? 'Shift transaksi ini sudah ditutup, jadi uang dikembalikan dari laci kas yang sedang buka dan tercatat sebagai refund. Stok produk dikembalikan.'
-                  : 'Transaksi ditandai batal dan stok produknya dikembalikan. Transaksi tidak dihapus, jadi jejaknya tetap ada.'}
-              </p>
-            </div>
-          </div>
-          <input
-            value={voidReason}
-            onChange={(event) => setVoidReason(event.target.value)}
-            placeholder="Alasan (opsional)"
-            aria-label="Alasan pembatalan"
-            data-testid="void-reason"
-            className="mt-3 w-full rounded-sm border-2 border-border px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
-          />
-          {actionError && <p className="mt-2 text-xs text-red-600">{actionError}</p>}
-          <div className="mt-4 flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setPendingVoid(null)
-                setNeedsRefund(false)
-                setActionError(null)
-              }}
-            >
-              Batal
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              busy={actionBusy}
-              data-testid="void-confirm"
-              onClick={() => {
-                const action = needsRefund ? refundOrderFn : voidOrderFn
-                setActionBusy(true)
-                setActionError(null)
-                void action({ data: { id: pendingVoid.id, reason: voidReason } })
-                  .then(() => {
-                    setPendingVoid(null)
-                    setNeedsRefund(false)
-                    void router.invalidate()
-                  })
-                  .catch((cause: unknown) => {
-                    const message =
-                      cause instanceof Error ? cause.message : 'Gagal membatalkan transaksi'
-                    // A closed shift turns a void into a refund (ADR-0006).
-                    if (!needsRefund && message.toLowerCase().includes('refund')) {
-                      setNeedsRefund(true)
-                    }
-                    setActionError(message)
-                  })
-                  .finally(() => setActionBusy(false))
-              }}
-            >
-              {needsRefund ? 'Kembalikan Dana' : 'Batalkan Transaksi'}
-            </Button>
-          </div>
-        </Modal>
       )}
 
       {hasFilters && orders.length > 0 && (

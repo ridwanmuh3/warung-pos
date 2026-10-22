@@ -29,7 +29,7 @@ export const registerFn = createServerFn({ method: 'POST' })
     if (existing) return { ok: false, errors: ['Email sudah terdaftar'] }
 
     const user = await createUser({ name: data.name, email: data.email, password: data.password })
-    const tenantId = await provisionDefaultTenant(user.id)
+    const tenantId = await provisionDefaultTenant(user.id, data.warungName ?? 'Warung Saya')
     await writeSessionIdentity(user.id, tenantId)
     return { ok: true, user }
   })

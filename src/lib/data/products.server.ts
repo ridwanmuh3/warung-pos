@@ -14,17 +14,19 @@ import type { Product } from '../../types'
 import { toProduct } from './mappers.server'
 /* ------------------------------- products ----------------------------- */
 
+/**
+ * A tenant's catalog, and only that tenant's rows.
+ *
+ * Deliberately does **not** seed a sample catalog. A new shop starts empty and
+ * the owner adds its real products; sample data in a live catalog can be sold,
+ * pollute reports, and cannot be removed cleanly afterwards (ADR-0007).
+ */
 export const listProducts = createServerOnlyFn(async (tenantId: string): Promise<Product[]> => {
-  const db = getDb()
-  const rows = await db.select().from(products).where(eq(products.tenantId, tenantId))
-  if (rows.length > 0) return rows.map(toProduct)
-
-  // Fresh shop: install the seed catalog so the cashier is usable immediately.
-  // Only ever runs while this tenant's catalog is empty.
-  const { DEFAULT_PRODUCTS } = await import('../../data/products')
-  await seedProductsIfEmpty(tenantId, DEFAULT_PRODUCTS)
-  const seeded = await db.select().from(products).where(eq(products.tenantId, tenantId))
-  return seeded.map(toProduct)
+  const rows = await getDb()
+    .select()
+    .from(products)
+    .where(eq(products.tenantId, tenantId))
+  return rows.map(toProduct)
 })
 
 export const createProduct = createServerOnlyFn(
@@ -76,40 +78,5 @@ export const removeProduct = createServerOnlyFn(
     await getDb()
       .delete(products)
       .where(and(eq(products.id, id), eq(products.tenantId, tenantId)))
-  },
-)
-
-/** Seeds a tenant's catalog only when that tenant has no products yet. */
-export const seedProductsIfEmpty = createServerOnlyFn(
-  async (
-    tenantId: string,
-    seed: Array<Omit<Product, 'id'> & { id: string }>,
-  ): Promise<number> => {
-    const db = getDb()
-    const existing = await db
-      .select({ id: products.id })
-      .from(products)
-      .where(eq(products.tenantId, tenantId))
-      .limit(1)
-    if (existing.length > 0) return 0
-    const now = new Date().toISOString()
-    await db.insert(products).values(
-      seed.map((item) => ({
-        id: item.id,
-        tenantId,
-        name: item.name,
-        price: item.price,
-        cost: item.cost,
-        category: item.category,
-        imageKey: item.imageKey,
-        stock: item.stock,
-        lowStockThreshold: item.lowStockThreshold,
-        sku: item.sku ?? null,
-        barcode: item.barcode ?? null,
-        createdAt: now,
-        updatedAt: now,
-      })),
-    )
-    return seed.length
   },
 )

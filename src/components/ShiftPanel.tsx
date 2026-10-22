@@ -13,7 +13,7 @@ import { Button } from './ui/Button'
  * Cash-drawer shift panel: open the drawer with a float, then close it with a
  * physical count. The variance is the difference between counted and expected.
  */
-export function ShiftPanel() {
+export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
   const { data: shifts, reload: reloadShifts } = useShifts()
   const { data: open, reload: reloadCurrent } = useCurrentShift()
 
@@ -84,6 +84,7 @@ export function ShiftPanel() {
                   reloadShifts()
                   reloadCurrent()
                   setOpeningCash('')
+                  onChanged?.()
                 })
                 .finally(() => setBusy(false))
             }}
@@ -219,6 +220,7 @@ export function ShiftPanel() {
               reloadCurrent()
               setCountedCash('')
               setNote('')
+              onChanged?.()
             })
             .finally(() => setBusy(false))
         }}

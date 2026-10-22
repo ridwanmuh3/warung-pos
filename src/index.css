@@ -248,4 +248,69 @@ a {
   body {
     @apply bg-white;
   }
+
+  /* Panduan: compact enough for one A4 page without shrinking the screen UI. */
+  main[data-route='guide'] {
+    max-width: none;
+    padding: 0 !important;
+  }
+  .guide-page h1 {
+    font-size: 18pt;
+  }
+  .guide-page > div:first-child {
+    margin-bottom: 4pt;
+  }
+  .guide-page h2 {
+    margin-top: 3pt;
+    font-size: 13pt;
+  }
+  .guide-page h3 {
+    font-size: 10.5pt;
+  }
+  .guide-page p {
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+  .guide-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3pt;
+    margin-top: 4pt;
+  }
+  .guide-step {
+    gap: 5pt;
+    padding: 2pt 6pt;
+    border: 0;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  .guide-step > span:first-child {
+    width: 18pt;
+    height: 18pt;
+    font-size: 10pt;
+  }
+  .guide-step svg {
+    display: none;
+  }
+  .guide-problems {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2pt;
+    margin-top: 4pt;
+  }
+  .guide-problem {
+    padding: 3pt 5pt;
+    border: 0;
+  }
+  .guide-roles {
+    margin-top: 3pt;
+    break-inside: avoid;
+  }
+  .guide-roles table {
+    font-size: 8.5pt;
+  }
+  .guide-roles th,
+  .guide-roles td {
+    padding: 2pt 5pt;
+  }
 }

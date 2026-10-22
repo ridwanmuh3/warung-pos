@@ -1,15 +1,20 @@
 import { useMemo, useRef } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { IconArrowRight, IconPackage, IconPlus, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
+import { IconArrowRight, IconBook, IconPackage, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CATEGORY_LABELS } from '../data/products'
 import { addToCart, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
 import { useProducts } from '../lib/useServerData'
+import { useTenant } from '../lib/useTenant'
+import { itemsTotal } from '../lib/totals'
 import type { ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
+import { FirstRunGuide } from '../components/FirstRunGuide'
+import { OwnerSetupChecklist } from '../components/OwnerSetupChecklist'
 import { ProductImage } from '../components/ProductImage'
+import { KasStatus } from '../components/KasStatus'
 import { SkeletonGrid } from '../components/ui/Skeleton'
 
 const FILTERS: Array<{ value: ProductCategory | 'semua'; label: string }> = [
@@ -39,8 +44,10 @@ function MenuPage() {
   const query = cari ?? ''
   const navigate = useNavigate({ from: Route.fullPath })
   const searchRef = useRef<HTMLInputElement>(null)
-  const { items } = useCart()
+  const { items, count } = useCart()
   const { data: products, loading: productsLoading } = useProducts()
+  const tenant = useTenant()
+  const canManageCatalog = tenant.context?.role === 'owner' || tenant.context?.role === 'manager'
 
   const qtyByProduct = useMemo(() => {
     const map = new Map<string, number>()
@@ -77,20 +84,39 @@ function MenuPage() {
   }
 
   return (
-    <div className="pb-14 md:pb-0">
+    <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <PageHeader
         title="Kasir"
         subtitle="Pilih produk yang dibeli pelanggan"
         action={
-          <Link
-            to="/produk"
-            className="inline-flex items-center gap-1.5 rounded-full border-2 border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
-          >
-            <IconPackage size={16} />
-            Kelola Produk
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/panduan"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-full border-2 border-divider bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+            >
+              <IconBook size={16} stroke={2} />
+              Panduan
+            </Link>
+            <Link
+              to="/produk"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-full border-2 border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+            >
+              <IconPackage size={16} />
+              {canManageCatalog ? 'Kelola Produk' : 'Lihat Produk'}
+            </Link>
+          </div>
         }
       />
+
+      {tenant.context?.role === 'owner' && (
+        <OwnerSetupChecklist
+          tenantName={tenant.context.tenantName}
+          productCount={products.length}
+          productsLoading={productsLoading}
+        />
+      )}
+
+      <KasStatus />
 
       <div className="relative mb-3">
         <IconSearch
@@ -145,32 +171,51 @@ function MenuPage() {
 
       {productsLoading && products.length === 0 ? (
         <SkeletonGrid count={8} />
-      ) : visible.length === 0 ? (
+      ) : products.length === 0 ? (
         <EmptyState
-          emoji={needle === '' ? '📦' : '🔍'}
-          title={needle === '' ? 'Belum ada produk' : 'Produk tidak ditemukan'}
+          emoji="📦"
+          title="Belum ada produk"
           description={
-            needle === ''
-              ? 'Tambahkan produk dulu di halaman Kelola Produk.'
-              : `Tidak ada produk cocok dengan “${query}”.`
+            canManageCatalog
+              ? 'Tambahkan produk pertama agar kasir bisa dipakai. Cukup nama dan harga.'
+              : 'Minta pemilik atau manajer menambahkan produk. Panduan singkat bisa dibuka kapan saja.'
           }
           action={
-            needle === '' ? (
+            canManageCatalog ? (
               <Link
                 to="/produk"
                 className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
               >
                 <IconPackage size={16} />
-                Kelola Produk
+                Tambah Produk
               </Link>
             ) : (
-              <button
-                onClick={() => setSearch({ cari: '' })}
-                className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+              <Link
+                to="/panduan"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
               >
-                Hapus pencarian
-              </button>
+                <IconBook size={16} />
+                Lihat Panduan
+              </Link>
             )
+          }
+        />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          emoji={needle === '' ? '📦' : '🔍'}
+          title={needle === '' ? 'Belum ada produk di kategori ini' : 'Produk tidak ditemukan'}
+          description={
+            needle === ''
+              ? 'Coba pilih kategori lain atau tampilkan semua produk.'
+              : `Tidak ada produk cocok dengan “${query}”.`
+          }
+          action={
+            <button
+              onClick={() => navigate({ search: {}, replace: true })}
+              className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+            >
+              Tampilkan semua
+            </button>
           }
         />
       ) : (
@@ -185,12 +230,13 @@ function MenuPage() {
               <button
                 key={product.id}
                 onClick={() => addToCart(product)}
+                aria-label={`Tambah ${product.name}`}
                 className={`relative flex flex-col items-start rounded-2xl border bg-surface p-3 text-left shadow-level1 transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-level3 active:scale-[0.98] ${
                   soldOut ? 'border-danger/30' : 'border-border-subtle'
                 }`}
               >
                 {qty > 0 && (
-                  <span className="tabular absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-ink text-xs font-bold text-white">
+                  <span className="tabular absolute right-2 top-2 z-10 grid size-6 place-items-center rounded-full bg-ink text-xs font-bold text-white">
                     {qty}
                   </span>
                 )}
@@ -199,42 +245,45 @@ function MenuPage() {
                 <span className="tabular mt-1 text-sm font-bold text-brand-600">
                   {formatIDR(product.price)}
                 </span>
-                {product.stock !== null && (
+                {/* Stock is only worth a line when it changes the decision.
+                    A normal count on every card is twenty rows of noise. */}
+                {product.stock !== null && (soldOut || isLow) && (
                   <span
                     data-testid={`menu-stock-${product.id}`}
-                    className={`tabular mt-1 text-[11px] font-medium ${
-                      soldOut ? 'text-red-600' : isLow ? 'text-amber-600' : 'text-slate-400'
+                    className={`tabular mt-1 text-[11px] font-semibold ${
+                      soldOut ? 'text-red-600' : 'text-amber-600'
                     }`}
                   >
-                    {soldOut ? `Stok habis (${product.stock})` : `Stok ${product.stock}`}
+                    {soldOut ? `Stok habis (${product.stock})` : `Sisa ${product.stock}`}
                   </span>
                 )}
-                <span className="mt-2 flex w-full items-center justify-center gap-1 rounded-full bg-surface-muted py-1.5 text-xs font-semibold text-body">
-                  <IconPlus size={14} stroke={2.5} />
-                  {soldOut ? 'Habis' : 'Tambah'}
-                </span>
               </button>
             )
           })}
         </div>
       )}
 
-      {/* Floating cart bar for small screens, stacked above the tab bar. */}
-      <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
-        <Link
-          to="/keranjang"
-          className="flex items-center justify-between rounded-full border-2 border-primary bg-primary px-5 py-3 font-semibold text-on-primary"
-        >
-          <span className="flex items-center gap-2">
-            <IconShoppingCart size={18} stroke={2} />
-            {items.length} produk dipilih
-          </span>
-          <span className="flex items-center gap-1">
-            Lanjut
-            <IconArrowRight size={16} stroke={2.5} />
-          </span>
-        </Link>
-      </div>
+      {/* Floating cart bar for small screens, stacked above the tab bar. Hidden
+          while the cart is empty: a dead "0 produk" bar is just noise. */}
+      {items.length > 0 && (
+        <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
+          <Link
+            to="/keranjang"
+            className="flex items-center justify-between rounded-full border-2 border-primary bg-primary px-5 py-3 font-semibold text-on-primary"
+          >
+            <span className="flex items-center gap-2">
+              <IconShoppingCart size={18} stroke={2} />
+              {count} produk
+            </span>
+            <span className="tabular flex items-center gap-1">
+              {formatIDR(itemsTotal(items))}
+              <IconArrowRight size={16} stroke={2.5} />
+            </span>
+          </Link>
+        </div>
+      )}
+
+      <FirstRunGuide />
     </div>
   )
 }

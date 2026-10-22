@@ -94,6 +94,15 @@ export function numberField(schema: z.ZodType<number, number>) {
     .pipe(schema)
 }
 
+/** Numeric form field where a blank input means zero (e.g. optional HPP). */
+export function blankAsZeroField(schema: z.ZodType<number, number>) {
+  return z
+    .string()
+    .transform((value) => value.trim())
+    .transform((value) => (value === '' ? 0 : Number(value)))
+    .pipe(schema)
+}
+
 /** Percent discount: 0–100. */
 export const discountPercent = z
   .number()
@@ -167,7 +176,7 @@ export const barcodeCode = z
 export const productDraftSchema = z.object({
   name: requiredText(MAX_TEXT, 'Nama produk wajib diisi'),
   price: numberField(priceRupiah),
-  cost: numberField(rupiah),
+  cost: blankAsZeroField(rupiah),
   category: productCategory,
   /** R2 object key; null removes the image. */
   imageKey: z.string().max(200).nullable().optional().default(null),
@@ -269,12 +278,17 @@ export const shiftCloseSchema = z.object({
   note: noteText,
 })
 
+/** Shop label shown across the app and on receipts. */
+export const tenantName = requiredText(60, 'Nama warung wajib diisi')
+
 export const registerSchema = z
   .object({
     name: personName,
     email,
     password,
     confirmPassword: z.string(),
+    /** Optional so older clients (and tests) can still register. */
+    warungName: cleanText(60).optional(),
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: 'Konfirmasi kata sandi tidak cocok',

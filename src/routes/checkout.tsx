@@ -2,17 +2,25 @@ import { useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
-import { IconBuildingBank, IconCash, IconQrcode } from '@tabler/icons-react'
+import {
+  IconBuildingBank,
+  IconCash,
+  IconChevronDown,
+  IconQrcode,
+} from '@tabler/icons-react'
 import { PAYMENT_LABELS, CHANNEL_LABELS } from '../data/products'
-import { clearCart, flushCart, useCart } from '../lib/cart'
+import { clearCart, flushCart, setCartItems, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
 import { checkoutFn } from '../lib/data.functions'
 import { discountValue, itemsTotal } from '../lib/totals'
 import { checkoutFormSchema, parseCheckoutForm } from '../lib/validation'
+import { useProducts } from '../lib/useServerData'
+import { useSession } from '../lib/useSession'
 import type { PaymentMethod, SalesChannel } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { ProductImage } from '../components/ProductImage'
+import { KasStatus } from '../components/KasStatus'
 import { Button } from '../components/ui/Button'
 
 const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
@@ -49,18 +57,43 @@ export const Route = createFileRoute('/checkout')({
 function CheckoutPage() {
   const navigate = useNavigate()
   const { items } = useCart()
+  const session = useSession()
+  const { data: products } = useProducts()
   const [payment, setPayment] = useState<PaymentMethod>('tunai')
   const [channel, setChannel] = useState<SalesChannel>('dine-in')
-  const [cashier, setCashier] = useState('')
+  /** Null means "not edited yet": the label follows the signed-in user. */
+  const [cashierDraft, setCashierDraft] = useState<string | null>(null)
+  const cashier = cashierDraft ?? session?.name ?? ''
   const [discountMode, setDiscountMode] = useState<DiscountMode>('rupiah')
   const [discountInput, setDiscountInput] = useState('')
-  const [cashInput, setCashInput] = useState('')
+  /** Null means "uang pas": the amount follows the total until edited. */
+  const [cashDraft, setCashDraft] = useState<string | null>(null)
+  const [showDetails, setShowDetails] = useState(false)
   const [formErrors, setFormErrors] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   /** Synchronous latch: `disabled` alone cannot stop a double click before re-render. */
   const submittedRef = useRef(false)
 
-  const subtotal = useMemo(() => itemsTotal(items), [items])
+  // The server prices from the live catalog (ADR-0003). The screen must show
+  // the same numbers, otherwise the charged total can differ from the change
+  // the cashier just counted out.
+  const liveById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products])
+  const pricedItems = useMemo(
+    () =>
+      items.map((item) => {
+        const live = liveById.get(item.productId)
+        return live
+          ? { ...item, name: live.name, imageKey: live.imageKey, price: live.price }
+          : item
+      }),
+    [items, liveById],
+  )
+  const stale = useMemo(
+    () => items.filter((item) => liveById.has(item.productId) && liveById.get(item.productId)!.price !== item.price),
+    [items, liveById],
+  )
+
+  const subtotal = useMemo(() => itemsTotal(pricedItems), [pricedItems])
   const discount = useMemo(() => {
     const parsed = Number(discountInput)
     if (discountInput === '' || !Number.isFinite(parsed) || parsed <= 0) return 0
@@ -72,6 +105,9 @@ function CheckoutPage() {
 
   const total = subtotal - discount
 
+  // Cash defaults to the exact amount: most warung payments are "uang pas".
+  // Editing the field pins the typed value; "Uang pas" clears the pin.
+  const cashInput = cashDraft ?? String(total)
   const cashAmount = Number(cashInput)
   const cashValid = cashInput !== '' && Number.isFinite(cashAmount) && cashAmount >= total
   const change = cashValid ? cashAmount - total : 0
@@ -132,6 +168,9 @@ function CheckoutPage() {
     setSubmitting(true)
     void (async () => {
       try {
+        // Carry the corrected prices back into the local cart before pushing it,
+        // so the server's open cart and this screen agree.
+        if (stale.length > 0) setCartItems(pricedItems)
         // Push the local cart to the server, then settle it: the server finds
         // the open cart, prices it from the live catalog, and settles it
         // exactly once (ADR-0003/0004). A retry returns the original order, so
@@ -154,15 +193,20 @@ function CheckoutPage() {
       <h2 className="text-sm font-semibold text-slate-900">Uang Diterima</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
-          onClick={() => setCashInput(String(total))}
-          className="rounded-full border border-divider px-3.5 py-2 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
+          onClick={() => setCashDraft(null)}
+          aria-pressed={Number(cashInput) === total}
+          className={`rounded-full border px-3.5 py-2 text-xs font-semibold transition duration-150 ease-out ${
+            Number(cashInput) === total
+              ? 'border-primary bg-primary-subtle text-on-primary'
+              : 'border-divider text-body hover:bg-surface-muted'
+          }`}
         >
           Uang pas
         </button>
         {quickCashOptions(total).map((option) => (
           <button
             key={option}
-            onClick={() => setCashInput(String(option))}
+            onClick={() => setCashDraft(String(option))}
             className="tabular rounded-full border border-divider px-3.5 py-2 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
           >
             {formatIDR(option)}
@@ -175,7 +219,7 @@ function CheckoutPage() {
         step={500}
         inputMode="numeric"
         value={cashInput}
-        onChange={(event) => setCashInput(event.target.value)}
+        onChange={(event) => setCashDraft(event.target.value)}
         placeholder="0"
         aria-label="Uang diterima"
         data-testid="cash-input"
@@ -193,45 +237,7 @@ function CheckoutPage() {
       {cashInput !== '' && !cashValid && (
         <p className="mt-1 text-xs text-red-600">Uang diterima kurang dari total bayar.</p>
       )}
-    </section>
-  )
-
-  const discountSection = (
-    <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">Diskon</h2>
-        <div className="flex rounded-lg border border-slate-200 p-0.5">
-          {(['rupiah', 'persen'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setDiscountMode(mode)}
-              aria-pressed={discountMode === mode}
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                discountMode === mode ? 'bg-ink text-white' : 'text-body hover:bg-surface-muted'
-              }`}
-            >
-              {mode === 'rupiah' ? 'Rp' : '%'}
-            </button>
-          ))}
-        </div>
-      </div>
-      <input
-        type="number"
-        min={0}
-        step={discountMode === 'persen' ? 1 : 500}
-        inputMode="numeric"
-        value={discountInput}
-        onChange={(event) => setDiscountInput(event.target.value)}
-        placeholder={discountMode === 'persen' ? '10' : '2000'}
-        aria-label="Nilai diskon"
-        data-testid="discount-input"
-        className="tabular mt-3 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-right text-sm font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
-      />
-      {discount > 0 && (
-        <p className="mt-1 text-right text-xs text-slate-500">
-          Potongan <span className="tabular font-semibold text-red-600">−{formatIDR(discount)}</span>
-        </p>
-      )}
+      <KasStatus compact />
     </section>
   )
 
@@ -249,7 +255,7 @@ function CheckoutPage() {
   )
 
   return (
-    <div className="pb-14 md:pb-0">
+    <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <PageHeader
         title="Detail Pesanan"
         subtitle="Periksa kembali sebelum konfirmasi"
@@ -271,14 +277,23 @@ function CheckoutPage() {
         </div>
       )}
 
+      {stale.length > 0 && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+          Harga beberapa produk berubah. Total di bawah sudah memakai harga katalog terbaru.
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-[1fr_18rem] lg:grid-cols-[1fr_20rem]">
         <div className="space-y-4">
           <section className="rounded-2xl border border-border-subtle bg-surface shadow-level1">
-            <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900 sm:px-5">
-              Rincian Produk
-            </h2>
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
+              <h2 className="text-sm font-semibold text-slate-900">Rincian Produk</h2>
+              <Link to="/keranjang" className="text-xs font-semibold text-brand-700 hover:underline">
+                Ubah
+              </Link>
+            </div>
             <ul className="divide-y divide-slate-100">
-              {items.map((item) => (
+              {pricedItems.map((item) => (
                 <li key={item.productId} className="flex items-center gap-3 px-4 py-3 sm:px-5">
                   <ProductImage imageKey={item.imageKey} alt={item.name} className="size-9" iconSize={16} />
                   <div className="min-w-0 flex-1">
@@ -297,7 +312,7 @@ function CheckoutPage() {
 
           <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900">Metode Pembayaran</h2>
-            <div className="mt-3 grid gap-2 grid-cols-3">
+            <div className="mt-3 grid grid-cols-3 gap-2">
               {PAYMENT_METHODS.map((method) => {
                 const Icon = PAYMENT_ICONS[method]
                 return (
@@ -319,43 +334,112 @@ function CheckoutPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
-            <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
-            <div className="mt-3 grid gap-2 grid-cols-3">
-              {CHANNELS.map((value) => (
-                <button
-                  key={value}
-                  onClick={() => setChannel(value)}
-                  aria-pressed={channel === value}
-                  data-testid={`channel-${value}`}
-                  className={`rounded-xl border-2 px-3 py-3 text-sm font-medium transition-colors ${
-                    channel === value
-                      ? 'border-primary bg-primary-subtle text-on-primary'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  {CHANNEL_LABELS[value]}
-                </button>
-              ))}
-            </div>
-            <label htmlFor="cashier-name" className="mt-3 block">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Nama Kasir
-              </span>
-              <input
-                id="cashier-name"
-                value={cashier}
-                onChange={(event) => setCashier(event.target.value)}
-                placeholder="Opsional"
-                autoComplete="off"
-                data-testid="cashier-input"
-                className="mt-1 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
-              />
-            </label>
-          </section>
-
           {cashSection}
-          {discountSection}
+
+          {/* Channel, cashier label, and discount are secondary: most sales use
+              the default. One tap reveals them instead of three permanent
+              blocks the cashier has to scroll past. */}
+          <section className="rounded-2xl border border-border-subtle bg-surface shadow-level1">
+            <button
+              type="button"
+              onClick={() => setShowDetails((open) => !open)}
+              aria-expanded={showDetails}
+              data-testid="checkout-details-toggle"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5"
+            >
+              <span className="text-sm font-semibold text-slate-900">Detail tambahan</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-xs text-slate-500">
+                  {CHANNEL_LABELS[channel]}
+                  {discount > 0 ? ` · Diskon ${formatIDR(discount)}` : ''}
+                </span>
+                <IconChevronDown
+                  size={16}
+                  stroke={2}
+                  className={`shrink-0 text-slate-400 transition-transform ${showDetails ? 'rotate-180' : ''}`}
+                />
+              </span>
+            </button>
+
+            {showDetails && (
+              <div className="space-y-4 border-t border-slate-100 p-4 sm:p-5">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Jenis Pesanan</h3>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {CHANNELS.map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => setChannel(value)}
+                        aria-pressed={channel === value}
+                        data-testid={`channel-${value}`}
+                        className={`rounded-xl border-2 px-2 py-2.5 text-xs font-medium transition-colors ${
+                          channel === value
+                            ? 'border-primary bg-primary-subtle text-on-primary'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        {CHANNEL_LABELS[value]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="cashier-name" className="block">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Nama Kasir di Struk
+                    </span>
+                    <input
+                      id="cashier-name"
+                      value={cashier}
+                      onChange={(event) => setCashierDraft(event.target.value)}
+                      placeholder="Opsional"
+                      autoComplete="off"
+                      data-testid="cashier-input"
+                      className="mt-1 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+                    />
+                  </label>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Diskon</h3>
+                    <div className="flex rounded-lg border border-slate-200 p-0.5">
+                      {(['rupiah', 'persen'] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => setDiscountMode(mode)}
+                          aria-pressed={discountMode === mode}
+                          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                            discountMode === mode ? 'bg-ink text-white' : 'text-body hover:bg-surface-muted'
+                          }`}
+                        >
+                          {mode === 'rupiah' ? 'Rp' : '%'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    step={discountMode === 'persen' ? 1 : 500}
+                    inputMode="numeric"
+                    value={discountInput}
+                    onChange={(event) => setDiscountInput(event.target.value)}
+                    placeholder={discountMode === 'persen' ? '10' : '2000'}
+                    aria-label="Nilai diskon"
+                    data-testid="discount-input"
+                    className="tabular mt-2 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-right text-sm font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+                  />
+                  {discount > 0 && (
+                    <p className="mt-1 text-right text-xs text-slate-500">
+                      Potongan <span className="tabular font-semibold text-red-600">−{formatIDR(discount)}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
         </div>
 
         <div className="hidden md:block lg:sticky lg:top-24 lg:self-start">

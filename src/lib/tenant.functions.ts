@@ -7,10 +7,11 @@ import {
   listMemberships,
   listTenantMembers,
   findMembership,
+  renameTenant,
   requireMembership,
   updateMemberRole,
 } from './tenant.server'
-import { email as emailSchema } from './validation'
+import { email as emailSchema, tenantName } from './validation'
 
 /** Tenant/role RPC. The client only ever *reads* its role and *asks* to switch. */
 
@@ -71,4 +72,12 @@ export const inviteMemberFn = createServerFn({ method: 'POST' })
   .handler(async ({ data: input }): Promise<MemberRow> => {
     const ctx = await requireMembership('owner')
     return addMemberByEmail(ctx.tenantId, input.email, input.role as Role)
+  })
+
+/** Renames the active shop. Only the owner can change the shop's identity. */
+export const updateTenantNameFn = createServerFn({ method: 'POST' })
+  .validator(z.object({ name: tenantName }))
+  .handler(async ({ data: input }): Promise<void> => {
+    const ctx = await requireMembership('owner')
+    await renameTenant(ctx.tenantId, input.name)
   })

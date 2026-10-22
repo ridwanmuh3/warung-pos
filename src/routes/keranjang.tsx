@@ -69,7 +69,7 @@ function ParkedCarts({
     <section className="mb-4">
       <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
         <IconArchive size={16} stroke={2} />
-        Keranjang Tersimpan
+        Pesanan Ditahan
       </h2>
       <ul className="space-y-2">
         {parked.map((cart) => (
@@ -187,7 +187,7 @@ function CartPage() {
   }
 
   return (
-    <div className="pb-14 md:pb-0">
+    <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/" backLabel="Tambah produk" />
 
       <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
@@ -255,8 +255,8 @@ function CartPage() {
                   <input
                     value={parkLabel}
                     onChange={(event) => setParkLabel(event.target.value)}
-                    placeholder="Nama pelanggan"
-                    aria-label="Nama keranjang disimpan"
+                    placeholder="Nama pelanggan / meja"
+                    aria-label="Nama pesanan yang ditahan"
                     className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-brand-500"
                   />
                   <button
@@ -266,7 +266,7 @@ function CartPage() {
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                   >
                     <IconArchive size={14} />
-                    Simpan
+                    Tahan
                   </button>
                 </div>
                 <button

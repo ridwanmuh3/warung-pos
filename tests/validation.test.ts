@@ -74,6 +74,21 @@ describe('productDraftSchema', () => {
     })
     expect(parsed.stock).toBeNull()
   })
+
+  it('treats an empty cost as zero instead of rejecting the new product', () => {
+    const parsed = productDraftSchema.parse({
+      name: 'Kopi',
+      price: '5000',
+      cost: '',
+      category: 'minuman',
+      imageKey: null,
+      stock: '',
+      lowStockThreshold: '5',
+      sku: '',
+      barcode: '',
+    })
+    expect(parsed.cost).toBe(0)
+  })
 })
 
 describe('marginPercent', () => {

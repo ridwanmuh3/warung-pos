@@ -2,16 +2,20 @@ import { IconBuildingStore } from '@tabler/icons-react'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { formatDateTime, formatIDR } from '../lib/format'
 import { lineSubtotal } from '../lib/totals'
+import { useTenant } from '../lib/useTenant'
 import type { Order } from '../types'
 import { ProductImage } from './ProductImage'
 
 export function Receipt({ order }: { order: Order }) {
+  const { context } = useTenant()
+  const shopName = context?.tenantName ?? 'Warung POS'
+
   return (
     <div className="rounded-2xl border border-border-subtle bg-surface p-5 shadow-level1">
       <div className="text-center">
         <p className="flex items-center justify-center gap-1.5 text-lg font-bold">
           <IconBuildingStore size={20} stroke={2} />
-          Warung POS
+          {shopName}
         </p>
         <p className="text-xs text-slate-500">Struk transaksi</p>
         <p className="tabular mt-1 text-xs text-slate-500">

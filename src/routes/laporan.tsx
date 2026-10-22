@@ -15,24 +15,26 @@ import {
 import { buildDailyReport, dailyOrdersCsv, downloadTextFile, zReportText } from '../lib/reporting'
 import { marginPercent } from '../lib/totals'
 import { useOrders, useShifts } from '../lib/useServerData'
+import { useTenant } from '../lib/useTenant'
 import { SkeletonRows, SkeletonStats } from '../components/ui/Skeleton'
 import { ShareBar } from '../components/ui/ShareBar'
 import { StatCard as Summary, type StatTone } from '../components/ui/StatCard'
+import { Tab, TabList } from '../components/ui/Tabs'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
+import { TodaySummary } from '../components/TodaySummary'
 
 export const Route = createFileRoute('/laporan')({
   component: ReportPage,
   // A hand-edited `?tanggal=` must fall back to today instead of reaching the
   // day formatters with an Invalid Date.
   validateSearch: z.object({
+    tab: z.enum(['hari-ini', 'per-hari']).optional().catch(undefined),
     tanggal: z.string().refine(isDayKey, 'Tanggal tidak valid').optional().catch(undefined),
   }),
-  // The selected day comes from a server function; the numbers come from
-  // browser-local orders, so only the data half is server-rendered.
   ssr: 'data-only',
   loaderDeps: ({ search }) => ({ tanggal: search.tanggal }),
   loader: ({ deps }) => {
@@ -42,9 +44,70 @@ export const Route = createFileRoute('/laporan')({
 
 function ReportPage() {
   const { day } = Route.useLoaderData()
+  const { tab: rawTab } = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const tenant = useTenant()
+  const tab = rawTab ?? 'hari-ini'
+
+  return (
+    <div>
+      <PageHeader
+        title="Laporan"
+        subtitle={
+          tab === 'hari-ini'
+            ? 'Ringkasan penjualan hari ini'
+            : `Rekap harian · ${formatDayLabel(day)}`
+        }
+      />
+
+      <TabList className="no-print mb-4" aria-label="Jenis laporan">
+        <Tab
+          active={tab === 'hari-ini'}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, tab: 'hari-ini' }), replace: true })}
+          data-testid="tab-today"
+          className="flex-1"
+        >
+          Hari ini
+        </Tab>
+        <Tab
+          active={tab === 'per-hari'}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, tab: 'per-hari' }), replace: true })}
+          data-testid="tab-daily"
+          className="flex-1"
+        >
+          Per hari
+        </Tab>
+      </TabList>
+
+      {tab === 'hari-ini' ? (
+        <TodaySummary day={resolveReportingDay()} />
+      ) : (
+        <DailyReport
+          day={day}
+          isCashier={tenant.context?.role === 'cashier'}
+          onPickDay={(value) =>
+            navigate({
+              search: (prev) => ({ ...prev, tanggal: value }),
+              replace: true,
+            })
+          }
+        />
+      )}
+    </div>
+  )
+}
+
+function DailyReport({
+  day,
+  isCashier,
+  onPickDay,
+}: {
+  day: string
+  isCashier: boolean
+  onPickDay: (day: string) => void
+}) {
   const { data: orders, loading: ordersLoading, error: ordersError, reload: reloadOrders } = useOrders()
   const { data: shifts, error: shiftsError, reload: reloadShifts } = useShifts()
-  const navigate = useNavigate({ from: Route.fullPath })
 
   const report = useMemo(() => buildDailyReport(day, orders, shifts), [day, orders, shifts])
 
@@ -57,23 +120,11 @@ function ReportPage() {
 
   const dayLabel = formatDayLabel(day)
   const hasData = report.orders.length > 0
-
   const margin = marginPercent(report.profit, report.revenue)
 
-  // Both mixes read largest-first; the report aggregates in storage order.
-  const paymentRows = useMemo(
-    () => [...report.byPayment].sort((a, b) => b.total - a.total),
-    [report.byPayment],
-  )
-  const channelRows = useMemo(
-    () => [...report.byChannel].sort((a, b) => b.total - a.total),
-    [report.byChannel],
-  )
+  const paymentRows = useMemo(() => [...report.byPayment].sort((a, b) => b.total - a.total), [report.byPayment])
+  const channelRows = useMemo(() => [...report.byChannel].sort((a, b) => b.total - a.total), [report.byChannel])
   const notCounted = report.voided.length + report.refunded.length
-
-  // Cash variance tone follows the app's existing convention (ShiftPanel and the
-  // reconciliation list): pas = green, lebih (surplus) = amber, kurang = red.
-  // Nothing to reconcile — no closed shift, or the cash read failed — stays neutral.
   const closedShiftCount = report.shifts.filter((shift) => shift.closedAt !== undefined).length
   const cashState = report.cashVariance === 0 ? 'pas' : report.cashVariance > 0 ? 'lebih' : 'kurang'
   const cashTone: StatTone =
@@ -87,55 +138,25 @@ function ReportPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Laporan Harian"
-        subtitle={`${dayLabel} · ${report.paid.length} transaksi lunas${
-          notCounted > 0 ? ` · ${notCounted} tidak masuk omzet` : ''
-        }`}
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                downloadTextFile(`warung-pos-${day}.csv`, dailyOrdersCsv(report), 'text/csv')
-              }
-              disabled={!hasData}
-              data-testid="export-csv"
+      <div className="no-print mb-4 flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          {availableDays.slice(0, 5).map((value) => (
+            <button
+              key={value}
+              onClick={() => onPickDay(value)}
+              data-testid={`day-${value}`}
+              className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+                value === day
+                  ? 'bg-slate-900 text-white'
+                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+              }`}
             >
-              <IconDownload size={16} />
-              CSV
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => window.print()}
-              disabled={!hasData}
-            >
-              <IconPrinter size={16} />
-              Cetak Laporan Harian
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="no-print mb-4 flex flex-wrap gap-2">
-        {availableDays.slice(0, 7).map((value) => (
-          <button
-            key={value}
-            onClick={() => navigate({ search: { tanggal: value }, replace: true })}
-            data-testid={`day-${value}`}
-            className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
-              value === day
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            {formatDayLabel(value)}
-          </button>
-        ))}
+              {formatDayLabel(value)}
+            </button>
+          ))}
+        </div>
         <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-600">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pilih</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tanggal</span>
           <input
             type="date"
             value={dayKeyToInputValue(day)}
@@ -145,16 +166,37 @@ function ReportPage() {
               const value = event.target.value
               if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return
               const [year, month, dayOfMonth] = value.split('-').map(Number)
-              navigate({
-                search: { tanggal: `${year}-${month - 1}-${dayOfMonth}` },
-                replace: true,
-              })
+              onPickDay(`${year}-${month - 1}-${dayOfMonth}`)
             }}
             data-testid="day-picker"
             className="min-h-6 bg-transparent text-sm outline-none"
           />
         </label>
+
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => downloadTextFile(`warung-pos-${day}.csv`, dailyOrdersCsv(report), 'text/csv')}
+            disabled={!hasData}
+            data-testid="export-csv"
+          >
+            <IconDownload size={16} />
+            CSV
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => window.print()} disabled={!hasData}>
+            <IconPrinter size={16} />
+            Cetak
+          </Button>
+        </div>
       </div>
+
+      {isCashier && (
+        <p className="mb-4 rounded-lg border border-divider bg-surface-muted px-3 py-2 text-xs text-slate-600">
+          Sebagai kasir, Anda hanya melihat transaksi hari ini. Pemilik dan manajer dapat membuka
+          tanggal lain.
+        </p>
+      )}
 
       {ordersLoading && orders.length === 0 ? (
         <>
@@ -195,8 +237,19 @@ function ReportPage() {
               testId="report-revenue"
               emphasis
             />
-            <Summary label="Laba Kotor" value={formatIDR(report.profit)} hint={`Modal ${formatIDR(report.costTotal)}`} testId="report-profit" />
-            <Summary label="Margin" value={`${margin}%`} hint={`Diskon ${formatIDR(report.discountTotal)}`} tone={margin < 0 ? 'danger' : 'neutral'} testId="report-margin" />
+            <Summary
+              label="Laba Kotor"
+              value={formatIDR(report.profit)}
+              hint={`Modal ${formatIDR(report.costTotal)}`}
+              testId="report-profit"
+            />
+            <Summary
+              label="Margin"
+              value={`${margin}%`}
+              hint={`Diskon ${formatIDR(report.discountTotal)}`}
+              tone={margin < 0 ? 'danger' : 'neutral'}
+              testId="report-margin"
+            />
             <Summary
               label="Selisih Kas"
               // A missing cash figure must read as unknown, never as a real Rp0.
@@ -234,62 +287,38 @@ function ReportPage() {
           <div className="mt-4 grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
             <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
               <h2 className="text-sm font-semibold text-slate-900">Pembayaran</h2>
-              {paymentRows.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500">
-                  Tidak ada transaksi lunas pada hari ini.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2.5" data-testid="report-payments">
-                  {paymentRows.map((row) => (
-                    <li key={row.method}>
-                      <div className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="min-w-0 truncate text-slate-600">
-                          {PAYMENT_LABELS[row.method] ?? row.method}{' '}
-                          <span className="tabular text-xs text-slate-400">({row.count}×)</span>
-                        </span>
-                        <span className="tabular shrink-0 font-semibold text-slate-900">
-                          {formatIDR(row.total)}
-                        </span>
-                      </div>
-                      <ShareBar
-                        share={
-                          report.revenue > 0 ? Math.round((row.total / report.revenue) * 100) : 0
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul className="mt-3 space-y-2.5" data-testid="report-payments">
+                {paymentRows.map((row) => (
+                  <li key={row.method}>
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="min-w-0 truncate text-slate-600">
+                        {PAYMENT_LABELS[row.method] ?? row.method}{' '}
+                        <span className="tabular text-xs text-slate-400">({row.count}×)</span>
+                      </span>
+                      <span className="tabular shrink-0 font-semibold text-slate-900">{formatIDR(row.total)}</span>
+                    </div>
+                    <ShareBar share={report.revenue > 0 ? Math.round((row.total / report.revenue) * 100) : 0} />
+                  </li>
+                ))}
+              </ul>
             </section>
 
             <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
               <h2 className="text-sm font-semibold text-slate-900">Jenis Pesanan</h2>
-              {channelRows.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500">
-                  Tidak ada transaksi lunas pada hari ini.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2.5" data-testid="report-channels">
-                  {channelRows.map((row) => (
-                    <li key={row.channel}>
-                      <div className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="min-w-0 truncate text-slate-600">
-                          {CHANNEL_LABELS[row.channel] ?? row.channel}{' '}
-                          <span className="tabular text-xs text-slate-400">({row.count}×)</span>
-                        </span>
-                        <span className="tabular shrink-0 font-semibold text-slate-900">
-                          {formatIDR(row.total)}
-                        </span>
-                      </div>
-                      <ShareBar
-                        share={
-                          report.revenue > 0 ? Math.round((row.total / report.revenue) * 100) : 0
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul className="mt-3 space-y-2.5" data-testid="report-channels">
+                {channelRows.map((row) => (
+                  <li key={row.channel}>
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="min-w-0 truncate text-slate-600">
+                        {CHANNEL_LABELS[row.channel] ?? row.channel}{' '}
+                        <span className="tabular text-xs text-slate-400">({row.count}×)</span>
+                      </span>
+                      <span className="tabular shrink-0 font-semibold text-slate-900">{formatIDR(row.total)}</span>
+                    </div>
+                    <ShareBar share={report.revenue > 0 ? Math.round((row.total / report.revenue) * 100) : 0} />
+                  </li>
+                ))}
+              </ul>
             </section>
           </div>
 
@@ -325,11 +354,7 @@ function ReportPage() {
 
           <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Transaksi ({report.orders.length})
-              </h2>
-              {/* Void and refunded rows stay in the list; these say up front how
-                  many of them are here and why they do not count. */}
+              <h2 className="text-sm font-semibold text-slate-900">Transaksi ({report.orders.length})</h2>
               {report.voided.length > 0 && (
                 <Badge variant="danger" className="px-1.5 py-0.5 text-[10px]">
                   {report.voided.length} batal
@@ -344,11 +369,7 @@ function ReportPage() {
             <ul className="mt-3 divide-y divide-slate-100" data-testid="report-orders">
               {report.orders.map((order) => (
                 <li key={order.id} className="flex items-center gap-3 py-2.5">
-                  <Link
-                    to="/riwayat/$orderId"
-                    params={{ orderId: order.id }}
-                    className="min-w-0 flex-1"
-                  >
+                  <Link to="/riwayat/$orderId" params={{ orderId: order.id }} className="min-w-0 flex-1">
                     <span className="tabular text-sm font-semibold text-slate-900">{order.orderNumber}</span>
                     <span className="tabular ml-2 text-xs text-slate-400">{formatTime(order.createdAt)}</span>
                     {order.status === 'void' && (
@@ -356,8 +377,6 @@ function ReportPage() {
                         BATAL
                       </Badge>
                     )}
-                    {/* A refunded order is not money kept either; without this the
-                        row reads as a normal sale. */}
                     {order.status === 'refunded' && (
                       <Badge variant="warning" className="ml-2 px-1.5 py-0.5 text-[10px]">
                         REFUND
@@ -379,24 +398,21 @@ function ReportPage() {
             </ul>
           </section>
 
-          <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">Laporan Harian</h2>
-              <button
-                onClick={() => downloadTextFile(`z-report-${day}.txt`, zReportText(report, dayLabel))}
-                data-testid="download-zreport"
-                className="no-print inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
-              >
-                Unduh
-                <IconArrowRight size={12} stroke={2.5} />
-              </button>
+          <section className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Z-Report</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Rekap tutup toko: omzet, kas, dan {notCounted} transaksi yang tidak masuk omzet.
+              </p>
             </div>
-            <pre
-              data-testid="zreport-text"
-              className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-xs text-slate-700"
+            <button
+              onClick={() => downloadTextFile(`z-report-${day}.txt`, zReportText(report, dayLabel))}
+              data-testid="download-zreport"
+              className="no-print inline-flex min-h-9 items-center gap-1.5 rounded-full border border-slate-200 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             >
-              {zReportText(report, dayLabel)}
-            </pre>
+              Unduh .txt
+              <IconArrowRight size={12} stroke={2.5} />
+            </button>
           </section>
         </>
       )}
