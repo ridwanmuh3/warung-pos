@@ -4,7 +4,7 @@ import { __test } from '../src/lib/r2.server'
 const { s3Endpoint, isServableKey, isAllowedImageContentType } = __test
 
 describe('s3Endpoint', () => {
-  const BUCKET = 'devtest-bucket'
+  const BUCKET = 'unit-fixture-container-471'
   const BASE = 'https://acct.r2.cloudflarestorage.com'
 
   it('strips a trailing /<bucket> the dashboard adds', () => {
