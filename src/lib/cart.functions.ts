@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import * as data from './data.server'
 import { requireMembership } from './tenant.server'
-import { orderItemSchema } from './validation'
+import { cleanText, entityId, orderItemsSchema } from './validation'
 import type { Cart } from '../types'
 
 /**
@@ -21,14 +21,14 @@ export const getOpenCartFn = createServerFn({ method: 'GET' }).handler(
 )
 
 export const saveCartFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ items: z.array(orderItemSchema) }))
+  .validator(z.object({ items: orderItemsSchema }))
   .handler(async ({ data: input }): Promise<Cart> => {
     const ctx = await requireMembership('cashier')
     return data.saveCart(ctx.tenantId, ctx.userId, input.items)
   })
 
 export const parkCartFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ label: z.string().max(60).optional() }))
+  .validator(z.object({ label: cleanText(60).optional() }))
   .handler(async ({ data: input }): Promise<void> => {
     const ctx = await requireMembership('cashier')
     await data.parkCart(ctx.tenantId, ctx.userId, input.label)
@@ -42,14 +42,14 @@ export const listParkedCartsFn = createServerFn({ method: 'GET' }).handler(
 )
 
 export const resumeCartFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ cartId: z.string().min(1) }))
+  .validator(z.object({ cartId: entityId }))
   .handler(async ({ data: input }): Promise<Cart | undefined> => {
     const ctx = await requireMembership('cashier')
     return data.resumeCart(ctx.tenantId, ctx.userId, input.cartId)
   })
 
 export const deleteCartFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ cartId: z.string().min(1) }))
+  .validator(z.object({ cartId: entityId }))
   .handler(async ({ data: input }): Promise<void> => {
     const ctx = await requireMembership('cashier')
     await data.deleteCart(ctx.tenantId, ctx.userId, input.cartId)

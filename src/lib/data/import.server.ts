@@ -6,7 +6,7 @@
  * this directory and fails the build on an unscoped access.
  */
 
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { createServerOnlyFn } from '@tanstack/react-start'
 import { getDb } from '../../db/client.server'
 import { counters, orderItems, orders, products, shifts, stockMovements } from '../../db/schema'
@@ -108,6 +108,106 @@ export const importBatch = createServerOnlyFn(
     const now = new Date().toISOString()
 
     return db.transaction(async (tx) => {
+      const rejectForeign = (rows: Array<{ tenantId: string | null }>, label: string): void => {
+        if (rows.some((row) => row.tenantId !== tenantId)) {
+          throw new Error(`Impor berisi ${label} milik toko lain`)
+        }
+      }
+
+      // Primary keys are global. A legacy id that already belongs to another
+      // tenant must not silently "win" on conflict and leave imported rows
+      // pointing at that tenant's data.
+      const importedProductIds = input.products.map((item) => item.id)
+      if (importedProductIds.length > 0) {
+        rejectForeign(
+          await tx
+            .select({ tenantId: products.tenantId })
+            .from(products)
+            .where(inArray(products.id, importedProductIds)),
+          'produk',
+        )
+      }
+      const importedShiftIds = input.shifts.map((shift) => shift.id)
+      if (importedShiftIds.length > 0) {
+        rejectForeign(
+          await tx
+            .select({ tenantId: shifts.tenantId })
+            .from(shifts)
+            .where(inArray(shifts.id, importedShiftIds)),
+          'shift',
+        )
+      }
+      const importedOrderIds = input.orders.map((order) => order.id)
+      if (importedOrderIds.length > 0) {
+        rejectForeign(
+          await tx
+            .select({ tenantId: orders.tenantId })
+            .from(orders)
+            .where(inArray(orders.id, importedOrderIds)),
+          'pesanan',
+        )
+      }
+      const importedMovementIds = input.stockMovements.map((movement) => movement.id)
+      if (importedMovementIds.length > 0) {
+        rejectForeign(
+          await tx
+            .select({ tenantId: stockMovements.tenantId })
+            .from(stockMovements)
+            .where(inArray(stockMovements.id, importedMovementIds)),
+          'mutasi stok',
+        )
+      }
+
+      // Also check ids referenced by orders/movements, not just ids inserted by
+      // this batch. Missing catalog rows are allowed (legacy snapshots survive
+      // deleted products); a row owned by another tenant is not.
+      const itemProductIds = [...new Set(input.orders.flatMap((order) => order.items.map((item) => item.productId)))]
+      const movementProductIds = input.stockMovements.map((movement) => movement.productId)
+      const referencedProductIds = [...new Set([...itemProductIds, ...movementProductIds])]
+      if (referencedProductIds.length > 0) {
+        rejectForeign(
+          await tx
+            .select({ tenantId: products.tenantId })
+            .from(products)
+            .where(inArray(products.id, referencedProductIds)),
+          'produk yang dirujuk',
+        )
+      }
+
+      const referencedShiftIds = [
+        ...new Set(
+          input.orders
+            .map((order) => order.shiftId)
+            .filter((id): id is string => typeof id === 'string' && id !== ''),
+        ),
+      ]
+      if (referencedShiftIds.length > 0) {
+        rejectForeign(
+          await tx
+            .select({ tenantId: shifts.tenantId })
+            .from(shifts)
+            .where(inArray(shifts.id, referencedShiftIds)),
+          'shift yang dirujuk',
+        )
+      }
+
+      const referencedOrderIds = [
+        ...new Set(
+          input.stockMovements
+            .map((movement) => movement.orderId)
+            .filter((id): id is string => typeof id === 'string' && id !== ''),
+        ),
+      ]
+      if (referencedOrderIds.length > 0) {
+        rejectForeign(
+          await tx
+            .select({ tenantId: orders.tenantId })
+            .from(orders)
+            .where(inArray(orders.id, referencedOrderIds)),
+          'pesanan yang dirujuk',
+        )
+      }
+
       let productCount = 0
       if (input.products.length > 0) {
         const inserted = await tx

@@ -21,6 +21,12 @@ const MAX_TEXT = 120
 const MAX_NOTE = 240
 const MAX_EMAIL = 254
 
+/** Upper bounds for values that cross an RPC boundary. */
+export const MAX_ENTITY_ID = 100
+export const MAX_LINE_ITEMS = 200
+export const MAX_LINE_QTY = 10_000
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
 /**
  * Removes characters that carry no legitimate meaning in a shop label but do
  * enable markup, control-sequence, and homoglyph tricks: `<`, `>`, backticks,
@@ -81,8 +87,12 @@ export const rupiah = z
 /** Positive whole rupiah, for prices. */
 export const priceRupiah = rupiah.min(1, 'Harga harus lebih dari 0')
 
-/** Quantity: positive whole number. */
-export const quantity = z.number().int('Harus bilangan bulat').min(1, 'Minimal 1')
+/** Quantity: positive whole number, bounded so one line cannot exhaust integer space. */
+export const quantity = z
+  .number()
+  .int('Harus bilangan bulat')
+  .min(1, 'Minimal 1')
+  .max(MAX_LINE_QTY, `Maksimal ${MAX_LINE_QTY}`)
 
 /** Numeric form field: accepts the raw string, yields a validated number. */
 export function numberField(schema: z.ZodType<number, number>) {
@@ -119,18 +129,59 @@ export const email = z
 
 export const paymentMethod = z.enum(['tunai', 'qris', 'transfer'])
 
+/** Opaque row id from the database; bounded before it reaches a query. */
+export const entityId = z
+  .string()
+  .trim()
+  .min(1, 'ID wajib diisi')
+  .max(MAX_ENTITY_ID, 'ID terlalu panjang')
+
+/**
+ * R2 object key. Product uploads live under `products/`, shared seed images
+ * under `seed/`; traversal and foreign schemes are rejected before storage.
+ */
+export const imageKeySchema = z
+  .string()
+  .trim()
+  .max(200, 'Kunci gambar terlalu panjang')
+  .regex(/^(?:seed|products)\/[A-Za-z0-9][A-Za-z0-9/_.-]*$/, 'Kunci gambar tidak valid')
+  .refine((value) => !value.includes('..') && !value.includes('//'), 'Kunci gambar tidak valid')
+  .nullable()
+
+/** Query-string redirect target: only an internal absolute path is allowed. */
+export function safeInternalPath(value: string | null | undefined): string | null {
+  if (!value) return null
+  const path = value.trim()
+  if (path.length === 0 || path.length > 2048) return null
+  if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/\\')) return null
+  if (/%2f|%5c/i.test(path)) return null
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001F\u007F]/.test(path)) return null
+  return path
+}
+
+export const redirectPath = z
+  .string()
+  .max(2048)
+  .transform((value) => safeInternalPath(value) ?? undefined)
+  .optional()
+  .catch(undefined)
+
 /**
  * The ONE wire schema for a line-item snapshot (cart saves, legacy import).
  * Display-only data: checkout re-prices from the catalog (ADR-0003).
  */
 export const orderItemSchema = z.object({
-  productId: z.string().min(1),
-  name: z.string().min(1),
-  imageKey: z.string().nullable(),
-  price: z.number().int().min(0),
-  qty: z.number().int().min(1),
-  cost: z.number().int().min(0),
+  productId: entityId,
+  name: requiredText(MAX_TEXT, 'Nama item wajib diisi'),
+  imageKey: imageKeySchema,
+  price: rupiah,
+  qty: quantity,
+  cost: rupiah,
 })
+
+/** A cart or an imported order can never contain an unbounded line list. */
+export const orderItemsSchema = z.array(orderItemSchema).max(MAX_LINE_ITEMS, 'Terlalu banyak item')
 export const salesChannel = z.enum(['dine-in', 'bungkus', 'ojol'])
 export const productCategory = z.enum(['makanan', 'minuman', 'snack'])
 export const dayKey = z.string().regex(/^\d{1,4}-\d{1,2}-\d{1,2}$/, 'Format tanggal tidak valid')
@@ -179,7 +230,7 @@ export const productDraftSchema = z.object({
   cost: blankAsZeroField(rupiah),
   category: productCategory,
   /** R2 object key; null removes the image. */
-  imageKey: z.string().max(200).nullable().optional().default(null),
+  imageKey: imageKeySchema.optional().default(null),
   stock: z
     .string()
     .transform((value) => value.trim())
@@ -286,7 +337,7 @@ export const registerSchema = z
     name: personName,
     email,
     password,
-    confirmPassword: z.string(),
+    confirmPassword: z.string().max(128, 'Maksimal 128 karakter'),
     /** Optional so older clients (and tests) can still register. */
     warungName: cleanText(60).optional(),
   })
@@ -298,6 +349,9 @@ export type RegisterInput = z.infer<typeof registerSchema>
 
 export const loginSchema = z.object({
   email,
-  password: z.string().min(1, 'Kata sandi wajib diisi'),
+  password: z
+    .string()
+    .min(1, 'Kata sandi wajib diisi')
+    .max(128, 'Maksimal 128 karakter'),
 })
 export type LoginInput = z.infer<typeof loginSchema>

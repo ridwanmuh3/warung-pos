@@ -191,9 +191,30 @@ export const addMemberByEmail = createServerOnlyFn(
 
 export const updateMemberRole = createServerOnlyFn(
   async (tenantId: string, membershipId: string, role: Role): Promise<void> => {
-    await getDb()
-      .update(memberships)
-      .set({ role })
-      .where(and(eq(memberships.tenantId, tenantId), eq(memberships.id, membershipId)))
+    const db = getDb()
+    await db.transaction(async (tx) => {
+      const targetRows = await tx
+        .select({ role: memberships.role })
+        .from(memberships)
+        .where(and(eq(memberships.tenantId, tenantId), eq(memberships.id, membershipId)))
+        .limit(1)
+      const target = targetRows[0]
+      if (!target) throw new Error('Anggota tidak ditemukan')
+
+      if (target.role === 'owner' && role !== 'owner') {
+        const owners = await tx
+          .select({ id: memberships.id })
+          .from(memberships)
+          .where(and(eq(memberships.tenantId, tenantId), eq(memberships.role, 'owner')))
+        if (owners.length <= 1) {
+          throw new Error('Tidak bisa menurunkan pemilik terakhir')
+        }
+      }
+
+      await tx
+        .update(memberships)
+        .set({ role })
+        .where(and(eq(memberships.tenantId, tenantId), eq(memberships.id, membershipId)))
+    })
   },
 )

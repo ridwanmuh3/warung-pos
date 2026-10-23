@@ -2,12 +2,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { AuthScreen } from '../components/AuthScreen'
 import { userCountFn } from '../lib/auth.functions'
+import { redirectPath } from '../lib/validation'
 
 export const Route = createFileRoute('/masuk')({
     component: LoginPage,
     validateSearch: z.object({
         /** Where to continue after a successful sign-in. */
-        redirect: z.string().optional().catch(undefined),
+        redirect: redirectPath,
         mode: z.enum(['login', 'register']).optional().catch(undefined),
     }),
     // The account count comes from the database, so a fresh install can be sent

@@ -197,13 +197,22 @@ export function buildDailyReport(day: string, orders: Order[], shifts: Shift[]):
   }
 }
 
-/** Escapes one CSV field: quotes doubled, field quoted when it needs it. */
-function csvField(value: string): string {
-  return /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value
+/**
+ * Escapes one CSV field.
+ *
+ * Numbers stay numbers (so negative rupiah values remain numeric), while text
+ * beginning with a spreadsheet formula introducer gets a leading apostrophe.
+ * This is the CSV-injection defence: a product named `=HYPERLINK(...)` is data,
+ * not a formula. Quotes/commas/newlines are still quoted per RFC 4180.
+ */
+export function csvField(value: string | number): string {
+  if (typeof value === 'number') return String(value)
+  const guarded = /^[\u0000-\u0020]*[=+\-@]|^[\t\r]/.test(value) ? `'${value}` : value // eslint-disable-line no-control-regex
+  return /[",\n\r]/.test(guarded) ? `"${guarded.replaceAll('"', '""')}"` : guarded
 }
 
 function csvRow(values: Array<string | number>): string {
-  return values.map((value) => csvField(String(value))).join(',')
+  return values.map(csvField).join(',')
 }
 
 /** Line-item CSV for spreadsheet analysis of one day. */

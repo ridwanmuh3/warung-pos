@@ -27,13 +27,17 @@ export const databaseEnv = createServerOnlyFn((): DatabaseEnv => ({
 }))
 
 /**
- * Session-cookie secret. Falls back to the database token so a misconfigured
- * deployment still boots, but a dedicated secret is strongly preferred: the
- * fallback ties cookie validity to the database credential's lifetime.
+ * Session-cookie secret. Required and at least 32 characters: falling back to
+ * the database token would tie cookie validity to a database credential and
+ * make sessions forgeable if that token leaked.
  */
-export const sessionSecret = createServerOnlyFn((): string =>
-  process.env.SESSION_SECRET?.trim() || required('TURSO_ACCESS_TOKEN'),
-)
+export const sessionSecret = createServerOnlyFn((): string => {
+  const value = required('SESSION_SECRET').trim()
+  if (value.length < 32) {
+    throw new Error('SESSION_SECRET must be at least 32 characters')
+  }
+  return value
+})
 
 export interface R2Env {
   /** S3 API endpoint, used for signing and object access. */

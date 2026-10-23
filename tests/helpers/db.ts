@@ -16,6 +16,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const dir = mkdtempSync(join(tmpdir(), 'warung-pos-test-'))
 process.env.TURSO_URL = `file:${join(dir, 'test.db')}`
 process.env.TURSO_ACCESS_TOKEN = 'test-token'
+process.env.SESSION_SECRET = 'test-session-secret-0123456789abcdef'
 
 const { getDb } = await import('../../src/db/client.server')
 

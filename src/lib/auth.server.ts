@@ -15,6 +15,13 @@ import { users } from '../db/schema'
 const PBKDF2_ITERATIONS = 210_000
 const KEY_LENGTH_BITS = 256
 
+/**
+ * Fixed, non-secret salt used when an email does not exist. Deriving against
+ * it makes the unknown-email path do the same expensive work as a real
+ * password check, reducing timing-based account enumeration.
+ */
+const DUMMY_SALT = new Uint8Array(16)
+
 export interface PublicUser {
   id: string
   name: string
@@ -99,6 +106,11 @@ export const findUserById = createServerOnlyFn(async (id: string): Promise<Publi
 export const verifyPassword = createServerOnlyFn(async (user: UserWithSecret, password: string) => {
   const attempt = await derive(password, fromBase64(user.salt))
   return constantTimeEqual(attempt, user.passwordHash)
+})
+
+/** Burn the same PBKDF2 work for an unknown email as a real verification. */
+export const wastePasswordTime = createServerOnlyFn(async (password: string): Promise<void> => {
+  await derive(password, DUMMY_SALT)
 })
 
 export const countUsers = createServerOnlyFn(async (): Promise<number> => {

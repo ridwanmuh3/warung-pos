@@ -8,6 +8,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { r2Env, r2PublicUrl } from './env.server'
+import { MAX_IMAGE_BYTES } from './validation'
 
 /**
  * Cloudflare R2 access for product images.
@@ -21,6 +22,11 @@ import { r2Env, r2PublicUrl } from './env.server'
 
 export const IMAGE_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
 export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number]
+
+/** Exact content-type membership, never a prefix such as `image/svg+xml`. */
+export function isAllowedImageContentType(value: string): value is ImageContentType {
+  return (IMAGE_CONTENT_TYPES as readonly string[]).includes(value)
+}
 
 const EXT_BY_TYPE: Record<ImageContentType, string> = {
   'image/jpeg': 'jpg',
@@ -45,7 +51,7 @@ function s3Endpoint(uri: string, bucket: string): string {
 }
 
 /** Exposed for the unit test; not part of the runtime API. */
-export const __test = { s3Endpoint, isServableKey }
+export const __test = { s3Endpoint, isServableKey, isAllowedImageContentType }
 
 const getClient = createServerOnlyFn((): S3Client => {
   if (client) return client
@@ -87,7 +93,10 @@ export interface ImageObject {
  * be pointed at arbitrary objects in the bucket.
  */
 function isServableKey(key: string): boolean {
-  if (key === '' || key.startsWith('/') || key.includes('..')) return false
+  if (key === '' || key.length > 300 || key.startsWith('/') || key.includes('..') || key.includes('//')) {
+    return false
+  }
+  if (/[\u0000-\u001F\u007F\\?#]/.test(key)) return false // eslint-disable-line no-control-regex
   return key.startsWith('seed/') || key.startsWith('products/')
 }
 
@@ -97,15 +106,17 @@ function isServableKey(key: string): boolean {
  */
 export const readImageObject = createServerOnlyFn(async (key: string): Promise<ImageObject | null> => {
   if (!isServableKey(key)) return null
-  const env = r2Env()
   try {
+    const env = r2Env()
     const object = await getClient().send(new GetObjectCommand({ Bucket: env.bucket, Key: key }))
     const contentType = object.ContentType ?? ''
-    if (!contentType.startsWith('image/') || !object.Body) return null
+    if (!isAllowedImageContentType(contentType) || !object.Body) return null
+    if (object.ContentLength !== undefined && object.ContentLength > MAX_IMAGE_BYTES) return null
     // Copy into an ArrayBuffer-backed view; the SDK's stream type is
     // `Uint8Array<ArrayBufferLike>`, which `Response` does not accept.
     const body = new Uint8Array(await object.Body.transformToByteArray())
-    return { body, contentType, contentLength: object.ContentLength ?? body.byteLength }
+    if (body.byteLength === 0 || body.byteLength > MAX_IMAGE_BYTES) return null
+    return { body, contentType, contentLength: body.byteLength }
   } catch {
     return null
   }
@@ -128,20 +139,28 @@ export const createUploadTarget = createServerOnlyFn(
   },
 )
 
-/** True when the key exists in the bucket and holds an image. */
+/** True when the key exists in the bucket, is an allowed image, and is not oversized. */
 export const objectExists = createServerOnlyFn(async (key: string): Promise<boolean> => {
-  const env = r2Env()
+  if (!isServableKey(key)) return false
   try {
+    const env = r2Env()
     const head = await getClient().send(new HeadObjectCommand({ Bucket: env.bucket, Key: key }))
-    return (head.ContentType ?? '').startsWith('image/')
+    const length = head.ContentLength
+    return (
+      isAllowedImageContentType(head.ContentType ?? '') &&
+      typeof length === 'number' &&
+      length > 0 &&
+      length <= MAX_IMAGE_BYTES
+    )
   } catch {
     return false
   }
 })
 
 export const deleteObject = createServerOnlyFn(async (key: string): Promise<void> => {
-  const env = r2Env()
+  if (!isServableKey(key)) return
   try {
+    const env = r2Env()
     await getClient().send(new DeleteObjectCommand({ Bucket: env.bucket, Key: key }))
   } catch {
     // Already gone: deletion is idempotent.

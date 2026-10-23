@@ -5,6 +5,8 @@ import { requireMembership } from './tenant.server'
 import { IMAGE_CONTENT_TYPES, createUploadTarget, deleteObject, imageBaseUrl, objectExists } from './r2.server'
 import {
   checkoutFormSchema,
+  entityId,
+  noteText,
   openingCashFormSchema,
   openingCashSchema,
   parseCheckoutForm,
@@ -60,7 +62,7 @@ export const createProductFn = createServerFn({ method: 'POST' })
 export const updateProductFn = createServerFn({ method: 'POST' })
   .validator(
     z.object({
-      id: z.string().min(1),
+      id: entityId,
       draft: productDraftSchema,
     }),
   )
@@ -89,7 +91,7 @@ export const updateProductFn = createServerFn({ method: 'POST' })
   })
 
 export const deleteProductFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ id: z.string().min(1) }))
+  .validator(z.object({ id: entityId }))
   .handler(async ({ data: input }): Promise<void> => {
     const ctx = await requireMembership('manager')
     const before = (await data.listProducts(ctx.tenantId)).find((product) => product.id === input.id)
@@ -131,7 +133,7 @@ export const getImageUploadUrlFn = createServerFn({ method: 'POST' })
   })
 
 export const restockProductFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ id: z.string().min(1), delta: z.number().int().min(1).max(10_000) }))
+  .validator(z.object({ id: entityId, delta: z.number().int().min(1).max(10_000) }))
   .handler(async ({ data: input }): Promise<void> => {
     const ctx = await requireMembership('manager')
     await data.applyStockDelta(ctx.tenantId, {
@@ -160,11 +162,18 @@ export const listOrdersFn = createServerFn({ method: 'GET' }).handler(
 )
 
 export const getOrderFn = createServerFn({ method: 'GET' })
-  .validator(z.object({ id: z.string().min(1) }))
+  .validator(z.object({ id: entityId }))
   .handler(async ({ data: input }): Promise<Order | undefined> => {
     const ctx = await requireMembership('cashier')
     // A wrong tenant simply has no such order: an id leak reveals nothing.
-    return data.getOrderById(ctx.tenantId, input.id)
+    const order = await data.getOrderById(ctx.tenantId, input.id)
+    if (!order || ctx.role !== 'cashier') return order
+
+    // The cashier's "today only" rule is a server boundary, not just a UI
+    // filter. Keep the current shift visible when it opened before midnight.
+    if (order.createdAt >= startOfTodayIso()) return order
+    const current = await data.getCurrentShift(ctx.tenantId)
+    return current && order.shiftId === current.id ? order : undefined
   })
 
 /**
@@ -195,18 +204,18 @@ export const checkoutFn = createServerFn({ method: 'POST' })
   })
 
 export const voidOrderFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ id: z.string().min(1), reason: z.string().max(240) }))
+  .validator(z.object({ id: entityId, reason: noteText }))
   .handler(async ({ data: input }): Promise<Order | undefined> => {
     const ctx = await requireMembership('manager')
-    return data.voidOrder(ctx.tenantId, input.id, input.reason)
+    return data.voidOrder(ctx.tenantId, input.id, input.reason ?? '')
   })
 
 /** Returns money for an order whose shift has closed (ADR-0006). */
 export const refundOrderFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ id: z.string().min(1), reason: z.string().max(240) }))
+  .validator(z.object({ id: entityId, reason: noteText }))
   .handler(async ({ data: input }): Promise<Order | undefined> => {
     const ctx = await requireMembership('manager')
-    return data.refundOrder(ctx.tenantId, input.id, input.reason)
+    return data.refundOrder(ctx.tenantId, input.id, input.reason ?? '')
   })
 
 /* -------------------------------- shifts ------------------------------ */
@@ -214,6 +223,12 @@ export const refundOrderFn = createServerFn({ method: 'POST' })
 export const listShiftsFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<Shift[]> => {
     const ctx = await requireMembership('cashier')
+    if (ctx.role === 'cashier') {
+      return data.listShifts(ctx.tenantId, {
+        fromIso: startOfTodayIso(),
+        includeOpen: true,
+      })
+    }
     return data.listShifts(ctx.tenantId)
   },
 )
@@ -240,9 +255,16 @@ export const openShiftFn = createServerFn({ method: 'POST' })
 /** Orders feeding the drawer's expected-cash display: the open shift's sales
  *  and its refunds, unwindowed (unlike the cashier's today-only order list). */
 export const listDrawerOrdersFn = createServerFn({ method: 'GET' })
-  .validator(z.object({ shiftId: z.string().min(1) }))
+  .validator(z.object({ shiftId: entityId }))
   .handler(async ({ data: input }): Promise<Order[]> => {
     const ctx = await requireMembership('cashier')
+    const shift = await data.getShiftById(ctx.tenantId, input.shiftId)
+    if (!shift) return []
+    // A cashier may inspect today's shifts and the still-open shift. Closed
+    // historical shifts are manager/owner territory.
+    if (ctx.role === 'cashier' && shift.openedAt < startOfTodayIso() && shift.closedAt) {
+      return []
+    }
     return data.listOrdersForDrawer(ctx.tenantId, input.shiftId)
   })
 

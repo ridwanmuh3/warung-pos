@@ -123,8 +123,11 @@ function readRaw(key: string): unknown {
   }
 }
 
-function parseArray<T>(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : []
+/** Caps how many stored rows are read into memory in one snapshot. */
+const MAX_LEGACY_ROWS = 50_000
+
+function parseArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value.slice(0, MAX_LEGACY_ROWS) : []
 }
 
 /** Highest `ORD-NNN` value across a set of legacy order numbers. */

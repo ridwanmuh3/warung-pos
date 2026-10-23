@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { __test } from '../src/lib/r2.server'
 
-const { s3Endpoint, isServableKey } = __test
+const { s3Endpoint, isServableKey, isAllowedImageContentType } = __test
 
 describe('s3Endpoint', () => {
   const BUCKET = 'devtest-bucket'
@@ -34,5 +34,21 @@ describe('isServableKey', () => {
     expect(isServableKey('secret/keys.txt')).toBe(false)
     expect(isServableKey('seed/../../etc/passwd')).toBe(false)
     expect(isServableKey('products/tenant-1/../../../x')).toBe(false)
+    expect(isServableKey('seed/a.jpg?x=1')).toBe(false)
+    expect(isServableKey('seed/a.jpg\\..\\x')).toBe(false)
+  })
+})
+
+describe('isAllowedImageContentType', () => {
+  it('allows only the exact raster types the uploader signs', () => {
+    expect(isAllowedImageContentType('image/jpeg')).toBe(true)
+    expect(isAllowedImageContentType('image/png')).toBe(true)
+    expect(isAllowedImageContentType('image/webp')).toBe(true)
+  })
+
+  it('rejects SVG, HTML, and prefix lookalikes', () => {
+    expect(isAllowedImageContentType('image/svg+xml')).toBe(false)
+    expect(isAllowedImageContentType('text/html')).toBe(false)
+    expect(isAllowedImageContentType('image/png; charset=utf-8')).toBe(false)
   })
 })

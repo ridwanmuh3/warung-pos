@@ -6,7 +6,7 @@
  * this directory and fails the build on an unscoped access.
  */
 
-import { and, desc, eq, or, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, or, sql } from 'drizzle-orm'
 import { createServerOnlyFn } from '@tanstack/react-start'
 import { getDb } from '../../db/client.server'
 import { orders, shifts } from '../../db/schema'
@@ -15,14 +15,40 @@ import { expectedDrawerCash } from '../cashDrawer'
 import { toShift } from './mappers.server'
 /* -------------------------------- shifts ------------------------------ */
 
-export const listShifts = createServerOnlyFn(async (tenantId: string): Promise<Shift[]> => {
-  const rows = await getDb()
-    .select()
-    .from(shifts)
-    .where(eq(shifts.tenantId, tenantId))
-    .orderBy(desc(shifts.openedAt))
-  return rows.map(toShift)
-})
+export interface ListShiftsOptions {
+  /** Inclusive lower bound on `opened_at` (ISO string). */
+  fromIso?: string
+  /** Keep the still-open shift even if it opened before `fromIso`. */
+  includeOpen?: boolean
+}
+
+export const listShifts = createServerOnlyFn(
+  async (tenantId: string, options: ListShiftsOptions = {}): Promise<Shift[]> => {
+    const scope = eq(shifts.tenantId, tenantId)
+    const where = options.fromIso
+      ? and(
+          scope,
+          options.includeOpen
+            ? or(gte(shifts.openedAt, options.fromIso), sql`${shifts.closedAt} is null`)
+            : gte(shifts.openedAt, options.fromIso),
+        )
+      : scope
+    const rows = await getDb().select().from(shifts).where(where).orderBy(desc(shifts.openedAt))
+    return rows.map(toShift)
+  },
+)
+
+/** One shift, but only when it belongs to the caller's tenant. */
+export const getShiftById = createServerOnlyFn(
+  async (tenantId: string, id: string): Promise<Shift | undefined> => {
+    const rows = await getDb()
+      .select()
+      .from(shifts)
+      .where(and(eq(shifts.tenantId, tenantId), eq(shifts.id, id)))
+      .limit(1)
+    return rows[0] ? toShift(rows[0]) : undefined
+  },
+)
 
 export const getCurrentShift = createServerOnlyFn(
   async (tenantId: string): Promise<Shift | undefined> => {

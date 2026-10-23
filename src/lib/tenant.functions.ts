@@ -11,7 +11,7 @@ import {
   requireMembership,
   updateMemberRole,
 } from './tenant.server'
-import { email as emailSchema, tenantName } from './validation'
+import { email as emailSchema, entityId, tenantName } from './validation'
 
 /** Tenant/role RPC. The client only ever *reads* its role and *asks* to switch. */
 
@@ -38,7 +38,7 @@ export const listMembershipsFn = createServerFn({ method: 'GET' }).handler(
 
 /** Switches the active shop, but only to a tenant the caller is a member of. */
 export const switchTenantFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ tenantId: z.string().min(1) }))
+  .validator(z.object({ tenantId: entityId }))
   .handler(async ({ data: input }): Promise<boolean> => {
     const userId = await readSessionUserId()
     if (!userId) return false
@@ -61,7 +61,7 @@ export const listMembersFn = createServerFn({ method: 'GET' }).handler(
 )
 
 export const updateMemberRoleFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ membershipId: z.string().min(1), role: roleSchema }))
+  .validator(z.object({ membershipId: entityId, role: roleSchema }))
   .handler(async ({ data: input }): Promise<void> => {
     const ctx = await requireMembership('owner')
     await updateMemberRole(ctx.tenantId, input.membershipId, input.role)

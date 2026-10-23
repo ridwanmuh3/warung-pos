@@ -13,7 +13,7 @@ import {
 } from '@tabler/icons-react'
 import { CATEGORY_LABELS } from '../data/products'
 import { formatIDR } from '../lib/format'
-import { productDraftSchema } from '../lib/validation'
+import { MAX_IMAGE_BYTES, productDraftSchema } from '../lib/validation'
 import {
   createProductFn,
   deleteProductFn,
@@ -35,7 +35,6 @@ import { Modal, ModalTitle } from '../components/ui/Modal'
 import { SkeletonRows } from '../components/ui/Skeleton'
 
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 interface DraftState {
   id: string | null

@@ -23,6 +23,10 @@ export const Route = createFileRoute('/img/$')({
           headers: {
             'Content-Type': object.contentType,
             'Content-Length': String(object.contentLength),
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Security-Policy': "default-src 'none'; sandbox",
+            'Cross-Origin-Resource-Policy': 'same-origin',
+            'Content-Disposition': 'inline',
             // Keys are immutable — uploads are uuid-named and seed files are
             // fixed — so the browser can cache a returned image indefinitely.
             'Cache-Control': 'public, max-age=31536000, immutable',

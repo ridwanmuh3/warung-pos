@@ -11,6 +11,7 @@ import {
 } from '@tabler/icons-react'
 import { login, register } from '../lib/auth.session'
 import { useSession } from '../lib/useSession'
+import { safeInternalPath } from '../lib/validation'
 import { Button } from './ui/Button'
 import { buttonStyles } from './ui/buttonStyles'
 
@@ -93,7 +94,7 @@ export function AuthScreen({
         setConfirmPassword('')
         // Only same-origin, in-app paths are honoured: an attacker-supplied
         // absolute URL must not turn the login page into an open redirect.
-        const target = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/'
+        const target = safeInternalPath(redirectTo) ?? '/'
         navigate({ to: target })
         setBusy(false)
     }

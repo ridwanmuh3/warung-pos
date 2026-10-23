@@ -70,6 +70,8 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
    openssl rand -base64 48
    ```
 
+   `SESSION_SECRET` wajib diisi dan minimal 32 karakter; server menolak nilai yang lebih pendek. Jangan gunakan `TURSO_ACCESS_TOKEN` sebagai pengganti.
+
    Untuk gambar produk, isi juga `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_BUCKET`, `CLOUDFLARE_ACCESS_KEY_ID`, `CLOUDFLARE_SECRET_KEY`, dan `CLOUDFLARE_S3_URI`. Browser melakukan upload langsung ke R2, sehingga bucket perlu aturan CORS untuk origin aplikasi. Contoh konfigurasi CORS tersedia di `.env.example`.
 
 3. Pasang dependency dan siapkan skema database.
@@ -86,6 +88,14 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
    ```
 
    Buka `http://localhost:3000`. Jika belum ada akun, aplikasi mengarahkan ke halaman pendaftaran. Setiap akun yang mendaftar membuat warung baru dan menjadi `owner`-nya. Katalog awal kosong; tambahkan produk melalui halaman **Produk** atau ikuti checklist di halaman **Kasir**.
+
+### Keamanan
+
+- Semua input server divalidasi dengan Zod sebelum menyentuh database, URL, atau penyimpanan gambar; akses data selalu dibatasi tenant dan role dari cookie sesi, bukan dari klien.
+- Login dibatasi per proses: 5 kegagalan per email + IP dalam 15 menit, maksimum 50 kegagalan per IP, dan 10 pendaftaran per IP per jam.
+- Respons server function diberi `Cache-Control: no-store`, dan seluruh respons mendapat header `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, serta CSP dasar. HSTS aktif otomatis di produksi.
+- Pembatas laju bersifat per proses. Untuk deployment multi-instance, letakkan limiter bersama (Redis/DB) atau WAF di depan aplikasi.
+- Akun demo di bagian berikut hanya untuk instance demo dan tidak boleh dipakai di produksi.
 
 ### Perintah lain
 
