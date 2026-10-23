@@ -4,6 +4,7 @@ import {
     IconBuildingStore,
     IconDatabaseImport,
     IconFileText,
+    IconListCheck,
     IconLogout,
     IconPackage,
     IconSettings,
@@ -17,7 +18,10 @@ import { useCart } from '../lib/cart'
 import { logout } from '../lib/auth.session'
 import type { PublicUser } from '../lib/auth.server'
 import { hasLegacyData } from '../lib/legacy'
+import { hasSeenGuide } from '../lib/onboarding'
 import { useTenant } from '../lib/useTenant'
+import { FirstRunGuide } from './FirstRunGuide'
+import { buttonStyles } from './ui/buttonStyles'
 
 const NAV_ITEMS = [
     { to: '/', label: 'Kasir', Icon: IconShoppingCart },
@@ -31,12 +35,21 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
     const pathname = useRouterState({ select: (state) => state.location.pathname })
     const navigating = useRouterState({ select: (state) => state.isLoading })
     const [menuOpen, setMenuOpen] = useState(false)
+    const [guideOpen, setGuideOpen] = useState(false)
     const [legacyAvailable, setLegacyAvailable] = useState(false)
     const tenant = useTenant()
 
     useEffect(() => {
         setLegacyAvailable(hasLegacyData())
     }, [])
+
+    // Owners start with the setup checklist; everyone else gets the one-time
+    // quick-start sheet. Reading the flag here keeps the sheet global, so it
+    // can also be reopened from the account menu on any page.
+    useEffect(() => {
+        if (!session || !tenant.context || tenant.context.role === 'owner') return
+        if (!hasSeenGuide(session.id)) setGuideOpen(true)
+    }, [session, tenant.context])
 
     function signOut() {
         setMenuOpen(false)
@@ -81,9 +94,9 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
 
                     <Link
                         to="/keranjang"
-                        className="flex items-center gap-2 rounded-full border-2 border-primary bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+                        className={buttonStyles({ size: 'sm' })}
                     >
-                        <IconShoppingCart size={18} stroke={2} />
+                        <IconShoppingCart size={16} stroke={2} />
                         <span className="hidden sm:inline">Keranjang</span>
                         <span className="tabular rounded-full bg-on-primary/10 px-1.5 py-0.5 text-xs">{count}</span>
                     </Link>
@@ -178,6 +191,20 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                                         Riwayat Transaksi
                                     </Link>
 
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMenuOpen(false)
+                                            setGuideOpen(true)
+                                        }}
+                                        role="menuitem"
+                                        data-testid="account-quick-guide-link"
+                                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                    >
+                                        <IconListCheck size={16} stroke={2} />
+                                        Panduan Singkat
+                                    </button>
+
                                     <Link
                                         to="/panduan"
                                         onClick={() => setMenuOpen(false)}
@@ -251,6 +278,14 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
             <footer className="no-print hidden border-t border-divider px-4 py-4 text-center text-xs text-mute sm:px-6 md:block lg:px-8">
                 &copy; 2026. Crafted by ridwanmuh3
             </footer>
+
+            {session && (
+                <FirstRunGuide
+                    open={guideOpen}
+                    userId={session.id}
+                    onClose={() => setGuideOpen(false)}
+                />
+            )}
         </div>
     )
 }

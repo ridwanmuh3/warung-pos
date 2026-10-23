@@ -131,12 +131,12 @@ export function OwnerSetupChecklist({
               {copy.link ? (
                 <Link
                   to={copy.link}
-                  className="flex min-h-12 items-start gap-3 rounded-xl px-1 py-2 transition-colors hover:bg-white/60"
+                  className="flex min-h-12 items-center gap-3 rounded-xl px-1 py-2 transition-colors hover:bg-white/60"
                 >
                   {content}
                 </Link>
               ) : (
-                <div className="flex min-h-12 items-start gap-3 px-1 py-2">{content}</div>
+                <div className="flex min-h-12 items-center gap-3 px-1 py-2">{content}</div>
               )}
             </li>
           )

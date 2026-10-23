@@ -4,6 +4,7 @@ import { z } from 'zod'
 import {
   IconAlertTriangle,
   IconDeviceFloppy,
+  IconPackage,
   IconPencil,
   IconPlus,
   IconTrash,
@@ -29,6 +30,7 @@ import { EmptyState } from '../components/EmptyState'
 import { SelectField, TextField } from '../components/Field'
 import { ProductImage } from '../components/ProductImage'
 import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 import { Modal, ModalTitle } from '../components/ui/Modal'
 import { SkeletonRows } from '../components/ui/Skeleton'
 
@@ -462,7 +464,7 @@ function ProductsPage() {
         <SkeletonRows count={6} />
       ) : visible.length === 0 ? (
         <EmptyState
-          emoji="📦"
+          icon={IconPackage}
           title={menipis ? 'Tidak ada stok menipis' : 'Belum ada produk'}
           description={
             menipis
@@ -473,14 +475,14 @@ function ProductsPage() {
           }
           action={
             menipis ? undefined : canManage ? (
-              <Button size="sm" onClick={openCreate} data-testid="product-empty-add">
-                <IconPlus size={16} stroke={2.5} />
+              <Button size="md" onClick={openCreate} data-testid="product-empty-add">
+                <IconPlus size={18} stroke={2.5} />
                 Tambah Produk
               </Button>
             ) : (
               <Link
                 to="/panduan"
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-border px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+                className={buttonStyles({ variant: 'secondary', size: 'md' })}
               >
                 Lihat Panduan
               </Link>

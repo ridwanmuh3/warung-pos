@@ -11,11 +11,12 @@ import { itemsTotal } from '../lib/totals'
 import type { ProductCategory } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
-import { FirstRunGuide } from '../components/FirstRunGuide'
 import { OwnerSetupChecklist } from '../components/OwnerSetupChecklist'
 import { ProductImage } from '../components/ProductImage'
 import { KasStatus } from '../components/KasStatus'
 import { SkeletonGrid } from '../components/ui/Skeleton'
+import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 
 const FILTERS: Array<{ value: ProductCategory | 'semua'; label: string }> = [
   { value: 'semua', label: 'Semua' },
@@ -91,15 +92,8 @@ function MenuPage() {
         action={
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              to="/panduan"
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-full border-2 border-divider bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
-            >
-              <IconBook size={16} stroke={2} />
-              Panduan
-            </Link>
-            <Link
               to="/produk"
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-full border-2 border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+              className={buttonStyles({ variant: 'secondary', size: 'sm' })}
             >
               <IconPackage size={16} />
               {canManageCatalog ? 'Kelola Produk' : 'Lihat Produk'}
@@ -173,7 +167,7 @@ function MenuPage() {
         <SkeletonGrid count={8} />
       ) : products.length === 0 ? (
         <EmptyState
-          emoji="📦"
+          icon={IconPackage}
           title="Belum ada produk"
           description={
             canManageCatalog
@@ -184,17 +178,17 @@ function MenuPage() {
             canManageCatalog ? (
               <Link
                 to="/produk"
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+                className={buttonStyles({ size: 'md' })}
               >
-                <IconPackage size={16} />
+                <IconPackage size={18} />
                 Tambah Produk
               </Link>
             ) : (
               <Link
                 to="/panduan"
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+                className={buttonStyles({ variant: 'secondary', size: 'md' })}
               >
-                <IconBook size={16} />
+                <IconBook size={18} />
                 Lihat Panduan
               </Link>
             )
@@ -202,7 +196,7 @@ function MenuPage() {
         />
       ) : visible.length === 0 ? (
         <EmptyState
-          emoji={needle === '' ? '📦' : '🔍'}
+          icon={needle === '' ? IconPackage : IconSearch}
           title={needle === '' ? 'Belum ada produk di kategori ini' : 'Produk tidak ditemukan'}
           description={
             needle === ''
@@ -210,12 +204,12 @@ function MenuPage() {
               : `Tidak ada produk cocok dengan “${query}”.`
           }
           action={
-            <button
+            <Button
+              size="md"
               onClick={() => navigate({ search: {}, replace: true })}
-              className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               Tampilkan semua
-            </button>
+            </Button>
           }
         />
       ) : (
@@ -269,7 +263,7 @@ function MenuPage() {
         <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
           <Link
             to="/keranjang"
-            className="flex items-center justify-between rounded-full border-2 border-primary bg-primary px-5 py-3 font-semibold text-on-primary"
+            className={buttonStyles({ size: 'md', justify: 'between', className: 'w-full' })}
           >
             <span className="flex items-center gap-2">
               <IconShoppingCart size={18} stroke={2} />
@@ -282,8 +276,6 @@ function MenuPage() {
           </Link>
         </div>
       )}
-
-      <FirstRunGuide />
     </div>
   )
 }

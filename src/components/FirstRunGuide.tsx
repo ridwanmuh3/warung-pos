@@ -1,30 +1,42 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
 import { IconBook, IconX } from '@tabler/icons-react'
 import { QUICK_START } from '../data/guide'
-import { hasSeenGuide, markGuideSeen } from '../lib/onboarding'
-import { useSession } from '../lib/useSession'
-import { useTenant } from '../lib/useTenant'
+import { markGuideSeen } from '../lib/onboarding'
 import { Button } from './ui/Button'
+import { buttonStyles } from './ui/buttonStyles'
 
 /**
  * One-time welcome sheet for invited cashiers and managers.
  *
- * Owners get the setup checklist instead, because their first job is adding
- * real products. This sheet is deliberately short, dismissible, and stored per
- * user per device; the full guide stays available from the account menu.
+ * Owners get the setup checklist on first run instead, because their first job
+ * is adding real products. The sheet is deliberately short and dismissible;
+ * `AppShell` opens it once per user per device, and the account menu can reopen
+ * it at any time without touching the stored "seen" flag.
  */
-export function FirstRunGuide() {
-  const session = useSession()
-  const tenant = useTenant()
-  const [hidden, setHidden] = useState(false)
+export function FirstRunGuide({
+  open,
+  userId,
+  onClose,
+}: {
+  open: boolean
+  userId: string
+  onClose: () => void
+}) {
+  useEffect(() => {
+    if (!open) return
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
 
-  if (!session || !tenant.context || tenant.context.role === 'owner' || hidden) return null
-  if (hasSeenGuide(session.id)) return null
+  if (!open) return null
 
   function dismiss() {
-    if (session) markGuideSeen(session.id)
-    setHidden(true)
+    markGuideSeen(userId)
+    onClose()
   }
 
   return (
@@ -82,7 +94,7 @@ export function FirstRunGuide() {
           <Link
             to="/panduan"
             onClick={dismiss}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border-2 border-border px-6 text-base font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+            className={buttonStyles({ variant: 'secondary', size: 'md', className: 'w-full' })}
           >
             <IconBook size={18} stroke={2} />
             Buka panduan lengkap

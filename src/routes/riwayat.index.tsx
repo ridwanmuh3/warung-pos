@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
-import { IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
+import { IconReceipt, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { dayKey, formatDayLabel, formatIDR, formatTime, isDayKey } from '../lib/format'
@@ -10,6 +10,8 @@ import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { SkeletonRows } from '../components/ui/Skeleton'
 import { Badge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 import type { Order, PaymentMethod, SalesChannel } from '../types'
 
 const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
@@ -90,15 +92,12 @@ function OrdersPage() {
       <div>
         <PageHeader title="Riwayat Pesanan" />
         <EmptyState
-          emoji="🧾"
+          icon={IconReceipt}
           title="Belum ada transaksi"
           description="Pesanan yang sudah dibayar akan muncul di sini."
           action={
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
-            >
-              <IconShoppingCart size={16} />
+            <Link to="/" className={buttonStyles({ size: 'md' })}>
+              <IconShoppingCart size={18} />
               Buka Kasir
             </Link>
           }
@@ -203,17 +202,17 @@ function OrdersPage() {
         <SkeletonRows count={6} />
       ) : orders.length === 0 ? (
         <EmptyState
-          emoji="🔍"
+          icon={IconSearch}
           title="Tidak ada pesanan cocok"
           description="Coba ubah kata kunci atau hapus filter yang aktif."
           action={
             hasFilters ? (
-              <button
+              <Button
+                size="md"
                 onClick={() => navigate({ search: {}, replace: true })}
-                className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
               >
                 Hapus semua filter
-              </button>
+              </Button>
             ) : undefined
           }
         />

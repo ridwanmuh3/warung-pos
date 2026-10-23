@@ -24,6 +24,8 @@ import { TotalPanel } from '../components/TotalPanel'
 import { lineSubtotal, itemsTotal } from '../lib/totals'
 import { EmptyState } from '../components/EmptyState'
 import { ProductImage } from '../components/ProductImage'
+import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 
 function QtyStepper({ item }: { item: OrderItem }) {
   return (
@@ -87,20 +89,17 @@ function ParkedCarts({
                 {formatDateTime(cart.updatedAt)}
               </p>
             </div>
-            <button
-              onClick={() => onResume(cart.id)}
-              disabled={busy}
-              className="rounded-full border-2 border-primary bg-primary px-3.5 py-2 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover disabled:border-primary-muted disabled:bg-primary-muted disabled:text-mute"
-            >
+            <Button size="sm" onClick={() => onResume(cart.id)} disabled={busy}>
               Lanjutkan
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => onDiscard(cart.id)}
               disabled={busy}
-              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
             >
               Hapus
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
@@ -169,15 +168,12 @@ function CartPage() {
         <PageHeader title="Keranjang" backTo="/" backLabel="Kembali ke kasir" />
         <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
         <EmptyState
-          emoji="🛒"
+          icon={IconShoppingCart}
           title="Keranjang masih kosong"
           description="Pilih produk di halaman kasir untuk memulai transaksi."
           action={
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
-            >
-              <IconShoppingCart size={16} />
+            <Link to="/" className={buttonStyles({ size: 'md' })}>
+              <IconShoppingCart size={18} />
               Mulai Belanja
             </Link>
           }
@@ -246,37 +242,40 @@ function CartPage() {
               <div className="space-y-2">
                 <Link
                   to="/checkout"
-                  className="flex w-full items-center justify-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover active:scale-95"
+                  className={buttonStyles({ size: 'md', className: 'w-full' })}
                 >
                   Lanjut ke Detail Pesanan
-                  <IconArrowRight size={16} stroke={2.5} />
+                  <IconArrowRight size={18} stroke={2.5} />
                 </Link>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <input
                     value={parkLabel}
                     onChange={(event) => setParkLabel(event.target.value)}
                     placeholder="Nama pelanggan / meja"
                     aria-label="Nama pesanan yang ditahan"
-                    className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-brand-500"
+                    className="h-9 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-xs outline-none focus:border-brand-500"
                   />
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => void park()}
                     disabled={busy}
                     data-testid="park-cart"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                   >
-                    <IconArchive size={14} />
+                    <IconArchive size={16} />
                     Tahan
-                  </button>
+                  </Button>
                 </div>
-                <button
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
                   onClick={() => {
                     if (confirm('Kosongkan keranjang?')) clearCart()
                   }}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
                   Kosongkan keranjang
-                </button>
+                </Button>
               </div>
             }
           />
@@ -287,12 +286,12 @@ function CartPage() {
       <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
         <Link
           to="/checkout"
-          className="flex items-center justify-between rounded-full border-2 border-primary bg-primary px-5 py-3 font-semibold text-on-primary"
+          className={buttonStyles({ size: 'md', justify: 'between', className: 'w-full' })}
         >
           <span>Total · {count} item</span>
           <span className="tabular flex items-center gap-1">
             {formatIDR(itemsTotal(items))}
-            <IconArrowRight size={16} stroke={2.5} />
+            <IconArrowRight size={18} stroke={2.5} />
           </span>
         </Link>
       </div>

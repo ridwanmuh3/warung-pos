@@ -34,7 +34,7 @@ export function ErrorState({
       <p className="mt-1 max-w-sm text-sm text-slate-500">{description}</p>
       {onRetry && (
         <div className="mt-5">
-          <Button size="sm" onClick={onRetry}>
+          <Button size="md" onClick={onRetry}>
             {retryLabel}
           </Button>
         </div>

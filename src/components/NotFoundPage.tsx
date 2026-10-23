@@ -1,14 +1,16 @@
 import { Link } from '@tanstack/react-router'
+import { IconError404 } from '@tabler/icons-react'
 import { EmptyState } from './EmptyState'
+import { buttonStyles } from './ui/buttonStyles'
 
 export function NotFoundPage() {
   return (
     <EmptyState
-      emoji="🤷"
+      icon={IconError404}
       title="Halaman tidak ditemukan"
       description="Alamat yang kamu buka tidak tersedia."
       action={
-        <Link to="/" className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover">
+        <Link to="/" className={buttonStyles({ size: 'md' })}>
           Kembali ke Kasir
         </Link>
       }

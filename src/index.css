@@ -214,6 +214,32 @@ a {
   touch-action: manipulation;
 }
 
+/**
+ * Tailwind v4 leaves buttons with the browser's default arrow cursor, so raw
+ * `<button>` elements (chips, steppers, product cards) look inert. Every
+ * operable control advertises that it can be clicked; disabled controls say
+ * the opposite. Living in `base` lets utilities override a specific control.
+ */
+@layer base {
+  button:not(:disabled),
+  input:where([type='button'], [type='submit'], [type='reset']):not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab']:not([aria-disabled='true']),
+  [role='menuitem']:not([aria-disabled='true']),
+  select:not(:disabled),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:where([type='button'], [type='submit'], [type='reset']):disabled,
+  select:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
 /* ------------------------- browser surfaces -------------------------- */
 ::selection {
   background: var(--color-primary);

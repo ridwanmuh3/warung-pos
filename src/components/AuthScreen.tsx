@@ -11,6 +11,8 @@ import {
 } from '@tabler/icons-react'
 import { login, register } from '../lib/auth.session'
 import { useSession } from '../lib/useSession'
+import { Button } from './ui/Button'
+import { buttonStyles } from './ui/buttonStyles'
 
 type Mode = 'login' | 'register'
 
@@ -64,7 +66,7 @@ export function AuthScreen({
                     </p>
                     <Link
                         to="/"
-                        className="mt-5 inline-flex rounded-full border-2 border-primary bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+                        className={buttonStyles({ size: 'md', className: 'mt-5' })}
                     >
                         Buka Kasir
                     </Link>
@@ -245,14 +247,14 @@ export function AuthScreen({
                         </label>
                     )}
 
-                    <button
+                    <Button
                         type="submit"
-                        disabled={busy}
+                        busy={busy}
                         data-testid="auth-submit"
-                        className="mt-5 w-full h-11 rounded-full border-2 border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover active:scale-95 disabled:border-primary-muted disabled:bg-primary-muted disabled:text-mute"
+                        className="mt-5 w-full"
                     >
-                        {busy ? 'Memproses…' : mode === 'login' ? 'Masuk' : 'Daftar'}
-                    </button>
+                        {mode === 'login' ? 'Masuk' : 'Daftar'}
+                    </Button>
 
                     <p className="mt-3 text-center text-xs text-mute">
                         {mode === 'login' ? (

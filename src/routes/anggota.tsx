@@ -130,7 +130,7 @@ function MembersPage() {
       {loading ? (
         <SkeletonRows count={4} />
       ) : members.length === 0 ? (
-        <EmptyState emoji="👥" title="Belum ada anggota lain" description="Undang rekan kerja lewat form di atas." />
+        <EmptyState icon={IconUsers} title="Belum ada anggota lain" description="Undang rekan kerja lewat form di atas." />
       ) : (
         <ul className="space-y-2">
           {members.map((member) => (

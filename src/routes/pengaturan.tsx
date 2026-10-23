@@ -6,6 +6,7 @@ import { useTenant } from '../lib/useTenant'
 import { tenantName as tenantNameSchema } from '../lib/validation'
 import { PageHeader } from '../components/PageHeader'
 import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 import { SkeletonRows } from '../components/ui/Skeleton'
 
 export const Route = createFileRoute('/pengaturan')({
@@ -116,10 +117,10 @@ function SettingsPage() {
             <Link
               to="/panduan"
               data-testid="settings-guide-link"
-              className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-border bg-transparent px-4 text-sm font-semibold text-ink transition duration-150 ease-out hover:bg-surface-muted"
+              className={buttonStyles({ variant: 'secondary', size: 'md', className: 'mt-3' })}
             >
               Buka Panduan
-              <IconChevronRight size={16} stroke={2} />
+              <IconChevronRight size={18} stroke={2} />
             </Link>
           </section>
         </div>

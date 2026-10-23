@@ -128,14 +128,14 @@ export function KasStatus({ compact = false }: { compact?: boolean }) {
           </p>
           <p className="tabular text-xs text-slate-500">Modal awal {formatIDR(open.openingCash)}</p>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => setDialogOpen(true)}
           data-testid="kas-close-button"
-          className="rounded-full border border-slate-300 px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-surface-muted"
         >
           Tutup Kas
-        </button>
+        </Button>
       </div>
 
       {dialogOpen && (

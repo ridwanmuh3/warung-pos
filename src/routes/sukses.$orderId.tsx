@@ -1,15 +1,47 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { IconCheck, IconPlus, IconPrinter } from '@tabler/icons-react'
+import { IconCheck, IconPlus, IconPrinter, IconSearch } from '@tabler/icons-react'
 import { formatIDR } from '../lib/format'
 import { getOrderFn } from '../lib/data.functions'
 import { Receipt } from '../components/Receipt'
 import { EmptyState } from '../components/EmptyState'
+import { Skeleton } from '../components/ui/Skeleton'
+import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
+import type { Order } from '../types'
 
 export const Route = createFileRoute('/sukses/$orderId')({
   component: SuccessPage,
-  // The freshly created order is fetched from the database during SSR.
-  loader: async ({ params }) => ({ order: await getOrderFn({ data: { id: params.orderId } }) }),
+  pendingComponent: SuccessPending,
+  pendingMs: 120,
+  pendingMinMs: 300,
+  // The freshly created order is fetched from the database during SSR. A
+  // client-side checkout hands the order over in history state, so the receipt
+  // appears immediately instead of waiting for a second round-trip.
+  loader: async ({ params, location }) => {
+    const cached = (location.state as { order?: Order }).order
+    if (cached?.id === params.orderId) return { order: cached }
+    return { order: await getOrderFn({ data: { id: params.orderId } }) }
+  },
 })
+
+/** Geometry matches the receipt so the first paint does not jump. */
+function SuccessPending() {
+  return (
+    <div className="mx-auto max-w-md" role="status" aria-live="polite">
+      <span className="sr-only">Memuat struk…</span>
+      <div className="mb-5 flex flex-col items-center">
+        <Skeleton className="size-16 rounded-full" />
+        <Skeleton className="mt-4 h-7 w-52" />
+        <Skeleton className="mt-2 h-4 w-40" />
+      </div>
+      <Skeleton className="h-[22rem] rounded-2xl" />
+      <div className="mt-4 grid gap-2">
+        <Skeleton className="h-12 rounded-full" />
+        <Skeleton className="h-11 rounded-xl" />
+      </div>
+    </div>
+  )
+}
 
 function SuccessPage() {
   const { order } = Route.useLoaderData()
@@ -17,11 +49,11 @@ function SuccessPage() {
   if (!order) {
     return (
       <EmptyState
-        emoji="🔍"
+        icon={IconSearch}
         title="Pesanan tidak ditemukan"
         description="Struk ini mungkin sudah tidak tersedia di server."
         action={
-          <Link to="/riwayat" className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover">
+          <Link to="/riwayat" className={buttonStyles({ size: 'md' })}>
             Lihat Riwayat
           </Link>
         }
@@ -47,18 +79,20 @@ function SuccessPage() {
       <div className="no-print mt-4 grid gap-2">
         <Link
           to="/"
-          className="flex items-center justify-center gap-2 rounded-full border-2 border-primary bg-primary px-4 py-3 text-center text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover active:scale-95"
+          className={buttonStyles({ size: 'md', className: 'w-full' })}
         >
-          <IconPlus size={16} stroke={2.5} />
+          <IconPlus size={18} stroke={2.5} />
           Transaksi Baru
         </Link>
-        <button
+        <Button
+          variant="secondary"
+          size="md"
+          className="w-full"
           onClick={() => window.print()}
-          className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
-          <IconPrinter size={16} stroke={2} />
+          <IconPrinter size={18} stroke={2} />
           Cetak Struk
-        </button>
+        </Button>
       </div>
     </div>
   )

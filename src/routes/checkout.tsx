@@ -7,6 +7,7 @@ import {
   IconCash,
   IconChevronDown,
   IconQrcode,
+  IconReceipt,
 } from '@tabler/icons-react'
 import { PAYMENT_LABELS, CHANNEL_LABELS } from '../data/products'
 import { clearCart, flushCart, setCartItems, useCart } from '../lib/cart'
@@ -22,6 +23,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ProductImage } from '../components/ProductImage'
 import { KasStatus } from '../components/KasStatus'
 import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 
 const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
 const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
@@ -118,14 +120,11 @@ function CheckoutPage() {
       <div>
         <PageHeader title="Detail Pesanan" backTo="/keranjang" />
         <EmptyState
-          emoji="🧾"
+          icon={IconReceipt}
           title="Tidak ada pesanan untuk ditinjau"
           description="Tambahkan produk ke keranjang terlebih dahulu."
           action={
-            <Link
-              to="/"
-              className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
-            >
+            <Link to="/" className={buttonStyles({ size: 'md' })}>
               Kembali ke Kasir
             </Link>
           }
@@ -177,8 +176,16 @@ function CheckoutPage() {
         // the latch below is a UX nicety, not the integrity mechanism.
         await flushCart()
         const order = await checkoutFn({ data: { checkout: rawCheckout } })
+        // Let the success route mount before emptying the local cart. Clearing
+        // first would re-render this screen as "Tidak ada pesanan" while the
+        // next route loads, which read as a blank page between pay and receipt.
+        await navigate({
+          to: '/sukses/$orderId',
+          params: { orderId: order.id },
+          state: (prev) => ({ ...prev, order }),
+          replace: true,
+        })
         clearCart()
-        await navigate({ to: '/sukses/$orderId', params: { orderId: order.id } })
       } catch (cause) {
         // The order was not created: release the latch so the cashier can retry.
         submittedRef.current = false
@@ -241,10 +248,16 @@ function CheckoutPage() {
     </section>
   )
 
-  const payButton = (size: 'md' | 'lg', className: string, label: ReactNode) => (
+  const payButton = (
+    size: 'md' | 'lg',
+    className: string,
+    label: ReactNode,
+    justify: 'center' | 'between' = 'center',
+  ) => (
     <Button
       onClick={placeOrder}
       size={size}
+      justify={justify}
       busy={submitting}
       disabled={!canConfirm}
       data-testid="confirm-order"
@@ -482,13 +495,14 @@ function CheckoutPage() {
       <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
         {payButton(
           'md',
-          'w-full justify-between',
+          'w-full',
           <>
             <span>Konfirmasi Pesanan</span>
             <span data-testid="mobile-payable-total" className="tabular font-display font-black">
               {formatIDR(total)}
             </span>
           </>,
+          'between',
         )}
       </div>
     </div>

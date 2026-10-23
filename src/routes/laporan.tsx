@@ -1,6 +1,12 @@
 import { useMemo } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { IconArrowRight, IconDownload, IconPrinter, IconShoppingCart } from '@tabler/icons-react'
+import {
+  IconArrowRight,
+  IconDownload,
+  IconFileText,
+  IconPrinter,
+  IconShoppingCart,
+} from '@tabler/icons-react'
 import { z } from 'zod'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import {
@@ -22,6 +28,7 @@ import { StatCard as Summary, type StatTone } from '../components/ui/StatCard'
 import { Tab, TabList } from '../components/ui/Tabs'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
@@ -214,15 +221,12 @@ function DailyReport({
         />
       ) : !hasData ? (
         <EmptyState
-          emoji="📄"
+          icon={IconFileText}
           title="Tidak ada transaksi pada hari ini"
           description="Pilih tanggal lain atau buat transaksi baru di kasir."
           action={
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
-            >
-              <IconShoppingCart size={16} />
+            <Link to="/" className={buttonStyles({ size: 'md' })}>
+              <IconShoppingCart size={18} />
               Buka Kasir
             </Link>
           }
@@ -405,14 +409,16 @@ function DailyReport({
                 Rekap tutup toko: omzet, kas, dan {notCounted} transaksi yang tidak masuk omzet.
               </p>
             </div>
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
+              className="no-print"
               onClick={() => downloadTextFile(`z-report-${day}.txt`, zReportText(report, dayLabel))}
               data-testid="download-zreport"
-              className="no-print inline-flex min-h-9 items-center gap-1.5 rounded-full border border-slate-200 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             >
               Unduh .txt
-              <IconArrowRight size={12} stroke={2.5} />
-            </button>
+              <IconArrowRight size={16} stroke={2.5} />
+            </Button>
           </section>
         </>
       )}

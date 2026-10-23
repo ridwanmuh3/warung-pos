@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
-import { IconAlertTriangle, IconPrinter } from '@tabler/icons-react'
+import { IconAlertTriangle, IconPrinter, IconSearch } from '@tabler/icons-react'
 import { getOrderFn, refundOrderFn, voidOrderFn } from '../lib/data.functions'
 import { formatIDR } from '../lib/format'
 import { useTenant } from '../lib/useTenant'
@@ -8,6 +8,7 @@ import { Receipt } from '../components/Receipt'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { Button } from '../components/ui/Button'
+import { buttonStyles } from '../components/ui/buttonStyles'
 import { Modal, ModalTitle } from '../components/ui/Modal'
 
 export const Route = createFileRoute('/riwayat/$orderId')({
@@ -31,11 +32,11 @@ function ReceiptPage() {
   if (!order) {
     return (
       <EmptyState
-        emoji="🔍"
+        icon={IconSearch}
         title="Pesanan tidak ditemukan"
         description="Struk ini mungkin sudah tidak tersedia di server."
         action={
-          <Link to="/riwayat" className="rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover">
+          <Link to="/riwayat" className={buttonStyles({ size: 'md' })}>
             Kembali ke Riwayat
           </Link>
         }
@@ -94,24 +95,28 @@ function ReceiptPage() {
       <Receipt order={order} />
 
       <div className="no-print mt-4 space-y-2">
-        <button
+        <Button
+          variant="secondary"
+          size="md"
+          className="w-full"
           onClick={() => window.print()}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
-          <IconPrinter size={16} stroke={2} />
+          <IconPrinter size={18} stroke={2} />
           Cetak Struk
-        </button>
+        </Button>
 
         {/* Cancelling is a manager decision and belongs on the order it
             affects, not as a button on every row of the history list. */}
         {canManage && order.status === 'paid' && (
-          <button
+          <Button
+            variant="danger-outline"
+            size="md"
+            className="w-full"
             onClick={() => setConfirming(true)}
-            className="w-full rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
             data-testid="void-order"
           >
             Batalkan Transaksi
-          </button>
+          </Button>
         )}
       </div>
 

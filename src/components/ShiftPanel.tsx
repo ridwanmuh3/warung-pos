@@ -52,9 +52,16 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
         <p className="mt-1 text-xs text-slate-500">
           Buka kas dengan modal awal agar penjualan tunai bisa direkonsiliasi saat tutup.
         </p>
-        <div className="mt-3 flex flex-wrap items-end gap-2">
-          <label htmlFor="opening-cash" className="flex-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Modal Awal</span>
+        <div className="mt-3">
+          <label
+            htmlFor="opening-cash"
+            className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+          >
+            Modal Awal
+          </label>
+          {/* The field and its submit button share one centred row, so the
+              button lines up with the input rather than the label above it. */}
+          <div className="mt-1 flex items-center gap-2">
             <input
               id="opening-cash"
               type="number"
@@ -65,33 +72,33 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
               onChange={(event) => setOpeningCash(event.target.value)}
               placeholder="100000"
               data-testid="opening-cash"
-              className="tabular mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+              className="tabular min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
             />
-          </label>
-          <Button
-            size="sm"
-            busy={busy}
-            onClick={() => {
-              const parsed = openingCashFormSchema.safeParse({ openingCash })
-              if (!parsed.success) {
-                setError(parsed.error.issues[0]?.message ?? 'Modal awal tidak valid')
-                return
-              }
-              setError(null)
-              setBusy(true)
-              void openShiftFn({ data: parsed.data })
-                .then(() => {
-                  reloadShifts()
-                  reloadCurrent()
-                  setOpeningCash('')
-                  onChanged?.()
-                })
-                .finally(() => setBusy(false))
-            }}
-            data-testid="open-shift"
-          >
-            Buka Kas
-          </Button>
+            <Button
+              size="sm"
+              busy={busy}
+              onClick={() => {
+                const parsed = openingCashFormSchema.safeParse({ openingCash })
+                if (!parsed.success) {
+                  setError(parsed.error.issues[0]?.message ?? 'Modal awal tidak valid')
+                  return
+                }
+                setError(null)
+                setBusy(true)
+                void openShiftFn({ data: parsed.data })
+                  .then(() => {
+                    reloadShifts()
+                    reloadCurrent()
+                    setOpeningCash('')
+                    onChanged?.()
+                  })
+                  .finally(() => setBusy(false))
+              }}
+              data-testid="open-shift"
+            >
+              Buka Kas
+            </Button>
+          </div>
         </div>
         {error && (
           <p role="alert" data-testid="shift-error" className="mt-2 text-sm text-red-600">

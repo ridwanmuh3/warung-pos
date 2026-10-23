@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { IconAlertTriangle, IconArrowBackUp, IconDatabaseImport } from '@tabler/icons-react'
+import {
+  IconAlertTriangle,
+  IconArrowBackUp,
+  IconCircleCheck,
+  IconDatabaseImport,
+} from '@tabler/icons-react'
 import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
@@ -85,7 +90,7 @@ function RestorePage() {
       <div>
         <PageHeader title="Pulihkan Data" />
         <EmptyState
-          emoji="✅"
+          icon={IconCircleCheck}
           title="Tidak ada data lama"
           description="Tidak ditemukan data dari versi sebelumnya di perangkat ini."
         />

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
-import { IconArrowRight, IconChevronDown, IconShoppingCart } from '@tabler/icons-react'
+import { IconArrowRight, IconChartBar, IconChevronDown, IconShoppingCart } from '@tabler/icons-react'
 import { CATEGORY_LABELS, CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
 import { dayKey, formatDayLabel, formatIDR } from '../lib/format'
 import { busiestHour, channelBreakdown, hourHistogram, revenueTrend, summarizeCategories, topProducts } from '../lib/reporting'
@@ -12,6 +12,7 @@ import { ProductImage } from './ProductImage'
 import { ShareBar } from './ui/ShareBar'
 import { SkeletonRows, SkeletonStats } from './ui/Skeleton'
 import { StatCard } from './ui/StatCard'
+import { buttonStyles } from './ui/buttonStyles'
 import type { OrderItem, PaymentMethod, ProductCategory } from '../types'
 
 /** Y-axis ticks for the trend: at 10px, "3,5 jt" beats a seven-digit rupiah. */
@@ -114,15 +115,12 @@ export function TodaySummary({ day }: { day: string }) {
   if (stats.todayOrders.length === 0) {
     return (
       <EmptyState
-        emoji="📊"
+        icon={IconChartBar}
         title="Belum ada penjualan hari ini"
         description="Ringkasan muncul setelah transaksi pertama hari ini."
         action={
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-primary px-4 py-2 text-sm font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
-          >
-            <IconShoppingCart size={16} />
+          <Link to="/" className={buttonStyles({ size: 'md' })}>
+            <IconShoppingCart size={18} />
             Buka Kasir
           </Link>
         }
