@@ -116,7 +116,7 @@ export function AuthScreen({
                     </p>
                 </div>
 
-                <div className="mb-4 flex rounded-2xl border border-border-subtle bg-surface p-1">
+                <div className="mb-4 grid grid-cols-2 gap-1 overflow-hidden rounded-2xl border border-border-subtle bg-surface p-1">
                     {(['login', 'register'] as const).map((value) => (
                         <button
                             key={value}
@@ -126,7 +126,7 @@ export function AuthScreen({
                             }}
                             aria-pressed={mode === value}
                             data-testid={`auth-mode-${value}`}
-                            className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${mode === value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                            className={`min-w-0 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${mode === value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                                 }`}
                         >
                             {value === 'login' ? 'Masuk' : 'Daftar'}
@@ -284,9 +284,6 @@ export function AuthScreen({
                     </p>
                 </form>
 
-                <p className="mt-4 text-center text-xs text-mute">
-                    Kata sandi disimpan sebagai hash di server, bukan teks biasa.
-                </p>
             </div>
         </Shell>
     )
