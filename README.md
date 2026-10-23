@@ -1,107 +1,111 @@
 # Warung POS
 
-## 1. Ringkasan
+Aplikasi kasir berbasis web untuk warung: mencatat penjualan, mengelola stok, merekonsiliasi kas laci, dan membaca laporan harian dalam satu alur kerja.
 
-Warung POS adalah aplikasi kasir untuk warung, berbahasa Indonesia dan memakai Rupiah. Kasir memilih produk, mengisi keranjang, membayar, lalu mencetak struk. Pemilik toko membaca laporan penjualan, laba, dan selisih kas harian.
+## 1. Overview
 
-Aplikasi berjalan full-stack dengan TanStack Start. Data bisnis tersimpan di Turso (libSQL) lewat Drizzle ORM. Keranjang yang belum di-checkout masih disimpan di `localStorage`.
+Warung POS dibuat untuk mengurangi pencatatan manual yang terpisah-pisah antara buku penjualan, stok, dan uang kas. Kasir memilih produk, memeriksa keranjang, menerima pembayaran, lalu mencetak struk. Pemilik atau manajer dapat melihat omzet, laba kotor, produk terlaris, dan selisih kas pada laporan harian.
 
-Setiap toko adalah satu **tenant**. Satu user bisa tergabung ke beberapa tenant lewat membership dengan role `owner`, `manager`, atau `cashier`. Server menolak akses lintas tenant dan akses di bawah role yang dibutuhkan.
+Setiap data bisnis dikaitkan ke satu **tenant** (warung). Akses pengguna ditentukan oleh membership dengan role `owner`, `manager`, atau `cashier`; pembatasan akses dilakukan di server, bukan hanya disembunyikan di antarmuka.
 
-## 2. Tech Stack
+Data bisnis disimpan di Turso/libSQL melalui Drizzle ORM. Keranjang bersifat local-first agar interaksi tetap responsif, lalu disinkronkan ke server setelah pengguna masuk. Checkout dan perhitungan harga akhir dilakukan di server.
 
-| Teknologi | Kegunaan |
-| --------- | -------- |
-| [TanStack Start](https://tanstack.com/start) | Framework full-stack (SSR, server functions, server routes) |
-| [TanStack Router](https://tanstack.com/router) | File-based routing, search param tervalidasi, route loader |
-| [React 19](https://react.dev/) | Library UI |
-| [TypeScript](https://www.typescriptlang.org/) | Type safety |
-| [Turso](https://turso.tech/) / libSQL | Database SQLite terkelola |
-| [Cloudflare R2](https://developers.cloudflare.com/r2/) | Penyimpanan gambar produk (S3-compatible) |
-| [Drizzle ORM](https://orm.drizzle.team/) | Query builder + migrasi skema |
-| [Zod v4](https://zod.dev/) | Validasi input di klien dan server |
-| [Tailwind CSS v4](https://tailwindcss.com/) | Styling |
-| [@tabler/icons-react](https://tabler.io/icons) | Ikon antarmuka |
-| [Vite](https://vite.dev/) | Build tool dan dev server |
-| [Nitro](https://nitro.build/) | Runtime produksi (Node.js) |
-| [Vitest](https://vitest.dev/) | Test |
-| [oxlint](https://oxc.rs/) | Linting |
-| pnpm | Package manager |
+Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntansi lengkap. QRIS dan transfer dicatat sebagai metode pembayaran, bukan melalui integrasi payment gateway. Cetak struk menggunakan dialog cetak browser, bukan integrasi langsung dengan printer thermal. Checkout memerlukan koneksi ke server; aplikasi tidak menyediakan mode offline penuh.
 
-## 3. Fitur
+## 2. Fitur
 
-- **Kasir (`/`)** — cari produk lewat nama, SKU, atau barcode; filter kategori; lihat stok; kartu produk habis nonaktif otomatis.
-- **Keranjang (`/keranjang`)** — ubah jumlah, hapus item, lihat total berjalan, dan dapatkan peringatan bila harga produk berubah. Keranjang bertahan saat refresh.
-- **Checkout (`/checkout`)** — pilih metode bayar (Tunai / QRIS / Transfer), jenis pesanan (Makan di Sini / Bungkus / Ojol), isi nama kasir, dan pasang diskon (Rp atau %). Untuk tunai, ada tombol uang cepat dan kembalian otomatis.
-- **Struk (`/sukses/:id`)** — tampilkan subtotal, diskon, tunai diterima, dan kembalian; struk bisa dicetak.
-- **Kelola Produk (`/produk`)** — tambah, ubah, hapus produk dengan harga, HPP, stok, batas menipis, SKU, barcode, dan gambar mockup (unggah ke Cloudflare R2); restock cepat; filter kategori dan stok menipis.
-- **Riwayat (`/riwayat`)** — kelompokkan pesanan per hari, cari, filter metode/jenis/hari, dan void atau refund transaksi. Void mengembalikan stok dan tetap menyimpan jejaknya.
-- **Ringkasan (`/ringkasan`)** — omzet, laba kotor, HPP terjual, margin, jumlah transaksi, penjualan per metode, rincian per kategori, produk terlaris, jam tersibuk, dan tren omzet 7 hari.
-- **Laporan (`/laporan`)** — laporan per hari dengan pemilih tanggal, rekonsiliasi kas per shift, daftar transaksi dengan drill-down ke struk, ekspor CSV, dan Z-Report siap cetak.
-- **Kas / Shift** — buka kas dengan modal awal, tutup dengan hitungan fisik, lalu lihat selisih kas (lebih / kurang / pas).
-- **Anggota (`/anggota`)** — undang user ke tenant dan atur role-nya. Hanya owner yang boleh mengubah keanggotaan.
-- **Autentikasi (`/masuk`)** — daftar, login, dan logout. Password di-hash dengan PBKDF2-SHA-256 dan diverifikasi di server; sesi memakai cookie terenkripsi `httpOnly`.
-- **Pulihkan (`/pulihkan`)** — impor data lama dari `localStorage` ke database, dan batalkan impor bila perlu.
+| Area | Kemampuan |
+| --- | --- |
+| Kasir & keranjang | Cari produk berdasarkan nama, SKU, atau barcode; filter kategori; lihat stok; ubah jumlah; hapus item; tahan dan lanjutkan pesanan; peringatan ketika harga produk berubah. |
+| Checkout & struk | Pilih metode bayar Tunai, QRIS, atau Transfer; pilih jenis pesanan Makan di Sini, Bungkus, atau Ojol; isi nama kasir; terapkan diskon nominal atau persentase; tombol uang cepat dan kembalian otomatis untuk tunai. Struk dapat dicetak melalui browser. |
+| Produk & stok | Tambah, ubah, dan hapus produk; atur harga, HPP, stok, batas stok menipis, SKU, dan barcode; unggah gambar produk ke Cloudflare R2; restock cepat; filter produk dengan stok menipis. Produk dengan stok `null` tidak dilacak. |
+| Kas & shift | Buka kas dengan modal awal, tutup kas dengan hitungan fisik, dan lihat selisih kas (lebih, kurang, atau pas). Satu tenant memiliki satu shift kas aktif. |
+| Laporan | Ringkasan omzet, laba kotor, margin, jumlah transaksi, penjualan per metode, rincian kategori, produk terlaris, jam tersibuk, dan tren omzet tujuh hari. Tersedia ekspor CSV dan Z-Report teks siap cetak. |
+| Riwayat | Cari dan filter pesanan berdasarkan hari, metode bayar, atau jenis pesanan; buka detail struk; batalkan transaksi atau proses refund dengan alasan. Stok dikembalikan dan jejak transaksi tetap disimpan. |
+| Tim & akses | Undang anggota ke warung dan atur role. Hanya owner yang dapat mengelola anggota; manager dan owner dapat mengelola produk serta membatalkan transaksi. |
+| Onboarding | Checklist awal untuk pemilik, panduan penggunaan yang dapat dicetak, pengaturan nama warung, dan halaman pemulihan data lama dari penyimpanan browser. |
+
+## 3. Tech Stack
+
+| Layer | Teknologi | Peran |
+| --- | --- | --- |
+| Framework | [TanStack Start](https://tanstack.com/start) + [TanStack Router](https://tanstack.com/router) | SSR, server functions, file-based routing, loader, dan validasi search param. |
+| UI | [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/) | Komponen antarmuka dan type safety. |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com/), [Tabler Icons](https://tabler.io/icons) | Desain antarmuka dan ikon. |
+| Database | [Turso](https://turso.tech/) / libSQL, [Drizzle ORM](https://orm.drizzle.team/) | Penyimpanan data dan akses database. |
+| Validasi | [Zod v4](https://zod.dev/) | Validasi input di klien dan server. |
+| Penyimpanan gambar | [Cloudflare R2](https://developers.cloudflare.com/r2/) | Upload gambar produk melalui presigned PUT dan proxy gambar same-origin. |
+| Build & runtime | [Vite](https://vite.dev/), [Nitro](https://nitro.build/) | Dev server, build, dan runtime produksi Node.js. |
+| Kualitas kode | [Vitest](https://vitest.dev/), [oxlint](https://oxc.rs/) | Unit test dan linting. |
+| Package manager | pnpm | Instalasi dependency dan menjalankan script. |
 
 ## 4. Cara Menjalankan
 
 ### Prasyarat
 
-- Node.js v20+ (disarankan v22+)
-- pnpm
-- Database Turso (atau libSQL lokal)
+- Node.js 22.12 atau lebih baru.
+- pnpm.
+- Database Turso, atau libSQL yang kompatibel.
+- Akun Cloudflare R2 hanya jika ingin menggunakan unggah gambar produk.
 
 ### Langkah
 
-1. Salin `.env.example` menjadi `.env`, lalu isi nilainya.
+1. Salin konfigurasi environment.
 
-```bash
-TURSO_URL=libsql://<database>-<org>.turso.io
-TURSO_ACCESS_TOKEN=<token>
-SESSION_SECRET=<random-secret>   # openssl rand -base64 48
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-Untuk gambar produk, isi juga kredensial Cloudflare R2 (lihat `.env.example`). Upload memakai presigned PUT langsung dari browser, jadi bucket butuh aturan CORS untuk origin aplikasi; R2 menolak wildcard di `AllowedHeaders`, jadi daftarkan headernya secara literal:
+2. Isi variabel wajib di `.env`:
 
-```json
-{ "AllowedOrigins": ["http://localhost:3000"], "AllowedMethods": ["GET", "PUT"],
-  "AllowedHeaders": ["content-type"], "ExposeHeaders": ["ETag"] }
-```
+   ```bash
+   TURSO_URL=libsql://<database>-<org>.turso.io
+   TURSO_ACCESS_TOKEN=<token>
+   SESSION_SECRET=<secret-acak>
+   ```
 
-Pembacaan gambar dilayani oleh aplikasi sendiri lewat proxy same-origin `/img/<key>`, bukan domain publik `*.r2.dev` (domain itu diblokir di sebagian jaringan). Isi `CLOUDFLARE_R2_PUBLIC_URL` hanya bila bucket punya custom domain / CDN yang ingin dipakai langsung.
+   Buat `SESSION_SECRET` dengan:
 
-2. Pasang dependency dan buat skema database.
+   ```bash
+   openssl rand -base64 48
+   ```
 
-```bash
-pnpm install
-pnpm db:push
-```
+   Untuk gambar produk, isi juga `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_BUCKET`, `CLOUDFLARE_ACCESS_KEY_ID`, `CLOUDFLARE_SECRET_KEY`, dan `CLOUDFLARE_S3_URI`. Browser melakukan upload langsung ke R2, sehingga bucket perlu aturan CORS untuk origin aplikasi. Contoh konfigurasi CORS tersedia di `.env.example`.
 
-3. (Opsional) Unggah gambar contoh ke R2 (sekali saja; `src/assets/` → `seed/<nama-file>`).
+3. Pasang dependency dan siapkan skema database.
 
-```bash
-pnpm seed:images
-```
+   ```bash
+   pnpm install
+   pnpm db:push
+   ```
 
-Gambar ini hanya disiapkan untuk mode latihan yang akan datang. Katalog warung baru **mulai kosong**; pemilik menambahkan produk nyata lewat halaman Produk, dipandu checklist dan `/panduan`.
+4. Jalankan development server.
 
-4. Jalankan dev server.
+   ```bash
+   pnpm dev
+   ```
 
-```bash
-pnpm dev        # http://localhost:3000
-```
-
-Instalasi baru (0 akun) otomatis diarahkan ke mode Daftar.
-
-Katalog warung baru **mulai kosong**. Setelah daftar, ikuti checklist tiga langkah di halaman Kasir (nama, produk pertama, buka kas), atau buka **Panduan** dari menu akun/header Kasir. Panduan berisi langkah untuk kasir, pelayan, pemilik, dan manajer, serta bisa dicetak untuk ditempel di dekat kasir.
+   Buka `http://localhost:3000`. Jika belum ada akun, aplikasi mengarahkan ke halaman pendaftaran. Setiap akun yang mendaftar membuat warung baru dan menjadi `owner`-nya. Katalog awal kosong; tambahkan produk melalui halaman **Produk** atau ikuti checklist di halaman **Kasir**.
 
 ### Perintah lain
 
-```bash
-pnpm build      # build klien + server ke .output/
-pnpm start      # jalankan build produksi: node .output/server/index.mjs
-pnpm test       # Vitest
-pnpm lint       # oxlint
-pnpm seed:images # (opsional) unggah gambar contoh untuk mode latihan mendatang
-pnpm db:studio  # buka Drizzle Studio
-```
+| Perintah | Kegunaan |
+| --- | --- |
+| `pnpm build` | Build klien dan server ke `.output/`. |
+| `pnpm start` | Menjalankan hasil build produksi. |
+| `pnpm test` | Menjalankan unit test dengan Vitest. |
+| `pnpm lint` | Menjalankan oxlint. |
+| `pnpm db:generate` | Membuat file migrasi dari perubahan skema. |
+| `pnpm db:migrate` | Menjalankan migrasi database. |
+| `pnpm db:studio` | Membuka Drizzle Studio. |
+| `pnpm check:tenant` | Memeriksa query server agar tetap terikat pada tenant. |
+
+## 5. Akun Demo
+
+Gunakan akun berikut untuk mencoba instance demo:
+
+| Email | Password |
+| --- | --- |
+| `test@test.com` | `test123123` |
+
+Akun demo tidak dibuat otomatis oleh `pnpm db:push`. Pada instalasi lokal baru, buat akun melalui halaman `/masuk`; akun yang dibuat melalui pendaftaran menjadi owner dari warung baru.
