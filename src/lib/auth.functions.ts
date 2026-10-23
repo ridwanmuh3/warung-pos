@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getRequestIP } from '@tanstack/react-start/server'
+import { getRequestHeader, getRequestIP } from '@tanstack/react-start/server'
 import {
   countUsers,
   createUser,
@@ -32,10 +32,9 @@ export type AuthResponse =
   | { ok: true; user: PublicUser }
   | { ok: false; errors: string[] }
 
-/** Best-effort client key; `getRequestIP` is only available inside a request. */
 function clientIp(): string {
   try {
-    return getRequestIP() ?? 'unknown'
+    return getRequestHeader('x-nf-client-connection-ip')?.trim() || getRequestIP() || 'unknown'
   } catch {
     return 'unknown'
   }

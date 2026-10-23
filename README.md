@@ -35,7 +35,7 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
 | Database | [Turso](https://turso.tech/) / libSQL, [Drizzle ORM](https://orm.drizzle.team/) | Penyimpanan data dan akses database. |
 | Validasi | [Zod v4](https://zod.dev/) | Validasi input di klien dan server. |
 | Penyimpanan gambar | [Cloudflare R2](https://developers.cloudflare.com/r2/) | Upload gambar produk melalui presigned PUT dan proxy gambar same-origin. |
-| Build & runtime | [Vite](https://vite.dev/), [Nitro](https://nitro.build/) | Dev server, build, dan runtime produksi Node.js. |
+| Build & runtime | [Vite](https://vite.dev/), [Netlify](https://www.netlify.com/) | Dev server, build, dan runtime produksi melalui Netlify Functions. |
 | Kualitas kode | [Vitest](https://vitest.dev/), [oxlint](https://oxc.rs/) | Unit test dan linting. |
 | Package manager | pnpm | Instalasi dependency dan menjalankan script. |
 
@@ -89,6 +89,8 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
 
    Buka `http://localhost:3000`. Jika belum ada akun, aplikasi mengarahkan ke halaman pendaftaran. Setiap akun yang mendaftar membuat warung baru dan menjadi `owner`-nya. Katalog awal kosong; tambahkan produk melalui halaman **Produk** atau ikuti checklist di halaman **Kasir**.
 
+   `pnpm dev` juga menjalankan emulasi Netlify melalui plugin TanStack Start, sehingga server function dan perilaku runtime produksi dapat diuji secara lokal.
+
 ### Keamanan
 
 - Semua input server divalidasi dengan Zod sebelum menyentuh database, URL, atau penyimpanan gambar; akses data selalu dibatasi tenant dan role dari cookie sesi, bukan dari klien.
@@ -101,14 +103,25 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
 
 | Perintah | Kegunaan |
 | --- | --- |
-| `pnpm build` | Build klien dan server ke `.output/`. |
-| `pnpm start` | Menjalankan hasil build produksi. |
+| `pnpm build` | Build produksi ke `dist/client` dan function Netlify. |
 | `pnpm test` | Menjalankan unit test dengan Vitest. |
 | `pnpm lint` | Menjalankan oxlint. |
 | `pnpm db:generate` | Membuat file migrasi dari perubahan skema. |
-| `pnpm db:migrate` | Menjalankan migrasi database. |
+| `pnpm db:migrate` | Menjalankan migrasi database menggunakan `.env` lokal. |
+| `pnpm db:migrate:prod` | Menjalankan migrasi dengan kredensial dari environment. |
 | `pnpm db:studio` | Membuka Drizzle Studio. |
 | `pnpm check:tenant` | Memeriksa query server agar tetap terikat pada tenant. |
+
+### Deploy ke Netlify
+
+`netlify.toml` menjalankan `pnpm build` pada Node.js 22 dan memublikasikan `dist/client`. Build juga menghasilkan SSR function di `.netlify/v1/functions/server.mjs`. `pnpm dev` memakai emulasi Netlify; `pnpm start` tidak tersedia karena output bukan lagi server Node mandiri.
+
+1. Konfigurasi environment variable di Netlify: `TURSO_URL`, `TURSO_ACCESS_TOKEN`, `SESSION_SECRET` (minimal 32 karakter), `CLOUDFLARE_BUCKET`, `CLOUDFLARE_ACCESS_KEY_ID`, `CLOUDFLARE_SECRET_KEY`, dan `CLOUDFLARE_S3_URI`. `.env` lokal tidak ikut deploy. `CLOUDFLARE_R2_PUBLIC_URL` opsional. Jangan berikan kredensial Turso produksi ke deploy preview yang tidak tepercaya; gunakan database terpisah.
+2. Sebelum deploy produksi, backup database lalu jalankan migrasi terhadap Turso produksi dari mesin tepercaya: `TURSO_URL='libsql://...' TURSO_ACCESS_TOKEN='...' pnpm db:migrate:prod`. Jangan gunakan `db:push` di produksi. Untuk database lama sebelum multi-tenant, jalankan juga `drizzle/phase8-backfill.sql` satu kali.
+3. Tambahkan origin situs Netlify atau domain produksi ke R2 CORS `AllowedOrigins`. Contoh aturan lain ada di `.env.example`. Upload gambar dari browser tidak bekerja bila hanya `localhost` yang diizinkan.
+4. Uji deploy preview dengan database preview: login, sesi, server functions, upload gambar, dan `/img`. Pastikan cookie `Secure` dan `HttpOnly`, respons server function `Cache-Control: no-store`, serta header keamanan tetap ada. Untuk deploy lewat Netlify CLI, gunakan versi 17.31 atau lebih baru.
+
+Pembatas login berbasis memori hanya berlaku per instance function; untuk perlindungan lintas instance gunakan limiter bersama atau WAF. Impor data besar juga dapat melampaui batas ukuran request atau waktu eksekusi Netlify Functions.
 
 ## 5. Akun Demo
 
