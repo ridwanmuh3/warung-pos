@@ -89,6 +89,13 @@ export const findUserByEmail = createServerOnlyFn(
   },
 )
 
+export const findUserWithSecretById = createServerOnlyFn(
+  async (id: string): Promise<UserWithSecret | undefined> => {
+    const rows = await getDb().select().from(users).where(eq(users.id, id)).limit(1)
+    return rows[0]
+  },
+)
+
 export const findUserById = createServerOnlyFn(async (id: string): Promise<PublicUser | undefined> => {
   const rows = await getDb()
     .select({

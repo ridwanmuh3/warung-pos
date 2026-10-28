@@ -355,3 +355,19 @@ export const loginSchema = z.object({
     .max(128, 'Maksimal 128 karakter'),
 })
 export type LoginInput = z.infer<typeof loginSchema>
+
+/**
+ * Destructive account deletion needs both the current password and a typed
+ * word, so a stray click can never remove an account.
+ */
+export const deleteAccountSchema = z.object({
+  password: z
+    .string()
+    .min(1, 'Kata sandi wajib diisi')
+    .max(128, 'Maksimal 128 karakter'),
+  confirmation: z
+    .string()
+    .trim()
+    .refine((value) => value.toUpperCase() === 'HAPUS', 'Ketik HAPUS untuk melanjutkan'),
+})
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>
