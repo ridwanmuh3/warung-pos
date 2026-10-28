@@ -12,6 +12,7 @@ import { AuthScreen } from '~/components/AuthScreen'
 import { NotFoundPage } from '~/components/NotFoundPage'
 import { Spinner } from '~/components/ui/Spinner'
 import { useSession } from '~/lib/useSession'
+import { isPublicPath } from '~/lib/public-routes'
 import appCss from '~/index.css?url'
 
 export const Route = createRootRoute({
@@ -33,9 +34,19 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const session = useSession()
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const isAuthRoute = pathname === '/masuk'
+
+  // Public pages stand on their own. Skipping the session hook here is what
+  // lets them render completely on the server: the hook only resolves after
+  // mount, so behind the gate the HTML would be the loading shell instead of
+  // the page a crawler needs to read.
+  if (isPublicPath(pathname)) return <Outlet />
+
+  return <SessionGate pathname={pathname} />
+}
+
+function SessionGate({ pathname }: { pathname: string }) {
+  const session = useSession()
 
   // The session resolves from the server cookie on first paint. Rendering the
   // sign-in screen before that resolves would flash it on every reload, so an
@@ -53,13 +64,10 @@ function RootComponent() {
     )
   }
 
-  // Access gate: without a session every route renders the sign-in screen.
+  // Access gate: without a session every app route renders the sign-in screen.
   // The decision is made from the server session, not a client flag.
   if (!session) {
-    // Auth pages stand on their own: no header, tab bar, or footer while the
-    // visitor has no session. `/masuk` still renders its own route component
-    // so search params (`mode`, `redirect`) keep working.
-    return isAuthRoute ? <Outlet /> : <AuthScreen initialMode="login" redirectTo={pathname} />
+    return <AuthScreen initialMode="login" redirectTo={pathname} />
   }
 
   return (

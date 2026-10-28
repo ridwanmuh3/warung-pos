@@ -11,15 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnggotaRouteImport } from './routes/anggota'
+import { Route as BerandaRouteImport } from './routes/beranda'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
+import { Route as KetentuanRouteImport } from './routes/ketentuan'
 import { Route as LaporanRouteImport } from './routes/laporan'
 import { Route as MasukRouteImport } from './routes/masuk'
 import { Route as PanduanRouteImport } from './routes/panduan'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
+import { Route as PrivasiRouteImport } from './routes/privasi'
 import { Route as ProdukRouteImport } from './routes/produk'
 import { Route as PulihkanRouteImport } from './routes/pulihkan'
 import { Route as RingkasanRouteImport } from './routes/ringkasan'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SitemapRouteImport } from './routes/sitemap'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as ImgSplatRouteImport } from './routes/img/$'
 import { Route as RiwayatIndexRouteImport } from './routes/riwayat.index'
@@ -36,6 +42,11 @@ const AnggotaRoute = AnggotaRouteImport.update({
   path: '/anggota',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BerandaRoute = BerandaRouteImport.update({
+  id: '/beranda',
+  path: '/beranda',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
@@ -44,6 +55,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
 const KeranjangRoute = KeranjangRouteImport.update({
   id: '/keranjang',
   path: '/keranjang',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KetentuanRoute = KetentuanRouteImport.update({
+  id: '/ketentuan',
+  path: '/ketentuan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LaporanRoute = LaporanRouteImport.update({
@@ -66,6 +82,11 @@ const PengaturanRoute = PengaturanRouteImport.update({
   path: '/pengaturan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivasiRoute = PrivasiRouteImport.update({
+  id: '/privasi',
+  path: '/privasi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProdukRoute = ProdukRouteImport.update({
   id: '/produk',
   path: '/produk',
@@ -79,6 +100,21 @@ const PulihkanRoute = PulihkanRouteImport.update({
 const RingkasanRoute = RingkasanRouteImport.update({
   id: '/ringkasan',
   path: '/ringkasan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapRoute = SitemapRouteImport.update({
+  id: '/sitemap',
+  path: '/sitemap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -110,15 +146,21 @@ const SuksesOrderIdRoute = SuksesOrderIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/anggota': typeof AnggotaRoute
+  '/beranda': typeof BerandaRoute
   '/checkout': typeof CheckoutRoute
   '/keranjang': typeof KeranjangRoute
+  '/ketentuan': typeof KetentuanRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
   '/panduan': typeof PanduanRoute
   '/pengaturan': typeof PengaturanRoute
+  '/privasi': typeof PrivasiRoute
   '/produk': typeof ProdukRoute
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap': typeof SitemapRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/health': typeof ApiHealthRoute
   '/img/$': typeof ImgSplatRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
@@ -128,15 +170,21 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/anggota': typeof AnggotaRoute
+  '/beranda': typeof BerandaRoute
   '/checkout': typeof CheckoutRoute
   '/keranjang': typeof KeranjangRoute
+  '/ketentuan': typeof KetentuanRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
   '/panduan': typeof PanduanRoute
   '/pengaturan': typeof PengaturanRoute
+  '/privasi': typeof PrivasiRoute
   '/produk': typeof ProdukRoute
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap': typeof SitemapRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/health': typeof ApiHealthRoute
   '/img/$': typeof ImgSplatRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
@@ -147,15 +195,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/anggota': typeof AnggotaRoute
+  '/beranda': typeof BerandaRoute
   '/checkout': typeof CheckoutRoute
   '/keranjang': typeof KeranjangRoute
+  '/ketentuan': typeof KetentuanRoute
   '/laporan': typeof LaporanRoute
   '/masuk': typeof MasukRoute
   '/panduan': typeof PanduanRoute
   '/pengaturan': typeof PengaturanRoute
+  '/privasi': typeof PrivasiRoute
   '/produk': typeof ProdukRoute
   '/pulihkan': typeof PulihkanRoute
   '/ringkasan': typeof RingkasanRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap': typeof SitemapRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/health': typeof ApiHealthRoute
   '/img/$': typeof ImgSplatRoute
   '/riwayat/$orderId': typeof RiwayatOrderIdRoute
@@ -167,15 +221,21 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/anggota'
+    | '/beranda'
     | '/checkout'
     | '/keranjang'
+    | '/ketentuan'
     | '/laporan'
     | '/masuk'
     | '/panduan'
     | '/pengaturan'
+    | '/privasi'
     | '/produk'
     | '/pulihkan'
     | '/ringkasan'
+    | '/robots.txt'
+    | '/sitemap'
+    | '/sitemap.xml'
     | '/api/health'
     | '/img/$'
     | '/riwayat/$orderId'
@@ -185,15 +245,21 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/anggota'
+    | '/beranda'
     | '/checkout'
     | '/keranjang'
+    | '/ketentuan'
     | '/laporan'
     | '/masuk'
     | '/panduan'
     | '/pengaturan'
+    | '/privasi'
     | '/produk'
     | '/pulihkan'
     | '/ringkasan'
+    | '/robots.txt'
+    | '/sitemap'
+    | '/sitemap.xml'
     | '/api/health'
     | '/img/$'
     | '/riwayat/$orderId'
@@ -203,15 +269,21 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/anggota'
+    | '/beranda'
     | '/checkout'
     | '/keranjang'
+    | '/ketentuan'
     | '/laporan'
     | '/masuk'
     | '/panduan'
     | '/pengaturan'
+    | '/privasi'
     | '/produk'
     | '/pulihkan'
     | '/ringkasan'
+    | '/robots.txt'
+    | '/sitemap'
+    | '/sitemap.xml'
     | '/api/health'
     | '/img/$'
     | '/riwayat/$orderId'
@@ -222,15 +294,21 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnggotaRoute: typeof AnggotaRoute
+  BerandaRoute: typeof BerandaRoute
   CheckoutRoute: typeof CheckoutRoute
   KeranjangRoute: typeof KeranjangRoute
+  KetentuanRoute: typeof KetentuanRoute
   LaporanRoute: typeof LaporanRoute
   MasukRoute: typeof MasukRoute
   PanduanRoute: typeof PanduanRoute
   PengaturanRoute: typeof PengaturanRoute
+  PrivasiRoute: typeof PrivasiRoute
   ProdukRoute: typeof ProdukRoute
   PulihkanRoute: typeof PulihkanRoute
   RingkasanRoute: typeof RingkasanRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapRoute: typeof SitemapRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ImgSplatRoute: typeof ImgSplatRoute
   RiwayatOrderIdRoute: typeof RiwayatOrderIdRoute
@@ -254,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnggotaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/beranda': {
+      id: '/beranda'
+      path: '/beranda'
+      fullPath: '/beranda'
+      preLoaderRoute: typeof BerandaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout': {
       id: '/checkout'
       path: '/checkout'
@@ -266,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/keranjang'
       fullPath: '/keranjang'
       preLoaderRoute: typeof KeranjangRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ketentuan': {
+      id: '/ketentuan'
+      path: '/ketentuan'
+      fullPath: '/ketentuan'
+      preLoaderRoute: typeof KetentuanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/laporan': {
@@ -296,6 +388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PengaturanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privasi': {
+      id: '/privasi'
+      path: '/privasi'
+      fullPath: '/privasi'
+      preLoaderRoute: typeof PrivasiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/produk': {
       id: '/produk'
       path: '/produk'
@@ -315,6 +414,27 @@ declare module '@tanstack/react-router' {
       path: '/ringkasan'
       fullPath: '/ringkasan'
       preLoaderRoute: typeof RingkasanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap': {
+      id: '/sitemap'
+      path: '/sitemap'
+      fullPath: '/sitemap'
+      preLoaderRoute: typeof SitemapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -358,15 +478,21 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnggotaRoute: AnggotaRoute,
+  BerandaRoute: BerandaRoute,
   CheckoutRoute: CheckoutRoute,
   KeranjangRoute: KeranjangRoute,
+  KetentuanRoute: KetentuanRoute,
   LaporanRoute: LaporanRoute,
   MasukRoute: MasukRoute,
   PanduanRoute: PanduanRoute,
   PengaturanRoute: PengaturanRoute,
+  PrivasiRoute: PrivasiRoute,
   ProdukRoute: ProdukRoute,
   PulihkanRoute: PulihkanRoute,
   RingkasanRoute: RingkasanRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapRoute: SitemapRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthRoute: ApiHealthRoute,
   ImgSplatRoute: ImgSplatRoute,
   RiwayatOrderIdRoute: RiwayatOrderIdRoute,
