@@ -83,7 +83,7 @@ function MembersPage() {
         </p>
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label htmlFor="member-email" className="min-w-48 flex-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</span>
+            <span className="text-xs font-semibold tracking-wide text-slate-500">Email</span>
             <input
               id="member-email"
               type="email"
@@ -95,7 +95,7 @@ function MembersPage() {
             />
           </label>
           <label htmlFor="member-role">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Peran</span>
+            <span className="text-xs font-semibold tracking-wide text-slate-500">Peran</span>
             <select
               id="member-role"
               value={inviteRole}

@@ -118,7 +118,7 @@ function ImagePicker({ draft, onChange, onError }: {
 
   return (
     <div className="mt-3">
-      <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Gambar</span>
+      <span className="block text-xs font-semibold tracking-wide text-slate-500">Gambar</span>
       <div className="mt-1 flex items-center gap-3">
         <ProductImage imageKey={draft.imageKey} alt={draft.name || 'Produk'} className="size-16" iconSize={24} />
         <label
@@ -245,7 +245,7 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
       <ImagePicker draft={draft} onChange={onChange} onError={onError} />
 
       <details className="mt-3 rounded-lg border border-slate-200 p-3" open={advancedOpen}>
-        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <summary className="cursor-pointer text-xs font-semibold tracking-wide text-slate-500">
           Opsi lanjutan
         </summary>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -675,7 +675,7 @@ function ProductsPage() {
             ))}
           </div>
           <label htmlFor="restock-qty" className="mt-3 block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Jumlah masuk</span>
+            <span className="text-xs font-semibold tracking-wide text-slate-500">Jumlah masuk</span>
             <input
               id="restock-qty"
               type="number"

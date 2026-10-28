@@ -377,7 +377,7 @@ function CheckoutPage() {
             {showDetails && (
               <div className="space-y-4 border-t border-slate-100 p-4 sm:p-5">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Jenis Pesanan</h3>
+                  <h3 className="text-xs font-semibold tracking-wide text-slate-500">Jenis Pesanan</h3>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {CHANNELS.map((value) => (
                       <button
@@ -399,7 +399,7 @@ function CheckoutPage() {
 
                 <div>
                   <label htmlFor="cashier-name" className="block">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <span className="text-xs font-semibold tracking-wide text-slate-500">
                       Nama Kasir di Struk
                     </span>
                     <input
@@ -416,7 +416,7 @@ function CheckoutPage() {
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Diskon</h3>
+                    <h3 className="text-xs font-semibold tracking-wide text-slate-500">Diskon</h3>
                     <div className="flex rounded-lg border border-slate-200 p-0.5">
                       {(['rupiah', 'persen'] as const).map((mode) => (
                         <button

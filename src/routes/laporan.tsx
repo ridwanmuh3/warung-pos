@@ -163,7 +163,7 @@ function DailyReport({
           ))}
         </div>
         <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-600">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tanggal</span>
+          <span className="text-xs font-semibold tracking-wide text-slate-500">Tanggal</span>
           <input
             type="date"
             value={dayKeyToInputValue(day)}
@@ -233,7 +233,7 @@ function DailyReport({
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Summary
               label="Omzet"
               value={formatIDR(report.revenue)}

@@ -163,7 +163,7 @@ export function AuthScreen({
 
                     {mode === 'register' && (
                         <label htmlFor="auth-name" className="block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama</span>
+                            <span className="text-xs font-semibold tracking-wide text-slate-500">Nama</span>
                             <span className="relative mt-1 block">
                                 <IconUser size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
@@ -181,7 +181,7 @@ export function AuthScreen({
 
                     {mode === 'register' && (
                         <label htmlFor="auth-warung" className="mt-3 block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Nama Warung</span>
+                            <span className="text-xs font-semibold tracking-wide text-slate-500">Nama Warung</span>
                             <span className="relative mt-1 block">
                                 <IconBuildingStore size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
@@ -198,7 +198,7 @@ export function AuthScreen({
                     )}
 
                     <label htmlFor="auth-email" className="mt-3 block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</span>
+                        <span className="text-xs font-semibold tracking-wide text-slate-500">Email</span>
                         <span className="relative mt-1 block">
                             <IconMail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
@@ -215,7 +215,7 @@ export function AuthScreen({
                     </label>
 
                     <label htmlFor="auth-password" className="mt-3 block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Kata Sandi</span>
+                        <span className="text-xs font-semibold tracking-wide text-slate-500">Kata Sandi</span>
                         <span className="relative mt-1 block">
                             <IconLock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
@@ -233,7 +233,7 @@ export function AuthScreen({
 
                     {mode === 'register' && (
                         <label htmlFor="auth-confirm" className="mt-3 block">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <span className="text-xs font-semibold tracking-wide text-slate-500">
                                 Ulangi Kata Sandi
                             </span>
                             <span className="relative mt-1 block">

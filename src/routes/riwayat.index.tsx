@@ -134,7 +134,7 @@ function OrdersPage() {
             payment method and "Bungkus" is a channel, and mixing them made the
             filter unreadable. */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-mute">Metode</span>
+          <span className="shrink-0 text-[10px] font-semibold tracking-wide text-mute">Metode</span>
           <button
             onClick={() => updateSearch({ method: undefined })}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -161,7 +161,7 @@ function OrdersPage() {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-mute">Jenis</span>
+          <span className="shrink-0 text-[10px] font-semibold tracking-wide text-mute">Jenis</span>
           <button
             onClick={() => updateSearch({ channel: undefined })}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${

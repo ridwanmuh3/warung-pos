@@ -8,6 +8,8 @@
  *   (`overflow-wrap: anywhere`), so a nine-digit rupiah total stays readable.
  * - The label, value and hint are a description list, so a screen reader reads
  *   each figure together with its name instead of as loose paragraphs.
+ * - The figure steps down at xl, where the four-up desktop grid leaves each
+ *   card too narrow for the phone-sized number without breaking mid-rupiah.
  *
  * `tone` colors the figure only, and only where the sign carries meaning.
  *
@@ -56,7 +58,7 @@ export function StatCard({
     >
       <dl className="min-w-0">
         <dt
-          className={`break-words text-xs font-medium uppercase tracking-wide ${
+          className={`break-words text-xs font-medium tracking-wide ${
             emphasis ? 'text-brand-700' : 'text-slate-500'
           }`}
         >
@@ -64,7 +66,7 @@ export function StatCard({
         </dt>
         <dd
           data-testid={testId}
-          className={`tabular mt-1 font-display text-3xl font-black leading-none ${TONE_VALUE[tone]} [overflow-wrap:anywhere]`}
+          className={`tabular mt-1 font-display text-3xl font-black leading-none xl:text-2xl ${TONE_VALUE[tone]} [overflow-wrap:anywhere]`}
         >
           {value}
         </dd>

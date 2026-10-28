@@ -4,7 +4,7 @@ import { Input } from './ui/Input'
 function Label({ htmlFor, children, hint }: { htmlFor: string; children: ReactNode; hint?: string }) {
   return (
     <label htmlFor={htmlFor} className="block">
-      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{children}</span>
+      <span className="text-xs font-semibold tracking-wide text-slate-500">{children}</span>
       {hint && <span className="ml-1 text-xs font-normal normal-case text-mute">{hint}</span>}
     </label>
   )

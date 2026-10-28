@@ -132,7 +132,7 @@ export function TodaySummary({ day }: { day: string }) {
     <div>
       <p className="mb-3 text-xs text-mute">{formatDayLabel(day)}</p>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           testId="stat-omzet"
           label="Omzet Hari Ini"
@@ -196,11 +196,11 @@ export function TodaySummary({ day }: { day: string }) {
       {/* Everything else is real but secondary. One disclosure keeps it
           available without making the owner read it every day. */}
       <details className="group mt-4 rounded-2xl border border-border-subtle bg-surface shadow-level1">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 sm:px-5">
+        <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
           <span className="text-sm font-semibold text-slate-900">Rincian lengkap</span>
-          <span className="flex items-center gap-2 text-xs text-mute">
+          <span className="flex min-w-0 items-center gap-2 text-xs text-mute">
             Kategori · terlaris · jam · tren
-            <IconChevronDown size={16} stroke={2} className="transition-transform group-open:rotate-180" />
+            <IconChevronDown size={16} stroke={2} className="shrink-0 transition-transform group-open:rotate-180" />
           </span>
         </summary>
 

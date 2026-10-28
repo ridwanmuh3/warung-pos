@@ -55,7 +55,7 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
         <div className="mt-3">
           <label
             htmlFor="opening-cash"
-            className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+            className="text-xs font-semibold tracking-wide text-slate-500"
           >
             Modal Awal
           </label>
@@ -169,7 +169,7 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
 
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <label htmlFor="counted-cash" className="flex-1">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Kas Dihitung</span>
+          <span className="text-xs font-semibold tracking-wide text-slate-500">Kas Dihitung</span>
           <input
             id="counted-cash"
             type="number"
@@ -184,7 +184,7 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
           />
         </label>
         <label htmlFor="shift-note" className="flex-1">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Catatan</span>
+          <span className="text-xs font-semibold tracking-wide text-slate-500">Catatan</span>
           <input
             id="shift-note"
             value={note}
