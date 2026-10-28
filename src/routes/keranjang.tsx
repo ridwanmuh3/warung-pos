@@ -235,7 +235,7 @@ function CartPage() {
           ))}
         </ul>
 
-        <div className="hidden md:block lg:sticky lg:top-24 lg:self-start">
+        <div className="hidden md:block lg:sticky lg:top-6 lg:self-start">
           <TotalPanel
             items={items}
             footer={

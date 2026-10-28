@@ -63,7 +63,7 @@ function SettingsPage() {
               Identitas Warung
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Nama ini tampil di menu akun dan di bagian atas struk.
+              Nama ini tampil di menu Akun dan di bagian atas struk.
             </p>
 
             <label htmlFor="tenant-name" className="mt-3 block">

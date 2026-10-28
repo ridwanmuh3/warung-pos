@@ -10,7 +10,7 @@ type SetupLink = '/pengaturan' | '/produk'
 const STEP_COPY: Record<'name' | 'product' | 'shift', { title: string; hint: string; link?: SetupLink; action?: string }> = {
   name: {
     title: 'Beri nama warung',
-    hint: 'Nama ini tampil di struk dan menu akun.',
+    hint: 'Nama ini tampil di struk dan menu Akun.',
     link: '/pengaturan',
     action: 'Atur',
   },

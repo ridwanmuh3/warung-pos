@@ -79,24 +79,28 @@ export function AuthScreen({
     async function submit() {
         setBusy(true)
         setErrors([])
-        const result =
-            mode === 'register'
-                ? await register({ name, email, password, confirmPassword, warungName })
-                : await login({ email, password })
+        try {
+            const result =
+                mode === 'register'
+                    ? await register({ name, email, password, confirmPassword, warungName })
+                    : await login({ email, password })
 
-        if (!result.ok) {
-            setErrors(result.errors)
+            if (!result.ok) {
+                setErrors(result.errors)
+                return
+            }
+
+            setPassword('')
+            setConfirmPassword('')
+            // Only same-origin, in-app paths are honoured: an attacker-supplied
+            // absolute URL must not turn the login page into an open redirect.
+            const target = safeInternalPath(redirectTo) ?? '/'
+            await navigate({ to: target })
+        } catch {
+            setErrors(['Tidak dapat terhubung. Coba lagi.'])
+        } finally {
             setBusy(false)
-            return
         }
-
-        setPassword('')
-        setConfirmPassword('')
-        // Only same-origin, in-app paths are honoured: an attacker-supplied
-        // absolute URL must not turn the login page into an open redirect.
-        const target = safeInternalPath(redirectTo) ?? '/'
-        navigate({ to: target })
-        setBusy(false)
     }
 
     return (

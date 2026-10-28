@@ -271,6 +271,9 @@ a {
   .no-print {
     display: none !important;
   }
+  .app-layout {
+    padding-left: 0 !important;
+  }
   body {
     @apply bg-white;
   }

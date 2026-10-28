@@ -23,7 +23,7 @@ function GuidePage() {
   // A null choice keeps following the role until the user taps a tab.
   const tab: GuideTab = tabChoice ?? (tenant.context?.role === 'owner' ? 'pemilik' : 'kasir')
   const steps = tab === 'kasir' ? KASIR_STEPS : OWNER_STEPS
-  const heading = tab === 'kasir' ? 'Panduan Kasir' : 'Panduan Pemilik & Manajer'
+  const heading = tab === 'kasir' ? 'Panduan kasir' : 'Panduan pemilik & manajer'
   const intro =
     tab === 'kasir'
       ? 'Untuk kasir dan pelayan yang melayani pembayaran. Ikuti dari atas ke bawah saat pertama kali memakai aplikasi.'
@@ -175,7 +175,7 @@ function GuidePage() {
         </p>
         <Button variant="secondary" size="sm" onClick={print}>
           <IconPrinter size={16} stroke={2} />
-          Cetak Panduan
+          Cetak panduan
         </Button>
       </div>
     </div>

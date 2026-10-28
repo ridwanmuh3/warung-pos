@@ -44,12 +44,12 @@ export const KASIR_STEPS: GuideStep[] = [
   },
   {
     title: 'Pilih produk',
-    body: 'Ketuk kartu produk untuk menambah. Ketuk lagi untuk menambah jumlah. Gunakan kolom pencarian atau scan barcode bila perlu.',
+    body: 'Ketuk kartu produk untuk menambah. Ketuk lagi untuk menambah jumlah. Gunakan kolom pencarian atau pindai barcode bila perlu.',
     Icon: IconShoppingCart,
   },
   {
     title: 'Periksa keranjang',
-    body: 'Buka Keranjang untuk mengubah jumlah atau menghapus produk. Kalau pelanggan belum membayar, tekan Tahan Pesanan.',
+    body: 'Buka Keranjang untuk mengubah jumlah atau menghapus produk. Kalau pelanggan belum membayar, tekan Tahan.',
     Icon: IconPackage,
   },
   {
@@ -72,17 +72,17 @@ export const KASIR_STEPS: GuideStep[] = [
 export const OWNER_STEPS: GuideStep[] = [
   {
     title: 'Beri nama warung',
-    body: 'Buka Pengaturan, isi nama warung, lalu Simpan. Nama ini tampil di struk dan menu akun.',
+    body: 'Buka Pengaturan, isi nama warung, lalu Simpan. Nama ini tampil di struk dan menu Akun.',
     Icon: IconBuildingStore,
   },
   {
     title: 'Tambah produk',
-    body: 'Buka Produk, tekan tombol Produk, lalu isi nama dan harga. Foto, stok, dan barcode boleh ditambahkan nanti.',
+    body: 'Buka halaman Produk, tekan Tambah Produk, lalu isi nama dan harga. Foto, stok, dan barcode boleh ditambahkan nanti.',
     Icon: IconPackage,
   },
   {
     title: 'Undang anggota',
-    body: 'Buka menu akun di kanan atas, pilih Anggota Toko, lalu tentukan siapa yang menjadi manajer atau kasir.',
+    body: 'Buka menu Akun di sidebar (di ponsel: tab Akun), pilih Anggota Toko, lalu tentukan siapa yang menjadi manajer atau kasir.',
     Icon: IconUsers,
   },
   {

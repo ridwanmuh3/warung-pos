@@ -455,7 +455,7 @@ function CheckoutPage() {
           </section>
         </div>
 
-        <div className="hidden md:block lg:sticky lg:top-24 lg:self-start">
+        <div className="hidden md:block lg:sticky lg:top-6 lg:self-start">
           <div className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900">Ringkasan Bayar</h2>
             <dl className="mt-3 space-y-2 text-sm">

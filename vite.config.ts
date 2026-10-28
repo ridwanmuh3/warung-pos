@@ -18,6 +18,6 @@ export default defineConfig({
     }),
     // react's vite plugin must come after start's vite plugin
     viteReact(),
-    netlify(),
+    netlify({ dev: { edgeFunctions: { enabled: false } } }),
   ],
 })

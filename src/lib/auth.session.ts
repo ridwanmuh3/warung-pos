@@ -2,6 +2,7 @@ import { currentUserFn, loginFn, logoutFn, registerFn } from './auth.functions'
 import type { AuthResponse } from './auth.functions'
 import type { PublicUser } from './auth.server'
 import { startCartSync, stopCartSync } from './cart'
+import { loginSchema, registerSchema } from './validation'
 
 /**
  * Client-side auth facade.
@@ -18,6 +19,23 @@ import { startCartSync, stopCartSync } from './cart'
 export type { PublicUser, AuthResponse }
 
 const listeners = new Set<() => void>()
+
+function authError(cause: unknown): AuthResponse {
+  if (cause instanceof Error) {
+    try {
+      const issues: unknown = JSON.parse(cause.message)
+      if (Array.isArray(issues)) {
+        const messages = issues.flatMap((issue: unknown) =>
+          typeof issue === 'object' && issue !== null && 'message' in issue && typeof issue.message === 'string'
+            ? [issue.message]
+            : [],
+        )
+        if (messages.length) return { ok: false, errors: messages }
+      }
+    } catch { /* Non-validation errors must not expose internal details. */ }
+  }
+  return { ok: false, errors: ['Tidak dapat terhubung. Coba lagi.'] }
+}
 
 let cache: PublicUser | null = null
 let resolved = false
@@ -38,7 +56,14 @@ export function subscribeToSession(listener: () => void): () => void {
 }
 
 export async function login(input: { email: string; password: string }): Promise<AuthResponse> {
-  const result = await loginFn({ data: input })
+  const parsed = loginSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, errors: parsed.error.issues.map((issue) => issue.message) }
+  let result: AuthResponse
+  try {
+    result = await loginFn({ data: parsed.data })
+  } catch (cause) {
+    return authError(cause)
+  }
   if (result.ok) {
     cache = result.user
     resolved = true
@@ -55,7 +80,14 @@ export async function register(input: {
   confirmPassword: string
   warungName?: string
 }): Promise<AuthResponse> {
-  const result = await registerFn({ data: input })
+  const parsed = registerSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, errors: parsed.error.issues.map((issue) => issue.message) }
+  let result: AuthResponse
+  try {
+    result = await registerFn({ data: parsed.data })
+  } catch (cause) {
+    return authError(cause)
+  }
   if (result.ok) {
     cache = result.user
     resolved = true
