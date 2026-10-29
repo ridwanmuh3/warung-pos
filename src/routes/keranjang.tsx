@@ -165,14 +165,14 @@ function CartPage() {
   if (items.length === 0) {
     return (
       <div>
-        <PageHeader title="Keranjang" backTo="/" backLabel="Kembali ke kasir" />
+        <PageHeader title="Keranjang" backTo="/kasir" backLabel="Kembali ke kasir" />
         <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
         <EmptyState
           icon={IconShoppingCart}
           title="Keranjang masih kosong"
           description="Pilih produk di halaman kasir untuk memulai transaksi."
           action={
-            <Link to="/" className={buttonStyles({ size: 'md' })}>
+            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
               <IconShoppingCart size={18} />
               Mulai Belanja
             </Link>
@@ -184,7 +184,7 @@ function CartPage() {
 
   return (
     <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/" backLabel="Tambah produk" />
+      <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/kasir" backLabel="Tambah produk" />
 
       <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
 

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnggotaRouteImport } from './routes/anggota'
 import { Route as BerandaRouteImport } from './routes/beranda'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as KasirRouteImport } from './routes/kasir'
 import { Route as KeranjangRouteImport } from './routes/keranjang'
 import { Route as KetentuanRouteImport } from './routes/ketentuan'
 import { Route as LaporanRouteImport } from './routes/laporan'
@@ -50,6 +51,11 @@ const BerandaRoute = BerandaRouteImport.update({
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KasirRoute = KasirRouteImport.update({
+  id: '/kasir',
+  path: '/kasir',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KeranjangRoute = KeranjangRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/anggota': typeof AnggotaRoute
   '/beranda': typeof BerandaRoute
   '/checkout': typeof CheckoutRoute
+  '/kasir': typeof KasirRoute
   '/keranjang': typeof KeranjangRoute
   '/ketentuan': typeof KetentuanRoute
   '/laporan': typeof LaporanRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/anggota': typeof AnggotaRoute
   '/beranda': typeof BerandaRoute
   '/checkout': typeof CheckoutRoute
+  '/kasir': typeof KasirRoute
   '/keranjang': typeof KeranjangRoute
   '/ketentuan': typeof KetentuanRoute
   '/laporan': typeof LaporanRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/anggota': typeof AnggotaRoute
   '/beranda': typeof BerandaRoute
   '/checkout': typeof CheckoutRoute
+  '/kasir': typeof KasirRoute
   '/keranjang': typeof KeranjangRoute
   '/ketentuan': typeof KetentuanRoute
   '/laporan': typeof LaporanRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/anggota'
     | '/beranda'
     | '/checkout'
+    | '/kasir'
     | '/keranjang'
     | '/ketentuan'
     | '/laporan'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/anggota'
     | '/beranda'
     | '/checkout'
+    | '/kasir'
     | '/keranjang'
     | '/ketentuan'
     | '/laporan'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/anggota'
     | '/beranda'
     | '/checkout'
+    | '/kasir'
     | '/keranjang'
     | '/ketentuan'
     | '/laporan'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   AnggotaRoute: typeof AnggotaRoute
   BerandaRoute: typeof BerandaRoute
   CheckoutRoute: typeof CheckoutRoute
+  KasirRoute: typeof KasirRoute
   KeranjangRoute: typeof KeranjangRoute
   KetentuanRoute: typeof KetentuanRoute
   LaporanRoute: typeof LaporanRoute
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout'
       fullPath: '/checkout'
       preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kasir': {
+      id: '/kasir'
+      path: '/kasir'
+      fullPath: '/kasir'
+      preLoaderRoute: typeof KasirRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/keranjang': {
@@ -480,6 +500,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnggotaRoute: AnggotaRoute,
   BerandaRoute: BerandaRoute,
   CheckoutRoute: CheckoutRoute,
+  KasirRoute: KasirRoute,
   KeranjangRoute: KeranjangRoute,
   KetentuanRoute: KetentuanRoute,
   LaporanRoute: LaporanRoute,

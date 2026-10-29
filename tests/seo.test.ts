@@ -8,7 +8,7 @@ const LAST_MOD = '2026-10-28'
 describe('sitemap.xml', () => {
   it('memuat halaman publik dengan URL absolut', () => {
     const xml = sitemapXml(ORIGIN, LAST_MOD)
-    for (const path of ['/beranda', '/sitemap', '/privasi', '/ketentuan']) {
+    for (const path of ['/', '/sitemap', '/privasi', '/ketentuan']) {
       expect(xml).toContain(`<loc>${ORIGIN}${path}</loc>`)
     }
     expect(xml).toContain(`<lastmod>${LAST_MOD}</lastmod>`)
@@ -23,25 +23,25 @@ describe('sitemap.xml', () => {
   })
 
   it('menormalkan origin yang punya garis miring di akhir', () => {
-    expect(sitemapXml(`${ORIGIN}/`, LAST_MOD)).toContain(`<loc>${ORIGIN}/beranda</loc>`)
+    expect(sitemapXml(`${ORIGIN}/`, LAST_MOD)).toContain(`<loc>${ORIGIN}/</loc>`)
   })
 })
 
 describe('robots.txt', () => {
   it('mengizinkan halaman pemasaran dan menunjuk sitemap absolut', () => {
     const robots = robotsTxt(ORIGIN)
-    expect(robots).toContain('Allow: /beranda')
-    expect(robots).toContain('Disallow: /')
+    expect(robots).toContain('Allow: /')
+    expect(robots).toContain('Disallow: /kasir')
     expect(robots).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`)
   })
 })
 
 describe('structured data homepage', () => {
   it('menyajikan SoftwareApplication gratis selama uji coba', () => {
-    const [software] = homeStructuredData(`${ORIGIN}/beranda`)
+    const [software] = homeStructuredData(`${ORIGIN}/`)
     expect(software['@type']).toBe('SoftwareApplication')
     expect(software.offers).toMatchObject({ price: '0', priceCurrency: 'IDR' })
-    expect(software.url).toBe(`${ORIGIN}/beranda`)
+    expect(software.url).toBe(`${ORIGIN}/`)
   })
 
   it('FAQPage memakai pertanyaan yang sama dengan yang terlihat', () => {

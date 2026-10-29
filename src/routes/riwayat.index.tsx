@@ -96,7 +96,7 @@ function OrdersPage() {
           title="Belum ada transaksi"
           description="Pesanan yang sudah dibayar akan muncul di sini."
           action={
-            <Link to="/" className={buttonStyles({ size: 'md' })}>
+            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
               <IconShoppingCart size={18} />
               Buka Kasir
             </Link>

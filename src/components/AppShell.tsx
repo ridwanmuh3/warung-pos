@@ -26,7 +26,7 @@ import { FirstRunGuide } from './FirstRunGuide'
 import { isActive } from './app-nav'
 
 const NAV_ITEMS = [
-    { to: '/', label: 'Kasir', Icon: IconShoppingCart },
+    { to: '/kasir', label: 'Kasir', Icon: IconShoppingCart },
     { to: '/produk', label: 'Produk', Icon: IconPackage },
     { to: '/laporan', label: 'Laporan', Icon: IconFileText },
 ] as const
@@ -153,7 +153,7 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
             )}
             <aside ref={sidebarRef} className={`no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-divider bg-surface transition-[width] duration-200 motion-reduce:transition-none md:flex ${tabletExpanded ? 'w-64' : 'w-[4.5rem]'} ${sidebarCollapsed ? 'lg:w-[4.5rem]' : 'lg:w-64'}`} aria-label="Sidebar aplikasi" aria-modal={tabletExpanded && !isDesktop ? 'true' : undefined} role={tabletExpanded && !isDesktop ? 'dialog' : undefined}>
                 <div className={`flex min-h-20 items-center border-b border-divider px-3 ${rail ? 'flex-col justify-center pb-2 pt-5' : 'justify-between'}`}>
-                    <Link to="/" onClick={closeTabletSidebar} aria-label="Warung POS — Kasir" title="Warung POS" className="flex min-h-11 items-center gap-3 text-ink">
+                    <Link to="/kasir" onClick={closeTabletSidebar} aria-label="Warung POS — Kasir" title="Warung POS" className="flex min-h-11 items-center gap-3 text-ink">
                     <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-on-primary">
                         <IconBuildingStore size={22} stroke={2} />
                     </span>
@@ -273,13 +273,13 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                             key={to}
                             to={to}
                             aria-current={isActive(pathname, to) ? 'page' : undefined}
-                            aria-label={to === '/' && count > 0 ? `Kasir, ${count} produk di keranjang` : label}
+                            aria-label={to === '/kasir' && count > 0 ? `Kasir, ${count} produk di keranjang` : label}
                             className="flex min-h-12 min-w-0 items-center justify-center text-[11px] font-semibold"
                         >
                             <span className={`inline-flex flex-col items-center justify-center gap-0.5 rounded-md px-3 py-1 transition-colors ${isActive(pathname, to) ? 'bg-primary text-on-primary' : 'text-mute'}`}>
                                 <span className="relative inline-flex size-6 items-center justify-center">
                                     <Icon size={20} stroke={2} />
-                                    {to === '/' && count > 0 && <span className="tabular absolute -right-2 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-ink px-0.5 text-[9px] text-white" aria-hidden="true">{count > 99 ? '99+' : count}</span>}
+                                    {to === '/kasir' && count > 0 && <span className="tabular absolute -right-2 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-ink px-0.5 text-[9px] text-white" aria-hidden="true">{count > 99 ? '99+' : count}</span>}
                                 </span>
                                 <span className="truncate">{label}</span>
                             </span>

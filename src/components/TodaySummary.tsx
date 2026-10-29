@@ -119,7 +119,7 @@ export function TodaySummary({ day }: { day: string }) {
         title="Belum ada penjualan hari ini"
         description="Ringkasan muncul setelah transaksi pertama hari ini."
         action={
-          <Link to="/" className={buttonStyles({ size: 'md' })}>
+          <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
             <IconShoppingCart size={18} />
             Buka Kasir
           </Link>

@@ -73,7 +73,7 @@ function RestorePage() {
 
   function finish() {
     clearLegacyStorage()
-    void navigate({ to: '/' })
+    void navigate({ to: '/kasir' })
   }
 
   if (!snapshot) {
@@ -105,7 +105,7 @@ function RestorePage() {
       <PageHeader
         title="Pulihkan Data"
         subtitle="Data dari versi sebelumnya di perangkat ini bisa dipindahkan ke akun ini"
-        backTo="/"
+        backTo="/kasir"
         backLabel="Kembali ke kasir"
       />
 

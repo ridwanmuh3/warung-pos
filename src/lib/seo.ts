@@ -10,7 +10,7 @@ import { FAQ } from '../data/marketing'
 import { SITE } from '../data/site'
 
 export const PUBLIC_PAGES = [
-  { path: '/beranda', changefreq: 'weekly', priority: '1.0' },
+  { path: '/', changefreq: 'weekly', priority: '1.0' },
   { path: '/sitemap', changefreq: 'monthly', priority: '0.3' },
   { path: '/privasi', changefreq: 'yearly', priority: '0.3' },
   { path: '/ketentuan', changefreq: 'yearly', priority: '0.3' },
@@ -78,12 +78,21 @@ export function robotsTxt(origin: string): string {
   const base = originOnly(origin)
   return [
     'User-agent: *',
-    'Allow: /beranda',
-    'Allow: /sitemap',
-    'Allow: /privasi',
-    'Allow: /ketentuan',
+    'Allow: /',
+    'Disallow: /kasir',
     'Disallow: /masuk',
-    'Disallow: /',
+    'Disallow: /beranda',
+    'Disallow: /produk',
+    'Disallow: /keranjang',
+    'Disallow: /checkout',
+    'Disallow: /laporan',
+    'Disallow: /riwayat',
+    'Disallow: /anggota',
+    'Disallow: /pengaturan',
+    'Disallow: /pulihkan',
+    'Disallow: /sukses',
+    'Disallow: /panduan',
+    'Disallow: /api/',
     `Sitemap: ${base}/sitemap.xml`,
     '',
   ].join('\n')

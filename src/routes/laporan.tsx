@@ -225,7 +225,7 @@ function DailyReport({
           title="Tidak ada transaksi pada hari ini"
           description="Pilih tanggal lain atau buat transaksi baru di kasir."
           action={
-            <Link to="/" className={buttonStyles({ size: 'md' })}>
+            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
               <IconShoppingCart size={18} />
               Buka Kasir
             </Link>

@@ -10,7 +10,7 @@ export function NotFoundPage() {
       title="Halaman tidak ditemukan"
       description="Alamat yang kamu buka tidak tersedia."
       action={
-        <Link to="/" className={buttonStyles({ size: 'md' })}>
+        <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
           Kembali ke Kasir
         </Link>
       }

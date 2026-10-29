@@ -11,9 +11,10 @@ describe('rute publik', () => {
   })
 
   it('menjaga rute aplikasi tetap di balik gerbang sesi', () => {
-    expect(isPublicPath('/')).toBe(false)
+    expect(isPublicPath('/')).toBe(true)
     expect(isPublicPath('/produk')).toBe(false)
     expect(isPublicPath('/checkout')).toBe(false)
+    expect(isPublicPath('/kasir')).toBe(false)
     expect(isPublicPath('/laporan')).toBe(false)
   })
 

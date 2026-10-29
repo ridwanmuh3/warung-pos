@@ -92,7 +92,7 @@ export function LegalPage({
             <Link to="/ketentuan" className="font-semibold text-link underline underline-offset-2">
               Ketentuan layanan
             </Link>
-            <Link to="/beranda" className="font-semibold text-link underline underline-offset-2">
+            <Link to="/" className="font-semibold text-link underline underline-offset-2">
               Kembali ke beranda
             </Link>
           </p>

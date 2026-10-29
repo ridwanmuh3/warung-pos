@@ -136,7 +136,7 @@
   /* ------------------------- semantic: type -------------------------- */
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Geist Variable', 'Inter Variable', ui-sans-serif, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* ------------------------ semantic: motion ------------------------- */
   --ease-out: ease-out;

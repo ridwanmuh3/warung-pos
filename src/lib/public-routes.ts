@@ -1,11 +1,11 @@
 /**
  * Public pages: reachable without a session and rendered without the app shell.
  *
- * The marketing site lives outside the POS routes on purpose. `/` is still the
- * cashier, so the homepage is served from `/beranda` until the app moves to
- * `/kasir`. Anything not listed here keeps the existing sign-in gate.
+ * The marketing site lives outside the POS routes; the cashier is at /kasir.
+ * /beranda stays public only to serve the legacy redirect to /.
  */
 export const PUBLIC_PATHS = [
+  '/',
   '/beranda',
   '/sitemap',
   '/privasi',

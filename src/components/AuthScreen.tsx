@@ -66,7 +66,7 @@ export function AuthScreen({
                         {session.name} · <span className="tabular">{session.email}</span>
                     </p>
                     <Link
-                        to="/"
+                        to="/kasir"
                         className={buttonStyles({ size: 'md', className: 'mt-5' })}
                     >
                         Buka Kasir
@@ -94,7 +94,7 @@ export function AuthScreen({
             setConfirmPassword('')
             // Only same-origin, in-app paths are honoured: an attacker-supplied
             // absolute URL must not turn the login page into an open redirect.
-            const target = safeInternalPath(redirectTo) ?? '/'
+            const target = safeInternalPath(redirectTo) ?? '/kasir'
             await navigate({ to: target })
         } catch {
             setErrors(['Tidak dapat terhubung. Coba lagi.'])

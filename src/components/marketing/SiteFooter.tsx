@@ -11,7 +11,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-[1200px] px-4 pb-8 pt-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
-            <Link to="/beranda" className="inline-flex items-center gap-2.5 text-white">
+            <Link to="/" className="inline-flex items-center gap-2.5 text-white">
               <span className="grid size-9 place-items-center rounded-md bg-primary text-on-primary">
                 <IconBuildingStore size={20} stroke={2} />
               </span>
@@ -29,10 +29,10 @@ export function SiteFooter() {
           <nav aria-label="Produk">
             <p className={columnTitle}>Produk</p>
             <ul className="mt-4 space-y-2.5">
-              <li><Link to="/beranda" hash="fitur" className={linkClass}>Fitur</Link></li>
-              <li><Link to="/beranda" hash="cara-pakai" className={linkClass}>Cara pakai</Link></li>
-              <li><Link to="/beranda" hash="gratis" className={linkClass}>Masa uji coba</Link></li>
-              <li><Link to="/beranda" hash="faq" className={linkClass}>FAQ</Link></li>
+              <li><Link to="/" hash="fitur" className={linkClass}>Fitur</Link></li>
+              <li><Link to="/" hash="cara-pakai" className={linkClass}>Cara pakai</Link></li>
+              <li><Link to="/" hash="gratis" className={linkClass}>Masa uji coba</Link></li>
+              <li><Link to="/" hash="faq" className={linkClass}>FAQ</Link></li>
               <li>
                 <Link to="/masuk" search={{ mode: 'register' }} className={linkClass}>
                   Coba gratis
@@ -44,7 +44,7 @@ export function SiteFooter() {
           <nav aria-label="Halaman">
             <p className={columnTitle}>Halaman</p>
             <ul className="mt-4 space-y-2.5">
-              <li><Link to="/beranda" className={linkClass}>Beranda</Link></li>
+              <li><Link to="/" className={linkClass}>Beranda</Link></li>
               <li><Link to="/sitemap" className={linkClass}>Sitemap</Link></li>
               <li><Link to="/panduan" className={linkClass}>Panduan pengguna</Link></li>
               <li><Link to="/masuk" className={linkClass}>Masuk</Link></li>
@@ -81,7 +81,7 @@ export function SiteFooter() {
             <Link to="/sitemap" className="text-xs text-white/55 hover:text-white">
               Sitemap
             </Link>
-            <Link to="/beranda" hash="faq" className="text-xs text-white/55 hover:text-white">
+            <Link to="/" hash="faq" className="text-xs text-white/55 hover:text-white">
               FAQ
             </Link>
           </div>

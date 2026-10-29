@@ -87,7 +87,7 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
    pnpm dev
    ```
 
-   Buka `http://localhost:3000`. Jika belum ada akun, aplikasi mengarahkan ke halaman pendaftaran. Setiap akun yang mendaftar membuat warung baru dan menjadi `owner`-nya. Katalog awal kosong; tambahkan produk melalui halaman **Produk** atau ikuti checklist di halaman **Kasir**.
+   Buka `http://localhost:3000` untuk melihat homepage, lalu pilih **Coba gratis** untuk mendaftar. Setelah masuk, kasir ada di `/kasir`. Setiap akun yang mendaftar membuat warung baru dan menjadi `owner`-nya. Katalog awal kosong; tambahkan produk melalui halaman **Produk** atau ikuti checklist di halaman **Kasir**.
 
    `pnpm dev` juga menjalankan emulasi Netlify melalui plugin TanStack Start, sehingga server function dan perilaku runtime produksi dapat diuji secara lokal.
 

@@ -78,7 +78,7 @@ function SuccessPage() {
 
       <div className="no-print mt-4 grid gap-2">
         <Link
-          to="/"
+          to="/kasir"
           className={buttonStyles({ size: 'md', className: 'w-full' })}
         >
           <IconPlus size={18} stroke={2.5} />

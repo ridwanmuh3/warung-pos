@@ -17,7 +17,7 @@ export const Route = createFileRoute('/sitemap')({
 })
 
 const PUBLIC_LINKS = [
-  { label: 'Beranda', href: '/beranda', note: 'Ringkasan produk, fitur, dan masa uji coba.' },
+  { label: 'Beranda', href: '/', note: 'Ringkasan produk, fitur, dan masa uji coba.' },
   { label: 'Sitemap', href: '/sitemap', note: 'Halaman ini.' },
   { label: 'Kebijakan privasi', href: '/privasi', note: 'Data yang disimpan dan cara meminta penghapusan.' },
   { label: 'Ketentuan layanan', href: '/ketentuan', note: 'Batas layanan selama masa uji coba.' },
@@ -28,12 +28,11 @@ const HOME_SECTIONS = [
   { label: 'Fitur unggulan', hash: 'fitur' },
   { label: 'Cara pakai', hash: 'cara-pakai' },
   { label: 'Masa uji coba', hash: 'gratis' },
-  { label: 'Fakta singkat', hash: 'fakta' },
   { label: 'FAQ', hash: 'faq' },
 ] as const
 
 const APP_LINKS = [
-  { label: 'Kasir', href: '/', note: 'Pilih produk dan jalankan transaksi.' },
+  { label: 'Kasir', href: '/kasir', note: 'Pilih produk dan jalankan transaksi.' },
   { label: 'Produk', href: '/produk', note: 'Katalog, harga, HPP, dan stok.' },
   { label: 'Laporan', href: '/laporan', note: 'Omzet, laba, dan rekonsiliasi kas.' },
   { label: 'Riwayat pesanan', href: '/riwayat', note: 'Cari transaksi dan cetak ulang struk.' },
@@ -77,7 +76,7 @@ function SitemapPage() {
               {HOME_SECTIONS.map((section) => (
                 <li key={section.hash}>
                   <Link
-                    to="/beranda"
+                    to="/"
                     hash={section.hash}
                     className="inline-flex rounded-full border border-border-subtle bg-surface px-3.5 py-2 text-sm font-semibold text-body hover:bg-surface-muted"
                   >

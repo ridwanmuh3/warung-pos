@@ -124,7 +124,7 @@ function CheckoutPage() {
           title="Tidak ada pesanan untuk ditinjau"
           description="Tambahkan produk ke keranjang terlebih dahulu."
           action={
-            <Link to="/" className={buttonStyles({ size: 'md' })}>
+            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
               Kembali ke Kasir
             </Link>
           }
