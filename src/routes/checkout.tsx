@@ -201,9 +201,9 @@ function CheckoutPage() {
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           onClick={() => setCashDraft(null)}
-          aria-pressed={Number(cashInput) === total}
-          className={`rounded-full border px-3.5 py-2 text-xs font-semibold transition duration-150 ease-out ${
-            Number(cashInput) === total
+          aria-pressed={cashDraft === null}
+          className={`min-h-11 rounded-full border px-3.5 py-2 text-xs font-semibold transition duration-150 ease-out ${
+            cashDraft === null
               ? 'border-primary bg-primary-subtle text-on-primary'
               : 'border-divider text-body hover:bg-surface-muted'
           }`}
@@ -214,7 +214,8 @@ function CheckoutPage() {
           <button
             key={option}
             onClick={() => setCashDraft(String(option))}
-            className="tabular rounded-full border border-divider px-3.5 py-2 text-xs font-semibold text-body transition duration-150 ease-out hover:bg-surface-muted"
+            aria-pressed={cashDraft !== null && Number(cashInput) === option}
+            className={`tabular min-h-11 rounded-full border px-3.5 py-2 text-xs font-semibold transition duration-150 ease-out ${cashDraft !== null && Number(cashInput) === option ? 'border-primary bg-primary-subtle text-on-primary' : 'border-divider text-body hover:bg-surface-muted'}`}
           >
             {formatIDR(option)}
           </button>
@@ -230,7 +231,7 @@ function CheckoutPage() {
         placeholder="0"
         aria-label="Uang diterima"
         data-testid="cash-input"
-        className="tabular mt-3 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-right text-lg font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+        className="tabular mt-3 min-h-11 w-full rounded-sm border border-border bg-surface px-3 py-2 text-right text-lg font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
       />
       <div className="mt-2 flex items-center justify-between text-sm">
         <span className="text-slate-500">Kembalian</span>
@@ -333,7 +334,7 @@ function CheckoutPage() {
                     key={method}
                     onClick={() => setPayment(method)}
                     aria-pressed={payment === method}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-4 text-sm font-medium transition-colors ${
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-4 text-sm font-medium transition-colors ${
                       payment === method
                         ? 'border-primary bg-primary-subtle text-on-primary'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
@@ -385,7 +386,7 @@ function CheckoutPage() {
                         onClick={() => setChannel(value)}
                         aria-pressed={channel === value}
                         data-testid={`channel-${value}`}
-                        className={`rounded-xl border-2 px-2 py-2.5 text-xs font-medium transition-colors ${
+                        className={`min-h-11 rounded-xl border px-2 py-2.5 text-xs font-medium transition-colors ${
                           channel === value
                             ? 'border-primary bg-primary-subtle text-on-primary'
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
@@ -409,7 +410,7 @@ function CheckoutPage() {
                       placeholder="Opsional"
                       autoComplete="off"
                       data-testid="cashier-input"
-                      className="mt-1 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+                      className="mt-1 min-h-11 w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
                     />
                   </label>
                 </div>
@@ -423,8 +424,8 @@ function CheckoutPage() {
                           key={mode}
                           onClick={() => setDiscountMode(mode)}
                           aria-pressed={discountMode === mode}
-                          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                            discountMode === mode ? 'bg-ink text-white' : 'text-body hover:bg-surface-muted'
+                          className={`min-h-11 rounded-md px-4 text-xs font-semibold transition-colors ${
+                            discountMode === mode ? 'bg-primary text-on-primary' : 'text-body hover:bg-surface-muted'
                           }`}
                         >
                           {mode === 'rupiah' ? 'Rp' : '%'}
@@ -442,7 +443,7 @@ function CheckoutPage() {
                     placeholder={discountMode === 'persen' ? '10' : '2000'}
                     aria-label="Nilai diskon"
                     data-testid="discount-input"
-                    className="tabular mt-2 w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-right text-sm font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+                    className="tabular mt-2 min-h-11 w-full rounded-sm border border-border bg-surface px-3 py-2 text-right text-sm font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
                   />
                   {discount > 0 && (
                     <p className="mt-1 text-right text-xs text-slate-500">

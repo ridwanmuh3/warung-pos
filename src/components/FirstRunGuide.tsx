@@ -60,7 +60,7 @@ export function FirstRunGuide({
             type="button"
             onClick={dismiss}
             aria-label="Tutup panduan"
-            className="grid size-9 shrink-0 place-items-center rounded-full text-slate-500 transition-colors hover:bg-surface-muted hover:text-ink"
+            className="grid size-11 shrink-0 place-items-center rounded-full text-slate-500 transition-colors hover:bg-surface-muted hover:text-ink"
           >
             <IconX size={18} stroke={2.5} />
           </button>

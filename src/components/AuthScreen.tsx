@@ -130,7 +130,7 @@ export function AuthScreen({
                             }}
                             aria-pressed={mode === value}
                             data-testid={`auth-mode-${value}`}
-                            className={`min-w-0 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${mode === value ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                            className={`min-h-11 min-w-0 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary ${mode === value ? 'bg-primary text-on-primary' : 'text-body hover:bg-surface-muted'
                                 }`}
                         >
                             {value === 'login' ? 'Masuk' : 'Daftar'}

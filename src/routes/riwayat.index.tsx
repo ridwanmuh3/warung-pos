@@ -137,10 +137,11 @@ function OrdersPage() {
           <span className="shrink-0 text-[10px] font-semibold tracking-wide text-mute">Metode</span>
           <button
             onClick={() => updateSearch({ method: undefined })}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+            aria-pressed={method === undefined}
+            className={`flex min-h-11 shrink-0 items-center rounded-full px-3.5 text-xs font-medium transition-colors ${
               method === undefined
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-primary text-on-primary'
+                : 'border border-divider bg-surface text-body hover:bg-surface-muted'
             }`}
           >
             Semua
@@ -149,10 +150,11 @@ function OrdersPage() {
             <button
               key={value}
               onClick={() => updateSearch({ method: method === value ? undefined : value })}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              aria-pressed={method === value}
+              className={`flex min-h-11 shrink-0 items-center rounded-full px-3.5 text-xs font-medium transition-colors ${
                 method === value
-                  ? 'bg-slate-900 text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-primary text-on-primary'
+                  : 'border border-divider bg-surface text-body hover:bg-surface-muted'
               }`}
             >
               {PAYMENT_LABELS[value]}
@@ -164,10 +166,11 @@ function OrdersPage() {
           <span className="shrink-0 text-[10px] font-semibold tracking-wide text-mute">Jenis</span>
           <button
             onClick={() => updateSearch({ channel: undefined })}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+            aria-pressed={channel === undefined}
+            className={`flex min-h-11 shrink-0 items-center rounded-full px-3.5 text-xs font-medium transition-colors ${
               channel === undefined
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-primary text-on-primary'
+                : 'border border-divider bg-surface text-body hover:bg-surface-muted'
             }`}
           >
             Semua
@@ -177,10 +180,11 @@ function OrdersPage() {
               key={value}
               onClick={() => updateSearch({ channel: channel === value ? undefined : value })}
               data-testid={`filter-channel-${value}`}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              aria-pressed={channel === value}
+              className={`flex min-h-11 shrink-0 items-center rounded-full px-3.5 text-xs font-medium transition-colors ${
                 channel === value
-                  ? 'bg-slate-900 text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-primary text-on-primary'
+                  : 'border border-divider bg-surface text-body hover:bg-surface-muted'
               }`}
             >
               {CHANNEL_LABELS[value]}
@@ -189,7 +193,7 @@ function OrdersPage() {
           {day && (
             <button
               onClick={() => updateSearch({ day: undefined })}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border-2 border-primary bg-primary px-3 py-1.5 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full border border-primary bg-primary px-3.5 text-xs font-semibold text-on-primary transition duration-150 ease-out hover:bg-primary-hover"
             >
               {formatDayLabel(day)}
               <IconX size={12} stroke={2.5} />

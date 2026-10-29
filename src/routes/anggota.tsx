@@ -158,7 +158,7 @@ function MembersPage() {
                   }}
                   aria-label={`Peran ${member.name}`}
                   data-testid={`member-role-${member.userId}`}
-                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-brand-500"
+                  className="h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-brand-500"
                 >
                   {ROLES.map((role) => (
                     <option key={role} value={role}>

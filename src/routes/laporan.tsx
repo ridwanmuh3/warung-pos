@@ -152,17 +152,18 @@ function DailyReport({
               key={value}
               onClick={() => onPickDay(value)}
               data-testid={`day-${value}`}
-              className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+              aria-pressed={value === day}
+              className={`flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
                 value === day
-                  ? 'bg-slate-900 text-white'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-primary text-on-primary'
+                  : 'border border-divider bg-surface text-body hover:bg-surface-muted'
               }`}
             >
               {formatDayLabel(value)}
             </button>
           ))}
         </div>
-        <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-600">
+        <label className="inline-flex min-h-11 items-center gap-2 rounded-full border border-divider bg-surface px-3.5 py-2 text-sm text-body">
           <span className="text-xs font-semibold tracking-wide text-slate-500">Tanggal</span>
           <input
             type="date"

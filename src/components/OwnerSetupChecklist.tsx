@@ -82,7 +82,7 @@ export function OwnerSetupChecklist({
           type="button"
           onClick={() => setHidden(true)}
           aria-label="Sembunyikan checklist"
-          className="grid size-9 shrink-0 place-items-center rounded-full text-slate-500 transition-colors hover:bg-white/70 hover:text-ink"
+          className="grid size-11 shrink-0 place-items-center rounded-full text-slate-500 transition-colors hover:bg-white/70 hover:text-ink"
         >
           <IconX size={16} stroke={2.5} />
         </button>

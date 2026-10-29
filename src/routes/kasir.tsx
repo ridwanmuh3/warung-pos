@@ -132,13 +132,13 @@ function MenuPage() {
           placeholder="Cari nama, SKU, atau scan barcode…"
           aria-label="Cari produk"
           data-testid="menu-search"
-          className="w-full rounded-sm border-2 border-border bg-surface py-2 pl-9 pr-11 text-sm text-ink outline-none transition duration-150 ease-out placeholder:text-mute focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+          className="h-11 w-full rounded-sm border border-border bg-surface pl-9 pr-12 text-sm text-ink outline-none transition duration-150 ease-out placeholder:text-mute focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
         />
         {query !== '' && (
           <button
             onClick={() => setSearch({ cari: '' })}
             aria-label="Hapus pencarian"
-            className="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100"
+            className="absolute right-0 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100"
           >
             <IconX size={14} stroke={2.5} />
           </button>
@@ -152,7 +152,8 @@ function MenuPage() {
           <button
             key={filter.value}
             onClick={() => setSearch({ kategori: filter.value })}
-            className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition duration-150 ease-out ${
+            aria-pressed={active === filter.value}
+            className={`flex min-h-11 shrink-0 items-center rounded-full px-3.5 py-2 text-sm font-semibold transition duration-150 ease-out ${
               active === filter.value
                 ? 'bg-primary text-on-primary'
                 : 'border border-divider bg-surface text-body hover:bg-surface-muted'

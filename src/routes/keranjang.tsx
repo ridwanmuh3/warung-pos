@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   IconArchive,
@@ -9,7 +9,7 @@ import {
   IconShoppingCart,
   IconTrash,
 } from '@tabler/icons-react'
-import { clearCart, removeFromCart, setCartItems, setQty, stalePriceIds, useCart } from '../lib/cart'
+import { clearCart, currentCartItems, removeFromCart, setCartItems, setQty, stalePriceIds, useCart } from '../lib/cart'
 import {
   deleteCartFn,
   listParkedCartsFn,
@@ -26,13 +26,14 @@ import { EmptyState } from '../components/EmptyState'
 import { ProductImage } from '../components/ProductImage'
 import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
+import { Modal, ModalTitle } from '../components/ui/Modal'
 
 function QtyStepper({ item }: { item: OrderItem }) {
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-slate-200">
+    <div className="flex items-center gap-2 rounded-lg border border-slate-200">
       <button
         onClick={() => setQty(item.productId, item.qty - 1)}
-        className="grid size-10 place-items-center rounded-l-lg text-slate-600 transition-colors hover:bg-slate-100"
+        className="grid size-11 place-items-center rounded-l-lg text-slate-600 transition-colors hover:bg-slate-100"
         aria-label={`Kurangi jumlah ${item.name}`}
       >
         <IconMinus size={16} stroke={2.5} />
@@ -40,7 +41,7 @@ function QtyStepper({ item }: { item: OrderItem }) {
       <span className="tabular w-8 text-center text-sm font-semibold">{item.qty}</span>
       <button
         onClick={() => setQty(item.productId, item.qty + 1)}
-        className="grid size-10 place-items-center rounded-r-lg text-slate-600 transition-colors hover:bg-slate-100"
+        className="grid size-11 place-items-center rounded-r-lg text-slate-600 transition-colors hover:bg-slate-100"
         aria-label={`Tambah jumlah ${item.name}`}
       >
         <IconPlus size={16} stroke={2.5} />
@@ -93,7 +94,7 @@ function ParkedCarts({
               Lanjutkan
             </Button>
             <Button
-              variant="secondary"
+              variant="danger-outline"
               size="sm"
               onClick={() => onDiscard(cart.id)}
               disabled={busy}
@@ -113,6 +114,10 @@ function CartPage() {
   const [parked, setParked] = useState<Cart[]>([])
   const [parkLabel, setParkLabel] = useState('')
   const [busy, setBusy] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [undoItems, setUndoItems] = useState<OrderItem[] | null>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const confirmRef = useRef<HTMLButtonElement>(null)
   const stale = stalePriceIds(products)
   const staleNames = items.filter((item) => stale.includes(item.productId)).map((item) => item.name)
 
@@ -127,6 +132,26 @@ function CartPage() {
   useEffect(() => {
     void reloadParked()
   }, [])
+
+  useEffect(() => {
+    if (!undoItems) return
+    const timer = window.setTimeout(() => setUndoItems(null), 5000)
+    return () => window.clearTimeout(timer)
+  }, [undoItems])
+
+  function confirmEmptyCart() {
+    setUndoItems(currentCartItems())
+    setConfirmClear(false)
+    clearCart()
+  }
+
+  // ponytail: undo restores only an empty cart; merging later edits needs a dedicated cart-history flow.
+  const undoNotice = undoItems && items.length === 0 && (
+    <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-divider bg-primary-subtle px-4 py-3 text-sm text-on-primary">
+      <span>Keranjang dikosongkan. Urungkan dalam 5 detik.</span>
+      <button type="button" className="min-h-11 rounded-full px-4 font-semibold underline underline-offset-2" onClick={() => { setCartItems(undoItems); setUndoItems(null) }}>Urungkan</button>
+    </div>
+  )
 
   async function park() {
     if (items.length === 0) return
@@ -166,6 +191,7 @@ function CartPage() {
     return (
       <div>
         <PageHeader title="Keranjang" backTo="/kasir" backLabel="Kembali ke kasir" />
+        {undoNotice}
         <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
         <EmptyState
           icon={IconShoppingCart}
@@ -185,6 +211,8 @@ function CartPage() {
   return (
     <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/kasir" backLabel="Tambah produk" />
+
+      {undoNotice}
 
       <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
 
@@ -221,7 +249,7 @@ function CartPage() {
                   <QtyStepper item={item} />
                   <button
                     onClick={() => removeFromCart(item.productId)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                   >
                     <IconTrash size={14} stroke={2.2} />
                     Hapus
@@ -253,7 +281,7 @@ function CartPage() {
                     onChange={(event) => setParkLabel(event.target.value)}
                     placeholder="Nama pelanggan / meja"
                     aria-label="Nama pesanan yang ditahan"
-                    className="h-9 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-xs outline-none focus:border-brand-500"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-border px-3 text-sm outline-none focus:border-primary"
                   />
                   <Button
                     variant="secondary"
@@ -267,12 +295,10 @@ function CartPage() {
                   </Button>
                 </div>
                 <Button
-                  variant="secondary"
+                  variant="danger-outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => {
-                    if (confirm('Kosongkan keranjang?')) clearCart()
-                  }}
+                  onClick={() => setConfirmClear(true)}
                 >
                   Kosongkan keranjang
                 </Button>
@@ -281,6 +307,34 @@ function CartPage() {
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setConfirmClear(true)}
+        className="mt-4 min-h-11 w-full rounded-full border border-danger/40 px-4 text-sm font-semibold text-danger md:hidden"
+      >
+        Kosongkan keranjang
+      </button>
+
+      {confirmClear && (
+        <Modal
+          onClose={() => setConfirmClear(false)}
+          aria-labelledby="clear-cart-title"
+          aria-describedby="clear-cart-description"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') { event.preventDefault(); setConfirmClear(false) }
+            if (event.key === 'Tab' && event.shiftKey && document.activeElement === cancelRef.current) { event.preventDefault(); confirmRef.current?.focus() }
+            if (event.key === 'Tab' && !event.shiftKey && document.activeElement === confirmRef.current) { event.preventDefault(); cancelRef.current?.focus() }
+          }}
+        >
+          <ModalTitle id="clear-cart-title">Kosongkan keranjang?</ModalTitle>
+          <p id="clear-cart-description" className="mt-2 text-sm text-body">{count} item akan dihapus dari keranjang. Anda bisa mengurungkannya dalam 5 detik.</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button ref={cancelRef} autoFocus type="button" className={buttonStyles({ variant: 'secondary', size: 'sm' })} onClick={() => setConfirmClear(false)}>Batal</button>
+            <button ref={confirmRef} type="button" className={buttonStyles({ variant: 'danger', size: 'sm' })} onClick={confirmEmptyCart}>Ya, kosongkan</button>
+          </div>
+        </Modal>
+      )}
 
       {/* Compact sticky total bar on mobile */}
       <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">

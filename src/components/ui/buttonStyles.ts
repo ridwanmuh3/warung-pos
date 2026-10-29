@@ -35,7 +35,7 @@ export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
  * always line up.
  */
 export const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: 'h-9 px-4 text-sm',
+  sm: 'h-11 px-4 text-sm',
   md: 'h-11 px-6 text-base',
   lg: 'h-14 px-8 text-lg',
 }

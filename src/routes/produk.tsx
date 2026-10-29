@@ -142,7 +142,7 @@ function ImagePicker({ draft, onChange, onError }: {
           <button
             type="button"
             onClick={() => onChange({ ...draft, imageKey: null })}
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
           >
             <IconX size={14} />
             Hapus
@@ -437,10 +437,11 @@ function ProductsPage() {
           <button
             key={value}
             onClick={() => navigate({ search: (prev) => ({ ...prev, kategori: value }), replace: true })}
-            className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+            aria-pressed={filter === value}
+            className={`flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
               filter === value
-                ? 'bg-slate-900 text-white'
-                : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-primary text-on-primary'
+                : 'border border-divider bg-surface text-body hover:bg-surface-muted'
             }`}
           >
             {value === 'semua' ? 'Semua' : CATEGORY_LABELS[value]}
@@ -449,10 +450,10 @@ function ProductsPage() {
         <button
           onClick={() => navigate({ search: (prev) => ({ ...prev, menipis: menipis ? undefined : true }), replace: true })}
           aria-pressed={menipis === true}
-          className={`rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+          className={`flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
             menipis
-              ? 'bg-warning text-on-warning'
-              : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+              ? 'bg-primary text-on-primary'
+              : 'border border-divider bg-surface text-body hover:bg-surface-muted'
           }`}
         >
           Stok menipis
@@ -527,7 +528,7 @@ function ProductsPage() {
                         setRestockQty('10')
                         setRestockError(null)
                       }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                       aria-label={`Tambah stok ${product.name}`}
                       data-testid={`restock-${product.id}`}
                     >
@@ -542,7 +543,7 @@ function ProductsPage() {
                   <>
                     <button
                       onClick={() => openEdit(product)}
-                      className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      className="grid size-11 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       aria-label={`Edit ${product.name}`}
                     >
                       <IconPencil size={16} />
@@ -552,7 +553,7 @@ function ProductsPage() {
                         setDeleteError(null)
                         setPendingDelete(product)
                       }}
-                      className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                      className="grid size-11 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"
                       aria-label={`Hapus ${product.name}`}
                     >
                       <IconTrash size={16} />
@@ -664,7 +665,7 @@ function ProductsPage() {
                 type="button"
                 onClick={() => setRestockQty(String(amount))}
                 aria-pressed={restockQty === String(amount)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`min-h-11 rounded-full border px-3.5 text-xs font-semibold transition-colors ${
                   restockQty === String(amount)
                     ? 'border-primary bg-primary-subtle text-on-primary'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -685,7 +686,7 @@ function ProductsPage() {
               value={restockQty}
               onChange={(event) => setRestockQty(event.target.value)}
               data-testid="restock-qty"
-              className="tabular mt-1 w-full rounded-sm border-2 border-border px-3 py-2 text-right text-lg font-semibold outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+              className="tabular mt-1 min-h-11 w-full rounded-sm border border-border px-3 py-2 text-right text-lg font-semibold outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
             />
           </label>
           {restockValid && restockTarget.stock !== null && (

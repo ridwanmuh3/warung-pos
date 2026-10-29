@@ -22,7 +22,7 @@ export function Tab({ active = false, className = '', ...props }: TabProps) {
     <button
       role="tab"
       aria-selected={active}
-      className={`flex h-9 items-center justify-center rounded-md px-4 text-base font-semibold leading-none transition duration-150 ease-out ${
+      className={`flex h-11 items-center justify-center rounded-md px-4 text-base font-semibold leading-none transition duration-150 ease-out ${
         active ? 'bg-primary text-on-primary' : 'text-body hover:bg-surface-muted hover:text-ink'
       } ${className}`}
       {...props}
