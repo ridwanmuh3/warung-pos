@@ -16,6 +16,7 @@ dist-ssr
 .tanstack
 *.local
 .smoke
+.impeccable
 
 # Editor directories and files
 .vscode/*
