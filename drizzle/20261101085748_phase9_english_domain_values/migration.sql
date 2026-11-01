@@ -1,12 +1,6 @@
--- Normalise the Indonesian enum values written before the English API rename.
---
--- Run once, after backing up the database, in the same maintenance window as
--- the matching application deploy:
---
---   sqlite3 ... < drizzle/phase9-english-domain-values.sql
---
--- Idempotent: running it again changes nothing.
-
+-- Phase 9: normalise pre-rename Indonesian enum domain values to English.
+-- Idempoten (running again changes nothing). Must run on production in
+-- the same maintenance window as the deploy that adopts the English routes/API.
 UPDATE products
 SET category = CASE category
   WHEN 'makanan' THEN 'food'
