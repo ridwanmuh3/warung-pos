@@ -1,18 +1,20 @@
 import { IconPlus } from '@tabler/icons-react'
 import { FAQ } from '../../data/marketing'
+import { SectionEyebrow } from './SectionEyebrow'
 
 /**
  * Native disclosure widgets: keyboard support and open/close state come from
- * the browser, so the FAQ works before hydration.
+ * the browser, so the FAQ works before hydration. The grid-row transition only
+ * paints the open animation; the content is never trapped behind JavaScript.
  */
 export function Faq() {
   return (
     <section id="faq" className="scroll-mt-24 bg-surface-bone">
       <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-link">FAQ</p>
-            <h2 className="mt-3 font-display text-3xl font-black leading-[0.95] text-ink sm:text-4xl">
+          <div data-reveal>
+            <SectionEyebrow index="06">FAQ</SectionEyebrow>
+            <h2 className="mt-5 font-display text-3xl font-black leading-[0.95] text-ink sm:text-4xl">
               Pertanyaan yang paling sering muncul.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-body">
@@ -21,7 +23,7 @@ export function Faq() {
             </p>
           </div>
 
-          <div className="space-y-2.5">
+          <div data-reveal-group className="space-y-2.5">
             {FAQ.map((item) => (
               <details
                 key={item.question}
@@ -36,7 +38,11 @@ export function Faq() {
                     aria-hidden
                   />
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-body">{item.answer}</p>
+                <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-open:grid-rows-[1fr] motion-reduce:transition-none">
+                  <div className="overflow-hidden">
+                    <p className="pt-3 text-sm leading-relaxed text-body">{item.answer}</p>
+                  </div>
+                </div>
               </details>
             ))}
           </div>

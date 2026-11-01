@@ -42,8 +42,8 @@ describe('input bounds', () => {
 describe('safeInternalPath', () => {
   it('allows only same-origin absolute paths', () => {
     expect(safeInternalPath('/')).toBe('/')
-    expect(safeInternalPath('/kasir?tab=1')).toBe('/kasir?tab=1')
-    expect(safeInternalPath('  /pengaturan  ')).toBe('/pengaturan')
+    expect(safeInternalPath('/cashier?tab=1')).toBe('/cashier?tab=1')
+    expect(safeInternalPath('  /settings  ')).toBe('/settings')
   })
 
   it('rejects protocol-relative, absolute, encoded-slash, and control-character targets', () => {

@@ -17,7 +17,7 @@ const SECTIONS = [
   { id: 'kontak', title: 'Kontak' },
 ] as const
 
-export const Route = createFileRoute('/privasi')({
+export const Route = createFileRoute('/privacy')({
   component: PrivacyPage,
   head: () => ({
     meta: [

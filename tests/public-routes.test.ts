@@ -5,22 +5,22 @@ describe('rute publik', () => {
   it('membuka halaman pemasaran tanpa sesi', () => {
     expect(isPublicPath('/beranda')).toBe(true)
     expect(isPublicPath('/sitemap')).toBe(true)
-    expect(isPublicPath('/privasi')).toBe(true)
-    expect(isPublicPath('/ketentuan')).toBe(true)
-    expect(isPublicPath('/masuk')).toBe(true)
+    expect(isPublicPath('/privacy')).toBe(true)
+    expect(isPublicPath('/terms')).toBe(true)
+    expect(isPublicPath('/login')).toBe(true)
   })
 
   it('menjaga rute aplikasi tetap di balik gerbang sesi', () => {
     expect(isPublicPath('/')).toBe(true)
-    expect(isPublicPath('/produk')).toBe(false)
+    expect(isPublicPath('/products')).toBe(false)
     expect(isPublicPath('/checkout')).toBe(false)
-    expect(isPublicPath('/kasir')).toBe(false)
-    expect(isPublicPath('/laporan')).toBe(false)
+    expect(isPublicPath('/cashier')).toBe(false)
+    expect(isPublicPath('/reports')).toBe(false)
   })
 
   it('tidak membuka path yang hanya mirip', () => {
     expect(isPublicPath('/berandax')).toBe(false)
     expect(isPublicPath('/beranda/')).toBe(false)
-    expect(isPublicPath('/privasi-lama')).toBe(false)
+    expect(isPublicPath('/privacy-lama')).toBe(false)
   })
 })

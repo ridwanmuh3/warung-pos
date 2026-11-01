@@ -57,7 +57,7 @@ const EMPTY_DRAFT: DraftState = {
   name: '',
   price: '',
   cost: '',
-  category: 'makanan',
+  category: 'food',
   imageKey: null,
   stock: '',
   lowStockThreshold: '5',
@@ -305,11 +305,11 @@ function ProductForm({ draft, onChange, onSubmit, onCancel, error, busy, onError
 
 /** Validated search params: the category filter is shareable and refresh-safe. */
 const productSearchSchema = z.object({
-  kategori: z.enum(['semua', 'makanan', 'minuman', 'snack']).optional().catch(undefined),
-  menipis: z.boolean().optional().catch(undefined),
+  category: z.enum(['all', 'food', 'drink', 'snack']).optional().catch(undefined),
+  lowStock: z.boolean().optional().catch(undefined),
 })
 
-export const Route = createFileRoute('/produk')({
+export const Route = createFileRoute('/products')({
   component: ProductsPage,
   validateSearch: productSearchSchema,
   // The catalog now lives in the database, so the list is fetched on the server.
@@ -325,8 +325,8 @@ function ProductsPage() {
   const [restockQty, setRestockQty] = useState('10')
   const [restockError, setRestockError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
-  const { kategori, menipis } = Route.useSearch()
-  const filter = kategori ?? 'semua'
+  const { category, lowStock } = Route.useSearch()
+  const filter = category ?? 'all'
   const navigate = useNavigate({ from: Route.fullPath })
   const tenant = useTenant()
   const canManage = tenant.context?.role === 'owner' || tenant.context?.role === 'manager'
@@ -336,10 +336,10 @@ function ProductsPage() {
   const [deleting, setDeleting] = useState(false)
   const [restocking, setRestocking] = useState(false)
 
-  const lowStock = products.filter((p) => p.stock !== null && p.stock <= p.lowStockThreshold)
+  const lowStockProducts = products.filter((p) => p.stock !== null && p.stock <= p.lowStockThreshold)
   const visible = products
-    .filter((p) => filter === 'semua' || p.category === filter)
-    .filter((p) => !menipis || (p.stock !== null && p.stock <= p.lowStockThreshold))
+    .filter((p) => filter === 'all' || p.category === filter)
+    .filter((p) => !lowStock || (p.stock !== null && p.stock <= p.lowStockThreshold))
 
   function openCreate() {
     setDraft(EMPTY_DRAFT)
@@ -411,19 +411,19 @@ function ProductsPage() {
         </p>
       )}
 
-      {lowStock.length > 0 && (
+      {lowStockProducts.length > 0 && (
         <div className="mb-4 flex flex-wrap items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           <IconAlertTriangle size={18} stroke={2} className="mt-0.5 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold">{lowStock.length} produk perlu restock</p>
+            <p className="font-semibold">{lowStockProducts.length} produk perlu restock</p>
             <p className="mt-0.5 truncate text-xs">
-              {lowStock.slice(0, 3).map((p) => `${p.name} (${p.stock})`).join(', ')}
-              {lowStock.length > 3 ? `, +${lowStock.length - 3} lainnya` : ''}
+              {lowStockProducts.slice(0, 3).map((p) => `${p.name} (${p.stock})`).join(', ')}
+              {lowStockProducts.length > 3 ? `, +${lowStockProducts.length - 3} lainnya` : ''}
             </p>
           </div>
-          {!menipis && (
+          {!lowStock && (
             <button
-              onClick={() => navigate({ search: (prev) => ({ ...prev, menipis: true }), replace: true })}
+              onClick={() => navigate({ search: (prev) => ({ ...prev, lowStock: true }), replace: true })}
               className="text-xs font-semibold underline underline-offset-2 hover:text-amber-900"
             >
               Tampilkan
@@ -433,10 +433,10 @@ function ProductsPage() {
       )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {(['semua', ...(Object.keys(CATEGORY_LABELS) as ProductCategory[])] as const).map((value) => (
+        {(['all', ...(Object.keys(CATEGORY_LABELS) as ProductCategory[])] as const).map((value) => (
           <button
             key={value}
-            onClick={() => navigate({ search: (prev) => ({ ...prev, kategori: value }), replace: true })}
+            onClick={() => navigate({ search: (prev) => ({ ...prev, category: value }), replace: true })}
             aria-pressed={filter === value}
             className={`flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
               filter === value
@@ -444,14 +444,14 @@ function ProductsPage() {
                 : 'border border-divider bg-surface text-body hover:bg-surface-muted'
             }`}
           >
-            {value === 'semua' ? 'Semua' : CATEGORY_LABELS[value]}
+            {value === 'all' ? 'Semua' : CATEGORY_LABELS[value]}
           </button>
         ))}
         <button
-          onClick={() => navigate({ search: (prev) => ({ ...prev, menipis: menipis ? undefined : true }), replace: true })}
-          aria-pressed={menipis === true}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, lowStock: lowStock ? undefined : true }), replace: true })}
+          aria-pressed={lowStock === true}
           className={`flex min-h-11 items-center rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
-            menipis
+            lowStock
               ? 'bg-primary text-on-primary'
               : 'border border-divider bg-surface text-body hover:bg-surface-muted'
           }`}
@@ -465,23 +465,23 @@ function ProductsPage() {
       ) : visible.length === 0 ? (
         <EmptyState
           icon={IconPackage}
-          title={menipis ? 'Tidak ada stok menipis' : 'Belum ada produk'}
+          title={lowStock ? 'Tidak ada stok menipis' : 'Belum ada produk'}
           description={
-            menipis
+            lowStock
               ? 'Semua produk terlacak masih di atas batas menipis.'
               : canManage
                 ? 'Tambahkan produk pertama. Cukup nama dan harga; foto, stok, dan barcode bisa menyusul.'
                 : 'Belum ada produk di warung ini. Minta pemilik atau manajer menambahkannya.'
           }
           action={
-            menipis ? undefined : canManage ? (
+            lowStock ? undefined : canManage ? (
               <Button size="md" onClick={openCreate} data-testid="product-empty-add">
                 <IconPlus size={18} stroke={2.5} />
                 Tambah Produk
               </Button>
             ) : (
               <Link
-                to="/panduan"
+                to="/guide"
                 className={buttonStyles({ variant: 'secondary', size: 'md' })}
               >
                 Lihat Panduan

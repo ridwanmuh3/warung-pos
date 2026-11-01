@@ -48,7 +48,7 @@ export function useTenant(): TenantState {
   const switchTenant = useCallback(async (tenantId: string) => {
     await switchTenantFn({ data: { tenantId } })
     // Every cached list and the cart belong to the old shop: start clean.
-    if (typeof window !== 'undefined') window.location.assign('/kasir')
+    if (typeof window !== 'undefined') window.location.assign('/cashier')
   }, [])
 
   return { context, memberships, loading, switchTenant, reload }

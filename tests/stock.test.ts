@@ -18,7 +18,7 @@ function productDraft(overrides: Partial<Parameters<typeof data.createProduct>[1
     name: 'Kopi Tubruk',
     price: 5000,
     cost: 3000,
-    category: 'minuman' as const,
+    category: 'drink' as const,
     imageKey: null,
     stock: 2,
     lowStockThreshold: 5,

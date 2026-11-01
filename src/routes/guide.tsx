@@ -7,7 +7,7 @@ import { PageHeader } from '../components/PageHeader'
 import { Button } from '../components/ui/Button'
 import { SkeletonRows } from '../components/ui/Skeleton'
 
-export const Route = createFileRoute('/panduan')({
+export const Route = createFileRoute('/guide')({
   component: GuidePage,
   // The active shop and role come from the session cookie.
   ssr: false,

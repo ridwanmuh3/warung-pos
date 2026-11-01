@@ -16,10 +16,10 @@ describe('discountValue (totals)', () => {
 
 describe('parseCheckoutForm', () => {
   const base = {
-    paymentMethod: 'tunai',
+    paymentMethod: 'cash',
     channel: 'dine-in',
     cashier: '',
-    discountMode: 'rupiah',
+    discountMode: 'amount',
     discountInput: '2000',
     cashInput: '20000',
     total: 16000,
@@ -38,7 +38,7 @@ describe('parseCheckoutForm', () => {
 
   it('rejects a percent above 100', () => {
     expect(() =>
-      parseCheckoutForm({ ...base, discountMode: 'persen', discountInput: '150' }),
+      parseCheckoutForm({ ...base, discountMode: 'percent', discountInput: '150' }),
     ).toThrow()
   })
 })
@@ -65,7 +65,7 @@ describe('productDraftSchema', () => {
       name: 'Kopi',
       price: '5000',
       cost: '3000',
-      category: 'minuman',
+      category: 'drink',
       imageKey: null,
       stock: '',
       lowStockThreshold: '5',
@@ -80,7 +80,7 @@ describe('productDraftSchema', () => {
       name: 'Kopi',
       price: '5000',
       cost: '',
-      category: 'minuman',
+      category: 'drink',
       imageKey: null,
       stock: '',
       lowStockThreshold: '5',

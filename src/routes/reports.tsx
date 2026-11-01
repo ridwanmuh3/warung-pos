@@ -34,34 +34,34 @@ import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
 import { TodaySummary } from '../components/TodaySummary'
 
-export const Route = createFileRoute('/laporan')({
+export const Route = createFileRoute('/reports')({
   component: ReportPage,
-  // A hand-edited `?tanggal=` must fall back to today instead of reaching the
+  // A hand-edited `?day=` must fall back to today instead of reaching the
   // day formatters with an Invalid Date.
   validateSearch: z.object({
-    tab: z.enum(['hari-ini', 'per-hari']).optional().catch(undefined),
-    tanggal: z.string().refine(isDayKey, 'Tanggal tidak valid').optional().catch(undefined),
+    tab: z.enum(['today', 'daily']).optional().catch(undefined),
+    day: z.string().refine(isDayKey, 'Tanggal tidak valid').optional().catch(undefined),
   }),
   ssr: 'data-only',
-  loaderDeps: ({ search }) => ({ tanggal: search.tanggal }),
+  loaderDeps: ({ search }) => ({ day: search.day }),
   loader: ({ deps }) => {
-    return { day: deps.tanggal ?? resolveReportingDay() }
+    return { day: deps.day ?? resolveReportingDay() }
   },
 })
 
 function ReportPage() {
   const { day } = Route.useLoaderData()
-  const { tab: rawTab } = Route.useSearch()
+  const { tab: activeTab } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const tenant = useTenant()
-  const tab = rawTab ?? 'hari-ini'
+  const tab = activeTab ?? 'today'
 
   return (
     <div>
       <PageHeader
         title="Laporan"
         subtitle={
-          tab === 'hari-ini'
+          tab === 'today'
             ? 'Ringkasan penjualan hari ini'
             : `Rekap harian · ${formatDayLabel(day)}`
         }
@@ -69,16 +69,16 @@ function ReportPage() {
 
       <TabList className="no-print mb-4" aria-label="Jenis laporan">
         <Tab
-          active={tab === 'hari-ini'}
-          onClick={() => navigate({ search: (prev) => ({ ...prev, tab: 'hari-ini' }), replace: true })}
+          active={tab === 'today'}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, tab: 'today' }), replace: true })}
           data-testid="tab-today"
           className="flex-1"
         >
           Hari ini
         </Tab>
         <Tab
-          active={tab === 'per-hari'}
-          onClick={() => navigate({ search: (prev) => ({ ...prev, tab: 'per-hari' }), replace: true })}
+          active={tab === 'daily'}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, tab: 'daily' }), replace: true })}
           data-testid="tab-daily"
           className="flex-1"
         >
@@ -86,7 +86,7 @@ function ReportPage() {
         </Tab>
       </TabList>
 
-      {tab === 'hari-ini' ? (
+      {tab === 'today' ? (
         <TodaySummary day={resolveReportingDay()} />
       ) : (
         <DailyReport
@@ -94,7 +94,7 @@ function ReportPage() {
           isCashier={tenant.context?.role === 'cashier'}
           onPickDay={(value) =>
             navigate({
-              search: (prev) => ({ ...prev, tanggal: value }),
+              search: (prev) => ({ ...prev, day: value }),
               replace: true,
             })
           }
@@ -226,7 +226,7 @@ function DailyReport({
           title="Tidak ada transaksi pada hari ini"
           description="Pilih tanggal lain atau buat transaksi baru di kasir."
           action={
-            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
+            <Link to="/cashier" className={buttonStyles({ size: 'md' })}>
               <IconShoppingCart size={18} />
               Buka Kasir
             </Link>
@@ -374,7 +374,7 @@ function DailyReport({
             <ul className="mt-3 divide-y divide-slate-100" data-testid="report-orders">
               {report.orders.map((order) => (
                 <li key={order.id} className="flex items-center gap-3 py-2.5">
-                  <Link to="/riwayat/$orderId" params={{ orderId: order.id }} className="min-w-0 flex-1">
+                  <Link to="/orders/$orderId" params={{ orderId: order.id }} className="min-w-0 flex-1">
                     <span className="tabular text-sm font-semibold text-slate-900">{order.orderNumber}</span>
                     <span className="tabular ml-2 text-xs text-slate-400">{formatTime(order.createdAt)}</span>
                     {order.status === 'void' && (

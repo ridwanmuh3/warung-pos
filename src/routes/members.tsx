@@ -20,7 +20,7 @@ const ROLE_LABELS: Record<Role, string> = {
 
 const ROLES: Role[] = ['manager', 'cashier']
 
-export const Route = createFileRoute('/anggota')({
+export const Route = createFileRoute('/members')({
   component: MembersPage,
   // Reads live membership data; the server rejects non-owners.
   ssr: false,

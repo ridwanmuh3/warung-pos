@@ -18,7 +18,7 @@ import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
 import { SkeletonRows } from '../components/ui/Skeleton'
 
-export const Route = createFileRoute('/pengaturan')({
+export const Route = createFileRoute('/settings')({
   component: SettingsPage,
   // Identity and role come from the session cookie.
   ssr: false,
@@ -114,7 +114,7 @@ function SettingsPage() {
       // The server already cleared the cookie; this also resets the local
       // session cache and stops cart syncing before the sign-in screen appears.
       await logout()
-      navigate({ to: '/masuk' })
+      navigate({ to: '/login' })
     } catch (cause) {
       setDeleteError(cause instanceof Error ? cause.message : 'Gagal menghapus akun')
     } finally {
@@ -199,7 +199,7 @@ function SettingsPage() {
               untuk ditempel di dekat kasir.
             </p>
             <Link
-              to="/panduan"
+              to="/guide"
               data-testid="settings-guide-link"
               className={buttonStyles({ variant: 'secondary', size: 'md', className: 'mt-3' })}
             >

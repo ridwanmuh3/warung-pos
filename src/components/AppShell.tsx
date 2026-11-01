@@ -26,17 +26,17 @@ import { FirstRunGuide } from './FirstRunGuide'
 import { isActive } from './app-nav'
 
 const NAV_ITEMS = [
-    { to: '/kasir', label: 'Kasir', Icon: IconShoppingCart },
-    { to: '/produk', label: 'Produk', Icon: IconPackage },
-    { to: '/laporan', label: 'Laporan', Icon: IconFileText },
+    { to: '/cashier', label: 'Kasir', Icon: IconShoppingCart },
+    { to: '/products', label: 'Produk', Icon: IconPackage },
+    { to: '/reports', label: 'Laporan', Icon: IconFileText },
 ] as const
 
 const MORE_ITEMS = [
-    { to: '/riwayat', label: 'Riwayat Pesanan', Icon: IconFileText },
-    { to: '/panduan', label: 'Panduan Penggunaan', Icon: IconBook },
-    { to: '/anggota', label: 'Anggota Toko', Icon: IconUsers },
-    { to: '/pengaturan', label: 'Pengaturan', Icon: IconSettings },
-    { to: '/pulihkan', label: 'Pulihkan Data Lama', Icon: IconDatabaseImport },
+    { to: '/orders', label: 'Riwayat Pesanan', Icon: IconFileText },
+    { to: '/guide', label: 'Panduan Penggunaan', Icon: IconBook },
+    { to: '/members', label: 'Anggota Toko', Icon: IconUsers },
+    { to: '/settings', label: 'Pengaturan', Icon: IconSettings },
+    { to: '/restore', label: 'Pulihkan Data Lama', Icon: IconDatabaseImport },
 ] as const
 
 const desktopQuery = '(min-width: 1024px)'
@@ -127,12 +127,12 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
 
     function signOut() {
         setMenuOpen(false)
-        void logout().then(() => navigate({ to: '/masuk' }))
+        void logout().then(() => navigate({ to: '/login' }))
     }
 
     const moreItems = MORE_ITEMS.filter(({ to }) =>
-        (to !== '/anggota' || tenant.context?.role === 'owner') &&
-        (to !== '/pulihkan' || legacyAvailable),
+        (to !== '/members' || tenant.context?.role === 'owner') &&
+        (to !== '/restore' || legacyAvailable),
     )
     const sidebarWide = tabletExpanded || (isDesktop && !sidebarCollapsed)
     const labelClass = tabletExpanded ? '' : sidebarCollapsed ? 'hidden' : 'hidden lg:inline'
@@ -153,7 +153,7 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
             )}
             <aside ref={sidebarRef} className={`no-print fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-divider bg-surface transition-[width] duration-200 motion-reduce:transition-none md:flex ${tabletExpanded ? 'w-64' : 'w-[4.5rem]'} ${sidebarCollapsed ? 'lg:w-[4.5rem]' : 'lg:w-64'}`} aria-label="Sidebar aplikasi" aria-modal={tabletExpanded && !isDesktop ? 'true' : undefined} role={tabletExpanded && !isDesktop ? 'dialog' : undefined}>
                 <div className={`flex min-h-20 items-center border-b border-divider px-3 ${rail ? 'flex-col justify-center pb-2 pt-5' : 'justify-between'}`}>
-                    <Link to="/kasir" onClick={closeTabletSidebar} aria-label="Warung POS — Kasir" title="Warung POS" className="flex min-h-11 items-center gap-3 text-ink">
+                    <Link to="/cashier" onClick={closeTabletSidebar} aria-label="Warung POS — Kasir" title="Warung POS" className="flex min-h-11 items-center gap-3 text-ink">
                     <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-on-primary">
                         <IconBuildingStore size={22} stroke={2} />
                     </span>
@@ -198,9 +198,9 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                             </Link>
                         ))}
                         <Link
-                            to="/keranjang"
+                            to="/cart"
                             aria-label={`Keranjang, ${count} produk`}
-                            aria-current={isActive(pathname, '/keranjang') || isActive(pathname, '/checkout') ? 'page' : undefined}
+                            aria-current={isActive(pathname, '/cart') || isActive(pathname, '/checkout') ? 'page' : undefined}
                             title="Keranjang"
                             onClick={closeTabletSidebar}
                             className={`flex min-h-11 items-center gap-3 rounded-md bg-primary px-3 text-sm font-bold text-on-primary hover:bg-primary-hover ${rail ? 'justify-center' : 'justify-start'}`}
@@ -260,7 +260,7 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
 
             <main
                 className="mx-auto w-full max-w-5xl flex-1 px-4 pb-20 pt-4 sm:px-6 sm:pt-6 md:pb-8 lg:px-8"
-                data-route={pathname === '/panduan' ? 'guide' : undefined}
+                data-route={pathname === '/guide' ? 'guide' : undefined}
                 inert={tabletExpanded && !isDesktop}
             >
                 {children}
@@ -273,13 +273,13 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                             key={to}
                             to={to}
                             aria-current={isActive(pathname, to) ? 'page' : undefined}
-                            aria-label={to === '/kasir' && count > 0 ? `Kasir, ${count} produk di keranjang` : label}
+                            aria-label={to === '/cashier' && count > 0 ? `Kasir, ${count} produk di keranjang` : label}
                             className="flex min-h-12 min-w-0 items-center justify-center text-[11px] font-semibold"
                         >
                             <span className={`inline-flex flex-col items-center justify-center gap-0.5 rounded-md px-3 py-1 transition-colors ${isActive(pathname, to) ? 'bg-primary text-on-primary' : 'text-mute'}`}>
                                 <span className="relative inline-flex size-6 items-center justify-center">
                                     <Icon size={20} stroke={2} />
-                                    {to === '/kasir' && count > 0 && <span className="tabular absolute -right-2 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-ink px-0.5 text-[9px] text-white" aria-hidden="true">{count > 99 ? '99+' : count}</span>}
+                                    {to === '/cashier' && count > 0 && <span className="tabular absolute -right-2 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-ink px-0.5 text-[9px] text-white" aria-hidden="true">{count > 99 ? '99+' : count}</span>}
                                 </span>
                                 <span className="truncate">{label}</span>
                             </span>
@@ -345,13 +345,13 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
                         </div>
                     )}
                     <nav aria-label="Menu akun" className="grid gap-1">
-                        <Link to="/keranjang" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium hover:bg-surface-muted"><IconShoppingCart size={19} />Keranjang ({count})</Link>
+                        <Link to="/cart" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium hover:bg-surface-muted"><IconShoppingCart size={19} />Keranjang ({count})</Link>
                         {moreItems.map(({ to, label, Icon }) => (
                             <Link
                                 key={to}
                                 to={to}
                                 onClick={() => setMenuOpen(false)}
-                                data-testid={to === '/anggota' ? 'account-members-link' : to === '/pengaturan' ? 'account-settings-link' : to === '/riwayat' ? 'account-history-link' : to === '/panduan' ? 'account-guide-link' : 'account-restore-link'}
+                                data-testid={to === '/members' ? 'account-members-link' : to === '/settings' ? 'account-settings-link' : to === '/orders' ? 'account-history-link' : to === '/guide' ? 'account-guide-link' : 'account-restore-link'}
                                 className="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium hover:bg-surface-muted"
                             ><Icon size={19} />{label}</Link>
                         ))}

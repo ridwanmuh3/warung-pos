@@ -34,7 +34,7 @@ export function SiteFooter() {
               <li><Link to="/" hash="gratis" className={linkClass}>Masa uji coba</Link></li>
               <li><Link to="/" hash="faq" className={linkClass}>FAQ</Link></li>
               <li>
-                <Link to="/masuk" search={{ mode: 'register' }} className={linkClass}>
+                <Link to="/login" search={{ mode: 'register' }} className={linkClass}>
                   Coba gratis
                 </Link>
               </li>
@@ -46,16 +46,16 @@ export function SiteFooter() {
             <ul className="mt-4 space-y-2.5">
               <li><Link to="/" className={linkClass}>Beranda</Link></li>
               <li><Link to="/sitemap" className={linkClass}>Sitemap</Link></li>
-              <li><Link to="/panduan" className={linkClass}>Panduan pengguna</Link></li>
-              <li><Link to="/masuk" className={linkClass}>Masuk</Link></li>
+              <li><Link to="/guide" className={linkClass}>Panduan pengguna</Link></li>
+              <li><Link to="/login" className={linkClass}>Masuk</Link></li>
             </ul>
           </nav>
 
           <nav aria-label="Legal dan lainnya">
             <p className={columnTitle}>Legal</p>
             <ul className="mt-4 space-y-2.5">
-              <li><Link to="/privasi" className={linkClass}>Kebijakan privasi</Link></li>
-              <li><Link to="/ketentuan" className={linkClass}>Ketentuan layanan</Link></li>
+              <li><Link to="/privacy" className={linkClass}>Kebijakan privasi</Link></li>
+              <li><Link to="/terms" className={linkClass}>Ketentuan layanan</Link></li>
               <li>
                 <a href={SITE.github} className={`${linkClass} inline-flex items-center gap-1.5`}>
                   <IconBrandGithub size={16} stroke={2} />

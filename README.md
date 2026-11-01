@@ -87,7 +87,7 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
    pnpm dev
    ```
 
-   Buka `http://localhost:3000` untuk melihat homepage, lalu pilih **Coba gratis** untuk mendaftar. Setelah masuk, kasir ada di `/kasir`. Setiap akun yang mendaftar membuat warung baru dan menjadi `owner`-nya. Katalog awal kosong; tambahkan produk melalui halaman **Produk** atau ikuti checklist di halaman **Kasir**.
+   Buka `http://localhost:3000` untuk melihat homepage, lalu pilih **Coba gratis** untuk mendaftar. Setelah masuk, kasir ada di `/cashier`. Setiap akun yang mendaftar membuat warung baru dan menjadi `owner`-nya. Katalog awal kosong; tambahkan produk melalui halaman **Produk** atau ikuti checklist di halaman **Kasir**.
 
    `pnpm dev` juga menjalankan emulasi Netlify melalui plugin TanStack Start, sehingga server function dan perilaku runtime produksi dapat diuji secara lokal.
 
@@ -118,8 +118,9 @@ Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntan
 
 1. Konfigurasi environment variable di Netlify: `TURSO_URL`, `TURSO_ACCESS_TOKEN`, `SESSION_SECRET` (minimal 32 karakter), `CLOUDFLARE_BUCKET`, `CLOUDFLARE_ACCESS_KEY_ID`, `CLOUDFLARE_SECRET_KEY`, dan `CLOUDFLARE_S3_URI`. `.env` lokal tidak ikut deploy. `CLOUDFLARE_R2_PUBLIC_URL` opsional. Jangan berikan kredensial Turso produksi ke deploy preview yang tidak tepercaya; gunakan database terpisah.
 2. Sebelum deploy produksi, backup database lalu jalankan migrasi terhadap Turso produksi dari mesin tepercaya: `TURSO_URL='libsql://...' TURSO_ACCESS_TOKEN='...' pnpm db:migrate:prod`. Jangan gunakan `db:push` di produksi. Untuk database lama sebelum multi-tenant, jalankan juga `drizzle/phase8-backfill.sql` satu kali.
-3. Tambahkan origin situs Netlify atau domain produksi ke R2 CORS `AllowedOrigins`. Contoh aturan lain ada di `.env.example`. Upload gambar dari browser tidak bekerja bila hanya `localhost` yang diizinkan.
-4. Uji deploy preview dengan database preview: login, sesi, server functions, upload gambar, dan `/img`. Pastikan cookie `Secure` dan `HttpOnly`, respons server function `Cache-Control: no-store`, serta header keamanan tetap ada. Untuk deploy lewat Netlify CLI, gunakan versi 17.31 atau lebih baru.
+3. Untuk rilis yang mengubah nilai enum domain menjadi English, jalankan `drizzle/phase9-english-domain-values.sql` satu kali pada database produksi, pada jendela maintenance yang sama dengan deploy aplikasi. Skrip ini idempoten: menjalankannya ulang tidak mengubah data lagi. Tanpa langkah ini, produk dan transaksi lama masih menyimpan nilai `makanan`/`minuman`/`tunai`/`bungkus`/`ojol` dan tidak akan cocok dengan filter maupun label baru.
+4. Tambahkan origin situs Netlify atau domain produksi ke R2 CORS `AllowedOrigins`. Contoh aturan lain ada di `.env.example`. Upload gambar dari browser tidak bekerja bila hanya `localhost` yang diizinkan.
+5. Uji deploy preview dengan database preview: login, sesi, server functions, upload gambar, dan `/img`. Pastikan cookie `Secure` dan `HttpOnly`, respons server function `Cache-Control: no-store`, serta header keamanan tetap ada. Untuk deploy lewat Netlify CLI, gunakan versi 17.31 atau lebih baru.
 
 Pembatas login berbasis memori hanya berlaku per instance function; untuk perlindungan lintas instance gunakan limiter bersama atau WAF. Impor data besar juga dapat melampaui batas ukuran request atau waktu eksekusi Netlify Functions.
 
@@ -131,4 +132,4 @@ Gunakan akun berikut untuk mencoba instance demo:
 | --- | --- |
 | `test@test.com` | `test123123` |
 
-Akun demo tidak dibuat otomatis oleh `pnpm db:push`. Pada instalasi lokal baru, buat akun melalui halaman `/masuk`; akun yang dibuat melalui pendaftaran menjadi owner dari warung baru.
+Akun demo tidak dibuat otomatis oleh `pnpm db:push`. Pada instalasi lokal baru, buat akun melalui halaman `/login`; akun yang dibuat melalui pendaftaran menjadi owner dari warung baru.

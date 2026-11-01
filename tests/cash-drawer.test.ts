@@ -6,7 +6,7 @@ function order(overrides: Partial<CashOrderLike>): CashOrderLike {
   return {
     total: 0,
     status: 'paid',
-    paymentMethod: 'tunai',
+    paymentMethod: 'cash',
     ...overrides,
   }
 }

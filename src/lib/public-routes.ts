@@ -1,16 +1,16 @@
 /**
  * Public pages: reachable without a session and rendered without the app shell.
  *
- * The marketing site lives outside the POS routes; the cashier is at /kasir.
+ * The marketing site lives outside the POS routes; the cashier is at /cashier.
  * /beranda stays public only to serve the legacy redirect to /.
  */
 export const PUBLIC_PATHS = [
   '/',
   '/beranda',
   '/sitemap',
-  '/privasi',
-  '/ketentuan',
-  '/masuk',
+  '/privacy',
+  '/terms',
+  '/login',
 ] as const
 
 export type PublicPath = (typeof PUBLIC_PATHS)[number]

@@ -19,8 +19,8 @@ const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
 /** Validated search params: malformed values fall back instead of erroring. */
 const orderSearchSchema = z.object({
   q: z.string().optional().catch(undefined),
-  method: z.enum(['tunai', 'qris', 'transfer']).optional().catch(undefined),
-  channel: z.enum(['dine-in', 'bungkus', 'ojol']).optional().catch(undefined),
+  method: z.enum(['cash', 'qris', 'transfer']).optional().catch(undefined),
+  channel: z.enum(['dine-in', 'takeaway', 'delivery']).optional().catch(undefined),
   // Same guard as the report screens: a malformed `?day=` falls back to "all
   // days" instead of throwing inside the day formatter.
   day: z.string().refine(isDayKey, 'Tanggal tidak valid').optional().catch(undefined),
@@ -39,7 +39,7 @@ function groupByDay(orders: Order[]): Array<[string, Order[]]> {
   return [...groups.entries()]
 }
 
-export const Route = createFileRoute('/riwayat/')({
+export const Route = createFileRoute('/orders/')({
   component: OrdersPage,
   validateSearch: orderSearchSchema,
   // Orders now live in the database, so the server can filter and count them.
@@ -96,7 +96,7 @@ function OrdersPage() {
           title="Belum ada transaksi"
           description="Pesanan yang sudah dibayar akan muncul di sini."
           action={
-            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
+            <Link to="/cashier" className={buttonStyles({ size: 'md' })}>
               <IconShoppingCart size={18} />
               Buka Kasir
             </Link>
@@ -250,7 +250,7 @@ function OrdersPage() {
                         }`}
                       >
                         <Link
-                          to="/riwayat/$orderId"
+                          to="/orders/$orderId"
                           params={{ orderId: order.id }}
                           className="min-w-0 flex-1"
                         >

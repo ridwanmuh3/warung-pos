@@ -78,7 +78,7 @@ export async function register(input: {
   email: string
   password: string
   confirmPassword: string
-  warungName?: string
+  tenantName?: string
 }): Promise<AuthResponse> {
   const parsed = registerSchema.safeParse(input)
   if (!parsed.success) return { ok: false, errors: parsed.error.issues.map((issue) => issue.message) }

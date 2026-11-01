@@ -5,12 +5,13 @@ import type {
   ImportShift,
   ImportStockMovement,
 } from './data.server'
+import type { PaymentMethod, ProductCategory, SalesChannel } from '../types'
 
 /**
  * Reader for the pre-database `localStorage` keys (Phase 8B).
  *
  * Client-only and pure: `localStorage` does not exist on the server, so the
- * `/pulihkan` route that uses this is `ssr: false`. Every record is re-validated
+ * `/restore` route that uses this is `ssr: false`. Every record is re-validated
  * with Zod because storage is user-editable; a row that fails is *skipped and
  * reported*, never allowed to abort the whole import.
  */
@@ -27,6 +28,23 @@ export const LEGACY_KEYS = {
   cart: 'warung-pos.cart.v1',
 } as const
 
+/** Old browser storage holds Indonesian values; new rows use the English names. */
+const legacyCategory = z
+  .enum(['makanan', 'minuman', 'food', 'drink', 'snack'])
+  .transform((value): ProductCategory =>
+    value === 'makanan' ? 'food' : value === 'minuman' ? 'drink' : value,
+  )
+
+const legacyPaymentMethod = z
+  .enum(['tunai', 'qris', 'transfer', 'cash'])
+  .transform((value): PaymentMethod => (value === 'tunai' ? 'cash' : value))
+
+const legacyChannel = z
+  .enum(['dine-in', 'bungkus', 'ojol', 'takeaway', 'delivery'])
+  .transform((value): SalesChannel =>
+    value === 'bungkus' ? 'takeaway' : value === 'ojol' ? 'delivery' : value,
+  )
+
 const legacyItemSchema = z.object({
   productId: z.string().min(1),
   name: z.string().min(1),
@@ -41,7 +59,7 @@ const legacyProductSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   price: z.number(),
-  category: z.enum(['makanan', 'minuman', 'snack']),
+  category: legacyCategory,
   imageKey: z.string().nullable().catch(null),
   cost: z.number().min(0).catch(0),
   stock: z.number().nullable().catch(null),
@@ -60,11 +78,11 @@ const legacyOrderSchema = z.object({
   total: z.number(),
   costTotal: z.number().optional(),
   profit: z.number().optional(),
-  paymentMethod: z.enum(['tunai', 'qris', 'transfer']),
+  paymentMethod: legacyPaymentMethod,
   amountPaid: z.number().nullable().catch(null),
   change: z.number().nullable().catch(null),
   status: z.enum(['paid', 'void', 'refunded']).catch('paid'),
-  channel: z.enum(['dine-in', 'bungkus', 'ojol']).catch('dine-in'),
+  channel: legacyChannel.catch('dine-in'),
   cashier: z.string().optional(),
   shiftId: z.string().optional(),
   voidedAt: z.string().optional(),

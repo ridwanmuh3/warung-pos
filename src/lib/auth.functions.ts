@@ -78,7 +78,7 @@ export const registerFn = createServerFn({ method: 'POST' })
       throw error
     }
 
-    const tenantId = await provisionDefaultTenant(user.id, data.warungName ?? 'Warung Saya')
+    const tenantId = await provisionDefaultTenant(user.id, data.tenantName ?? 'Warung Saya')
     await writeSessionIdentity(user.id, tenantId)
     return { ok: true, user }
   })

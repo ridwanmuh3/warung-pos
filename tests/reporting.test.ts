@@ -16,7 +16,7 @@ function makeOrder(overrides: Partial<Order>): Order {
     total: 18000,
     costTotal: 11000,
     profit: 7000,
-    paymentMethod: 'tunai',
+    paymentMethod: 'cash',
     amountPaid: 20000,
     change: 2000,
     status: 'paid',
@@ -78,7 +78,7 @@ describe('day bucketing is one rule', () => {
 
 describe('pure aggregates ignore non-paid orders', () => {
   const orders = [
-    makeOrder({ total: 18000, channel: 'ojol' }),
+    makeOrder({ total: 18000, channel: 'delivery' }),
     makeOrder({ total: 9000, status: 'void', channel: 'dine-in' }),
   ]
 
@@ -91,7 +91,7 @@ describe('pure aggregates ignore non-paid orders', () => {
   it('channelBreakdown', () => {
     const rows = channelBreakdown(orders)
     expect(rows).toHaveLength(1)
-    expect(rows[0].channel).toBe('ojol')
+    expect(rows[0].channel).toBe('delivery')
   })
 })
 
@@ -103,10 +103,10 @@ describe('summarizeCategories', () => {
         { productId: 'p2', name: 'Teh', imageKey: null, price: 4000, cost: 0, qty: 1 },
         { productId: 'ghost', name: 'X', imageKey: null, price: 1000, cost: 0, qty: 5 },
       ],
-      { p1: 'makanan', p2: 'minuman' },
+      { p1: 'food', p2: 'drink' },
     )
     expect(rows).toHaveLength(2)
-    expect(rows[0]).toEqual({ category: 'makanan', revenue: 36000, itemsSold: 2 })
-    expect(rows[1]).toEqual({ category: 'minuman', revenue: 4000, itemsSold: 1 })
+    expect(rows[0]).toEqual({ category: 'food', revenue: 36000, itemsSold: 2 })
+    expect(rows[1]).toEqual({ category: 'drink', revenue: 4000, itemsSold: 1 })
   })
 })

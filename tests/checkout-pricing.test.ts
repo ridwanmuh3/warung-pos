@@ -27,7 +27,7 @@ async function seedProduct(sku: string, price: number, cost: number, stock: numb
     name: `Produk ${sku}`,
     price,
     cost,
-    category: 'makanan',
+    category: 'food',
     imageKey: null,
     stock,
     lowStockThreshold: 5,
@@ -91,7 +91,7 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
     await expect(
       data.checkoutCart(TENANT, USER, cart.id, {
         ...baseCheckout,
-        paymentMethod: 'tunai',
+        paymentMethod: 'cash',
         amountPaid: 18000,
       }),
     ).rejects.toThrow()
@@ -106,7 +106,7 @@ describe('checkout pricing is server-authoritative (ADR-0003)', () => {
     // Sufficient cash succeeds, and change is derived from the real total.
     const order = await data.checkoutCart(TENANT, USER, cart.id, {
       ...baseCheckout,
-      paymentMethod: 'tunai',
+      paymentMethod: 'cash',
       amountPaid: 25000,
     })
     expect(order.total).toBe(24000)

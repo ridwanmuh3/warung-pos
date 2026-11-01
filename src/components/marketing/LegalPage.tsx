@@ -86,10 +86,10 @@ export function LegalPage({
             Dokumen ini menjelaskan praktik layanan saat ini, bukan nasihat hukum.
           </p>
           <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <Link to="/privasi" className="font-semibold text-link underline underline-offset-2">
+            <Link to="/privacy" className="font-semibold text-link underline underline-offset-2">
               Kebijakan privasi
             </Link>
-            <Link to="/ketentuan" className="font-semibold text-link underline underline-offset-2">
+            <Link to="/terms" className="font-semibold text-link underline underline-offset-2">
               Ketentuan layanan
             </Link>
             <Link to="/" className="font-semibold text-link underline underline-offset-2">

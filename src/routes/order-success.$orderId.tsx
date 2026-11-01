@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
 import type { Order } from '../types'
 
-export const Route = createFileRoute('/sukses/$orderId')({
+export const Route = createFileRoute('/order-success/$orderId')({
   component: SuccessPage,
   pendingComponent: SuccessPending,
   pendingMs: 120,
@@ -53,7 +53,7 @@ function SuccessPage() {
         title="Pesanan tidak ditemukan"
         description="Struk ini mungkin sudah tidak tersedia di server."
         action={
-          <Link to="/riwayat" className={buttonStyles({ size: 'md' })}>
+          <Link to="/orders" className={buttonStyles({ size: 'md' })}>
             Lihat Riwayat
           </Link>
         }
@@ -78,7 +78,7 @@ function SuccessPage() {
 
       <div className="no-print mt-4 grid gap-2">
         <Link
-          to="/kasir"
+          to="/cashier"
           className={buttonStyles({ size: 'md', className: 'w-full' })}
         >
           <IconPlus size={18} stroke={2.5} />

@@ -11,7 +11,7 @@ import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
 import { Modal, ModalTitle } from '../components/ui/Modal'
 
-export const Route = createFileRoute('/riwayat/$orderId')({
+export const Route = createFileRoute('/orders/$orderId')({
   component: ReceiptPage,
   // The order is fetched from the database on the server and streamed with the HTML.
   loader: async ({ params }) => ({ order: await getOrderFn({ data: { id: params.orderId } }) }),
@@ -36,7 +36,7 @@ function ReceiptPage() {
         title="Pesanan tidak ditemukan"
         description="Struk ini mungkin sudah tidak tersedia di server."
         action={
-          <Link to="/riwayat" className={buttonStyles({ size: 'md' })}>
+          <Link to="/orders" className={buttonStyles({ size: 'md' })}>
             Kembali ke Riwayat
           </Link>
         }
@@ -72,7 +72,7 @@ function ReceiptPage() {
   return (
     <div className="mx-auto max-w-md">
       <div className="no-print">
-        <PageHeader title="Struk" subtitle={order.orderNumber} backTo="/riwayat" backLabel="Riwayat" />
+        <PageHeader title="Struk" subtitle={order.orderNumber} backTo="/orders" backLabel="Riwayat" />
       </div>
 
       {order.status !== 'paid' && (

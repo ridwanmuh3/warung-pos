@@ -3,7 +3,7 @@
  * match the deployment that served them — no hardcoded domain, and no stale
  * sitemap after a move to a custom domain.
  *
- * Only public pages are listed. `/masuk` is deliberately absent: it is a form,
+ * Only public pages are listed. `/login` is deliberately absent: it is a form,
  * not content.
  */
 import { FAQ } from '../data/marketing'
@@ -12,8 +12,8 @@ import { SITE } from '../data/site'
 export const PUBLIC_PAGES = [
   { path: '/', changefreq: 'weekly', priority: '1.0' },
   { path: '/sitemap', changefreq: 'monthly', priority: '0.3' },
-  { path: '/privasi', changefreq: 'yearly', priority: '0.3' },
-  { path: '/ketentuan', changefreq: 'yearly', priority: '0.3' },
+  { path: '/privacy', changefreq: 'yearly', priority: '0.3' },
+  { path: '/terms', changefreq: 'yearly', priority: '0.3' },
 ] as const
 
 function originOnly(origin: string): string {
@@ -79,19 +79,20 @@ export function robotsTxt(origin: string): string {
   return [
     'User-agent: *',
     'Allow: /',
-    'Disallow: /kasir',
-    'Disallow: /masuk',
+    'Disallow: /cashier',
+    'Disallow: /login',
     'Disallow: /beranda',
-    'Disallow: /produk',
-    'Disallow: /keranjang',
+    'Disallow: /ringkasan',
+    'Disallow: /products',
+    'Disallow: /cart',
     'Disallow: /checkout',
-    'Disallow: /laporan',
-    'Disallow: /riwayat',
-    'Disallow: /anggota',
-    'Disallow: /pengaturan',
-    'Disallow: /pulihkan',
-    'Disallow: /sukses',
-    'Disallow: /panduan',
+    'Disallow: /reports',
+    'Disallow: /orders',
+    'Disallow: /order-success',
+    'Disallow: /members',
+    'Disallow: /settings',
+    'Disallow: /restore',
+    'Disallow: /guide',
     'Disallow: /api/',
     `Sitemap: ${base}/sitemap.xml`,
     '',

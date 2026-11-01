@@ -37,15 +37,15 @@ A not-yet-paid basket being rung up, stored server-side per (tenant, user). Stat
 _Avoid_: basket, held order, draft order
 
 **Channel**:
-How the customer takes the order: `dine-in`, `bungkus` (takeaway), or `ojol` (online delivery).
+How the customer takes the order: `dine-in`, `takeaway`, or `delivery`. API/DB values are English; the UI labels them "Makan di Sini", "Bungkus", and "Ojol / Online".
 _Avoid_: order type, service mode
 
 **Payment Method**:
-How the customer pays: `tunai` (cash), `qris`, or `transfer`.
+How the customer pays: `cash`, `qris`, or `transfer`. API/DB values are English; the UI labels `cash` as "Tunai".
 _Avoid_: payment type, tender
 
 **Void**:
-Cancelling a paid order *while its shift is still open*, so it no longer counts in sales. A void restocks tracked inventory and, for `tunai` orders, reduces the open drawer's expected cash — the money never really left. Voids are idempotent and always carry a reason. Cancelling after the shift has closed is a Refund, not a void.
+Cancelling a paid order *while its shift is still open*, so it no longer counts in sales. A void restocks tracked inventory and, for `cash` orders, reduces the open drawer's expected cash — the money never really left. Voids are idempotent and always carry a reason. Cancelling after the shift has closed is a Refund, not a void.
 _Avoid_: delete, cancel
 
 **Refund**:

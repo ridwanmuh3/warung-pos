@@ -27,7 +27,7 @@ async function seedProduct(id: string, price: number, cost: number, stock: numbe
     name: `Produk ${id}`,
     price,
     cost,
-    category: 'makanan',
+    category: 'food',
     imageKey: null,
     stock,
     lowStockThreshold: 5,
@@ -37,7 +37,7 @@ async function seedProduct(id: string, price: number, cost: number, stock: numbe
 
 const checkoutInput = {
   discount: { amount: 0, percent: null },
-  paymentMethod: 'tunai' as const,
+  paymentMethod: 'cash' as const,
   amountPaid: 20000,
   channel: 'dine-in' as const,
 }

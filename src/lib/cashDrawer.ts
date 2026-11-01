@@ -27,7 +27,7 @@ export function expectedDrawerCash(input: {
   const { openingCash, orders, shiftId } = input
   let cash = openingCash
   for (const order of orders) {
-    if (order.paymentMethod !== 'tunai') continue
+    if (order.paymentMethod !== 'cash') continue
     if (order.shiftId === shiftId && order.status === 'paid') cash += order.total
     else if (order.shiftId === shiftId && order.status === 'void') cash -= order.total
     if (order.status === 'refunded' && order.refundedInShiftId === shiftId) cash -= order.total

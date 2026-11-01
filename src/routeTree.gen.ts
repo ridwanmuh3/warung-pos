@@ -10,42 +10,46 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AnggotaRouteImport } from './routes/anggota'
-import { Route as BerandaRouteImport } from './routes/beranda'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as CashierRouteImport } from './routes/cashier'
 import { Route as CheckoutRouteImport } from './routes/checkout'
-import { Route as KasirRouteImport } from './routes/kasir'
-import { Route as KeranjangRouteImport } from './routes/keranjang'
-import { Route as KetentuanRouteImport } from './routes/ketentuan'
-import { Route as LaporanRouteImport } from './routes/laporan'
-import { Route as MasukRouteImport } from './routes/masuk'
-import { Route as PanduanRouteImport } from './routes/panduan'
-import { Route as PengaturanRouteImport } from './routes/pengaturan'
-import { Route as PrivasiRouteImport } from './routes/privasi'
-import { Route as ProdukRouteImport } from './routes/produk'
-import { Route as PulihkanRouteImport } from './routes/pulihkan'
-import { Route as RingkasanRouteImport } from './routes/ringkasan'
+import { Route as GuideRouteImport } from './routes/guide'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MembersRouteImport } from './routes/members'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProductsRouteImport } from './routes/products'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as RestoreRouteImport } from './routes/restore'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SitemapRouteImport } from './routes/sitemap'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as ImgSplatRouteImport } from './routes/img/$'
-import { Route as RiwayatIndexRouteImport } from './routes/riwayat.index'
-import { Route as RiwayatOrderIdRouteImport } from './routes/riwayat.$orderId'
-import { Route as SuksesOrderIdRouteImport } from './routes/sukses.$orderId'
+import { Route as OrderSuccessOrderIdRouteImport } from './routes/order-success.$orderId'
+import { Route as OrdersIndexRouteImport } from './routes/orders.index'
+import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnggotaRoute = AnggotaRouteImport.update({
-  id: '/anggota',
-  path: '/anggota',
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BerandaRoute = BerandaRouteImport.update({
-  id: '/beranda',
-  path: '/beranda',
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashierRoute = CashierRouteImport.update({
+  id: '/cashier',
+  path: '/cashier',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -53,64 +57,49 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const KasirRoute = KasirRouteImport.update({
-  id: '/kasir',
-  path: '/kasir',
+const GuideRoute = GuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
-const KeranjangRoute = KeranjangRouteImport.update({
-  id: '/keranjang',
-  path: '/keranjang',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const KetentuanRoute = KetentuanRouteImport.update({
-  id: '/ketentuan',
-  path: '/ketentuan',
+const MembersRoute = MembersRouteImport.update({
+  id: '/members',
+  path: '/members',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LaporanRoute = LaporanRouteImport.update({
-  id: '/laporan',
-  path: '/laporan',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MasukRoute = MasukRouteImport.update({
-  id: '/masuk',
-  path: '/masuk',
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PanduanRoute = PanduanRouteImport.update({
-  id: '/panduan',
-  path: '/panduan',
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PengaturanRoute = PengaturanRouteImport.update({
-  id: '/pengaturan',
-  path: '/pengaturan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivasiRoute = PrivasiRouteImport.update({
-  id: '/privasi',
-  path: '/privasi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProdukRoute = ProdukRouteImport.update({
-  id: '/produk',
-  path: '/produk',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PulihkanRoute = PulihkanRouteImport.update({
-  id: '/pulihkan',
-  path: '/pulihkan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RingkasanRoute = RingkasanRouteImport.update({
-  id: '/ringkasan',
-  path: '/ringkasan',
+const RestoreRoute = RestoreRouteImport.update({
+  id: '/restore',
+  path: '/restore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapRoute = SitemapRouteImport.update({
@@ -123,6 +112,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
@@ -133,200 +127,193 @@ const ImgSplatRoute = ImgSplatRouteImport.update({
   path: '/img/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RiwayatIndexRoute = RiwayatIndexRouteImport.update({
-  id: '/riwayat/',
-  path: '/riwayat/',
+const OrderSuccessOrderIdRoute = OrderSuccessOrderIdRouteImport.update({
+  id: '/order-success/$orderId',
+  path: '/order-success/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RiwayatOrderIdRoute = RiwayatOrderIdRouteImport.update({
-  id: '/riwayat/$orderId',
-  path: '/riwayat/$orderId',
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SuksesOrderIdRoute = SuksesOrderIdRouteImport.update({
-  id: '/sukses/$orderId',
-  path: '/sukses/$orderId',
+const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
+  id: '/orders/$orderId',
+  path: '/orders/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/anggota': typeof AnggotaRoute
-  '/beranda': typeof BerandaRoute
+  '/$': typeof SplatRoute
+  '/cart': typeof CartRoute
+  '/cashier': typeof CashierRoute
   '/checkout': typeof CheckoutRoute
-  '/kasir': typeof KasirRoute
-  '/keranjang': typeof KeranjangRoute
-  '/ketentuan': typeof KetentuanRoute
-  '/laporan': typeof LaporanRoute
-  '/masuk': typeof MasukRoute
-  '/panduan': typeof PanduanRoute
-  '/pengaturan': typeof PengaturanRoute
-  '/privasi': typeof PrivasiRoute
-  '/produk': typeof ProdukRoute
-  '/pulihkan': typeof PulihkanRoute
-  '/ringkasan': typeof RingkasanRoute
+  '/guide': typeof GuideRoute
+  '/login': typeof LoginRoute
+  '/members': typeof MembersRoute
+  '/privacy': typeof PrivacyRoute
+  '/products': typeof ProductsRoute
+  '/reports': typeof ReportsRoute
+  '/restore': typeof RestoreRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/settings': typeof SettingsRoute
   '/sitemap': typeof SitemapRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/img/$': typeof ImgSplatRoute
-  '/riwayat/$orderId': typeof RiwayatOrderIdRoute
-  '/sukses/$orderId': typeof SuksesOrderIdRoute
-  '/riwayat/': typeof RiwayatIndexRoute
+  '/order-success/$orderId': typeof OrderSuccessOrderIdRoute
+  '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/orders/': typeof OrdersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/anggota': typeof AnggotaRoute
-  '/beranda': typeof BerandaRoute
+  '/$': typeof SplatRoute
+  '/cart': typeof CartRoute
+  '/cashier': typeof CashierRoute
   '/checkout': typeof CheckoutRoute
-  '/kasir': typeof KasirRoute
-  '/keranjang': typeof KeranjangRoute
-  '/ketentuan': typeof KetentuanRoute
-  '/laporan': typeof LaporanRoute
-  '/masuk': typeof MasukRoute
-  '/panduan': typeof PanduanRoute
-  '/pengaturan': typeof PengaturanRoute
-  '/privasi': typeof PrivasiRoute
-  '/produk': typeof ProdukRoute
-  '/pulihkan': typeof PulihkanRoute
-  '/ringkasan': typeof RingkasanRoute
+  '/guide': typeof GuideRoute
+  '/login': typeof LoginRoute
+  '/members': typeof MembersRoute
+  '/privacy': typeof PrivacyRoute
+  '/products': typeof ProductsRoute
+  '/reports': typeof ReportsRoute
+  '/restore': typeof RestoreRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/settings': typeof SettingsRoute
   '/sitemap': typeof SitemapRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/img/$': typeof ImgSplatRoute
-  '/riwayat/$orderId': typeof RiwayatOrderIdRoute
-  '/sukses/$orderId': typeof SuksesOrderIdRoute
-  '/riwayat': typeof RiwayatIndexRoute
+  '/order-success/$orderId': typeof OrderSuccessOrderIdRoute
+  '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/orders': typeof OrdersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/anggota': typeof AnggotaRoute
-  '/beranda': typeof BerandaRoute
+  '/$': typeof SplatRoute
+  '/cart': typeof CartRoute
+  '/cashier': typeof CashierRoute
   '/checkout': typeof CheckoutRoute
-  '/kasir': typeof KasirRoute
-  '/keranjang': typeof KeranjangRoute
-  '/ketentuan': typeof KetentuanRoute
-  '/laporan': typeof LaporanRoute
-  '/masuk': typeof MasukRoute
-  '/panduan': typeof PanduanRoute
-  '/pengaturan': typeof PengaturanRoute
-  '/privasi': typeof PrivasiRoute
-  '/produk': typeof ProdukRoute
-  '/pulihkan': typeof PulihkanRoute
-  '/ringkasan': typeof RingkasanRoute
+  '/guide': typeof GuideRoute
+  '/login': typeof LoginRoute
+  '/members': typeof MembersRoute
+  '/privacy': typeof PrivacyRoute
+  '/products': typeof ProductsRoute
+  '/reports': typeof ReportsRoute
+  '/restore': typeof RestoreRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/settings': typeof SettingsRoute
   '/sitemap': typeof SitemapRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/health': typeof ApiHealthRoute
   '/img/$': typeof ImgSplatRoute
-  '/riwayat/$orderId': typeof RiwayatOrderIdRoute
-  '/sukses/$orderId': typeof SuksesOrderIdRoute
-  '/riwayat/': typeof RiwayatIndexRoute
+  '/order-success/$orderId': typeof OrderSuccessOrderIdRoute
+  '/orders/$orderId': typeof OrdersOrderIdRoute
+  '/orders/': typeof OrdersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/anggota'
-    | '/beranda'
+    | '/$'
+    | '/cart'
+    | '/cashier'
     | '/checkout'
-    | '/kasir'
-    | '/keranjang'
-    | '/ketentuan'
-    | '/laporan'
-    | '/masuk'
-    | '/panduan'
-    | '/pengaturan'
-    | '/privasi'
-    | '/produk'
-    | '/pulihkan'
-    | '/ringkasan'
+    | '/guide'
+    | '/login'
+    | '/members'
+    | '/privacy'
+    | '/products'
+    | '/reports'
+    | '/restore'
     | '/robots.txt'
+    | '/settings'
     | '/sitemap'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/health'
     | '/img/$'
-    | '/riwayat/$orderId'
-    | '/sukses/$orderId'
-    | '/riwayat/'
+    | '/order-success/$orderId'
+    | '/orders/$orderId'
+    | '/orders/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/anggota'
-    | '/beranda'
+    | '/$'
+    | '/cart'
+    | '/cashier'
     | '/checkout'
-    | '/kasir'
-    | '/keranjang'
-    | '/ketentuan'
-    | '/laporan'
-    | '/masuk'
-    | '/panduan'
-    | '/pengaturan'
-    | '/privasi'
-    | '/produk'
-    | '/pulihkan'
-    | '/ringkasan'
+    | '/guide'
+    | '/login'
+    | '/members'
+    | '/privacy'
+    | '/products'
+    | '/reports'
+    | '/restore'
     | '/robots.txt'
+    | '/settings'
     | '/sitemap'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/health'
     | '/img/$'
-    | '/riwayat/$orderId'
-    | '/sukses/$orderId'
-    | '/riwayat'
+    | '/order-success/$orderId'
+    | '/orders/$orderId'
+    | '/orders'
   id:
     | '__root__'
     | '/'
-    | '/anggota'
-    | '/beranda'
+    | '/$'
+    | '/cart'
+    | '/cashier'
     | '/checkout'
-    | '/kasir'
-    | '/keranjang'
-    | '/ketentuan'
-    | '/laporan'
-    | '/masuk'
-    | '/panduan'
-    | '/pengaturan'
-    | '/privasi'
-    | '/produk'
-    | '/pulihkan'
-    | '/ringkasan'
+    | '/guide'
+    | '/login'
+    | '/members'
+    | '/privacy'
+    | '/products'
+    | '/reports'
+    | '/restore'
     | '/robots.txt'
+    | '/settings'
     | '/sitemap'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/health'
     | '/img/$'
-    | '/riwayat/$orderId'
-    | '/sukses/$orderId'
-    | '/riwayat/'
+    | '/order-success/$orderId'
+    | '/orders/$orderId'
+    | '/orders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AnggotaRoute: typeof AnggotaRoute
-  BerandaRoute: typeof BerandaRoute
+  SplatRoute: typeof SplatRoute
+  CartRoute: typeof CartRoute
+  CashierRoute: typeof CashierRoute
   CheckoutRoute: typeof CheckoutRoute
-  KasirRoute: typeof KasirRoute
-  KeranjangRoute: typeof KeranjangRoute
-  KetentuanRoute: typeof KetentuanRoute
-  LaporanRoute: typeof LaporanRoute
-  MasukRoute: typeof MasukRoute
-  PanduanRoute: typeof PanduanRoute
-  PengaturanRoute: typeof PengaturanRoute
-  PrivasiRoute: typeof PrivasiRoute
-  ProdukRoute: typeof ProdukRoute
-  PulihkanRoute: typeof PulihkanRoute
-  RingkasanRoute: typeof RingkasanRoute
+  GuideRoute: typeof GuideRoute
+  LoginRoute: typeof LoginRoute
+  MembersRoute: typeof MembersRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProductsRoute: typeof ProductsRoute
+  ReportsRoute: typeof ReportsRoute
+  RestoreRoute: typeof RestoreRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SettingsRoute: typeof SettingsRoute
   SitemapRoute: typeof SitemapRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ImgSplatRoute: typeof ImgSplatRoute
-  RiwayatOrderIdRoute: typeof RiwayatOrderIdRoute
-  SuksesOrderIdRoute: typeof SuksesOrderIdRoute
-  RiwayatIndexRoute: typeof RiwayatIndexRoute
+  OrderSuccessOrderIdRoute: typeof OrderSuccessOrderIdRoute
+  OrdersOrderIdRoute: typeof OrdersOrderIdRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -338,18 +325,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/anggota': {
-      id: '/anggota'
-      path: '/anggota'
-      fullPath: '/anggota'
-      preLoaderRoute: typeof AnggotaRouteImport
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/beranda': {
-      id: '/beranda'
-      path: '/beranda'
-      fullPath: '/beranda'
-      preLoaderRoute: typeof BerandaRouteImport
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cashier': {
+      id: '/cashier'
+      path: '/cashier'
+      fullPath: '/cashier'
+      preLoaderRoute: typeof CashierRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -359,81 +353,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/kasir': {
-      id: '/kasir'
-      path: '/kasir'
-      fullPath: '/kasir'
-      preLoaderRoute: typeof KasirRouteImport
+    '/guide': {
+      id: '/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/keranjang': {
-      id: '/keranjang'
-      path: '/keranjang'
-      fullPath: '/keranjang'
-      preLoaderRoute: typeof KeranjangRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ketentuan': {
-      id: '/ketentuan'
-      path: '/ketentuan'
-      fullPath: '/ketentuan'
-      preLoaderRoute: typeof KetentuanRouteImport
+    '/members': {
+      id: '/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof MembersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/laporan': {
-      id: '/laporan'
-      path: '/laporan'
-      fullPath: '/laporan'
-      preLoaderRoute: typeof LaporanRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/masuk': {
-      id: '/masuk'
-      path: '/masuk'
-      fullPath: '/masuk'
-      preLoaderRoute: typeof MasukRouteImport
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/panduan': {
-      id: '/panduan'
-      path: '/panduan'
-      fullPath: '/panduan'
-      preLoaderRoute: typeof PanduanRouteImport
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pengaturan': {
-      id: '/pengaturan'
-      path: '/pengaturan'
-      fullPath: '/pengaturan'
-      preLoaderRoute: typeof PengaturanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privasi': {
-      id: '/privasi'
-      path: '/privasi'
-      fullPath: '/privasi'
-      preLoaderRoute: typeof PrivasiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/produk': {
-      id: '/produk'
-      path: '/produk'
-      fullPath: '/produk'
-      preLoaderRoute: typeof ProdukRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pulihkan': {
-      id: '/pulihkan'
-      path: '/pulihkan'
-      fullPath: '/pulihkan'
-      preLoaderRoute: typeof PulihkanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ringkasan': {
-      id: '/ringkasan'
-      path: '/ringkasan'
-      fullPath: '/ringkasan'
-      preLoaderRoute: typeof RingkasanRouteImport
+    '/restore': {
+      id: '/restore'
+      path: '/restore'
+      fullPath: '/restore'
+      preLoaderRoute: typeof RestoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/robots.txt': {
@@ -441,6 +407,13 @@ declare module '@tanstack/react-router' {
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap': {
@@ -457,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/health': {
       id: '/api/health'
       path: '/api/health'
@@ -471,25 +451,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImgSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/riwayat/': {
-      id: '/riwayat/'
-      path: '/riwayat'
-      fullPath: '/riwayat/'
-      preLoaderRoute: typeof RiwayatIndexRouteImport
+    '/order-success/$orderId': {
+      id: '/order-success/$orderId'
+      path: '/order-success/$orderId'
+      fullPath: '/order-success/$orderId'
+      preLoaderRoute: typeof OrderSuccessOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/riwayat/$orderId': {
-      id: '/riwayat/$orderId'
-      path: '/riwayat/$orderId'
-      fullPath: '/riwayat/$orderId'
-      preLoaderRoute: typeof RiwayatOrderIdRouteImport
+    '/orders/': {
+      id: '/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof OrdersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sukses/$orderId': {
-      id: '/sukses/$orderId'
-      path: '/sukses/$orderId'
-      fullPath: '/sukses/$orderId'
-      preLoaderRoute: typeof SuksesOrderIdRouteImport
+    '/orders/$orderId': {
+      id: '/orders/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/orders/$orderId'
+      preLoaderRoute: typeof OrdersOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -497,28 +477,27 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AnggotaRoute: AnggotaRoute,
-  BerandaRoute: BerandaRoute,
+  SplatRoute: SplatRoute,
+  CartRoute: CartRoute,
+  CashierRoute: CashierRoute,
   CheckoutRoute: CheckoutRoute,
-  KasirRoute: KasirRoute,
-  KeranjangRoute: KeranjangRoute,
-  KetentuanRoute: KetentuanRoute,
-  LaporanRoute: LaporanRoute,
-  MasukRoute: MasukRoute,
-  PanduanRoute: PanduanRoute,
-  PengaturanRoute: PengaturanRoute,
-  PrivasiRoute: PrivasiRoute,
-  ProdukRoute: ProdukRoute,
-  PulihkanRoute: PulihkanRoute,
-  RingkasanRoute: RingkasanRoute,
+  GuideRoute: GuideRoute,
+  LoginRoute: LoginRoute,
+  MembersRoute: MembersRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProductsRoute: ProductsRoute,
+  ReportsRoute: ReportsRoute,
+  RestoreRoute: RestoreRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
+  SettingsRoute: SettingsRoute,
   SitemapRoute: SitemapRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   ApiHealthRoute: ApiHealthRoute,
   ImgSplatRoute: ImgSplatRoute,
-  RiwayatOrderIdRoute: RiwayatOrderIdRoute,
-  SuksesOrderIdRoute: SuksesOrderIdRoute,
-  RiwayatIndexRoute: RiwayatIndexRoute,
+  OrderSuccessOrderIdRoute: OrderSuccessOrderIdRoute,
+  OrdersOrderIdRoute: OrdersOrderIdRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

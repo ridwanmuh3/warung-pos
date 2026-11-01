@@ -43,7 +43,7 @@ export interface CheckoutCartInput {
    */
   discount: { amount: number; percent: number | null }
   paymentMethod: PaymentMethod
-  /** Cash tendered; required for `tunai`, ignored otherwise. */
+  /** Cash tendered; required for `cash`, ignored otherwise. */
   amountPaid: number | null
   channel: SalesChannel
   cashier?: string
@@ -122,7 +122,7 @@ export const checkoutCart = createServerOnlyFn(
       const total = subtotal - discount
       const costTotal = priced.reduce((sum, line) => sum + line.cost * line.qty, 0)
 
-      const isCash = input.paymentMethod === 'tunai'
+      const isCash = input.paymentMethod === 'cash'
       if (isCash && (input.amountPaid === null || input.amountPaid < total)) {
         throw new Error('Uang diterima kurang dari total bayar')
       }

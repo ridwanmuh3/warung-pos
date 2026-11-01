@@ -30,7 +30,7 @@ async function seedProduct(tenantId: string, id: string): Promise<void> {
     name: `Produk ${id}`,
     price: 5000,
     cost: 3000,
-    category: 'makanan',
+    category: 'food',
     stock: 10,
     lowStockThreshold: 2,
     createdAt: now,
@@ -46,7 +46,7 @@ async function seedOrder(tenantId: string, id: string, number: string, userId: s
     createdAt: new Date().toISOString(),
     subtotal: 5000,
     total: 5000,
-    paymentMethod: 'tunai',
+    paymentMethod: 'cash',
     userId,
   })
 }

@@ -46,7 +46,7 @@ export function AuthScreen({
     const session = useSession()
     const [mode, setMode] = useState<Mode>(initialMode)
     const [name, setName] = useState('')
-    const [warungName, setWarungName] = useState('')
+    const [tenantName, setTenantName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -66,7 +66,7 @@ export function AuthScreen({
                         {session.name} · <span className="tabular">{session.email}</span>
                     </p>
                     <Link
-                        to="/kasir"
+                        to="/cashier"
                         className={buttonStyles({ size: 'md', className: 'mt-5' })}
                     >
                         Buka Kasir
@@ -82,7 +82,7 @@ export function AuthScreen({
         try {
             const result =
                 mode === 'register'
-                    ? await register({ name, email, password, confirmPassword, warungName })
+                    ? await register({ name, email, password, confirmPassword, tenantName })
                     : await login({ email, password })
 
             if (!result.ok) {
@@ -94,7 +94,7 @@ export function AuthScreen({
             setConfirmPassword('')
             // Only same-origin, in-app paths are honoured: an attacker-supplied
             // absolute URL must not turn the login page into an open redirect.
-            const target = safeInternalPath(redirectTo) ?? '/kasir'
+            const target = safeInternalPath(redirectTo) ?? '/cashier'
             await navigate({ to: target })
         } catch {
             setErrors(['Tidak dapat terhubung. Coba lagi.'])
@@ -186,8 +186,8 @@ export function AuthScreen({
                                 <IconBuildingStore size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     id="auth-warung"
-                                    value={warungName}
-                                    onChange={(event) => setWarungName(event.target.value)}
+                                    value={tenantName}
+                                    onChange={(event) => setTenantName(event.target.value)}
                                     placeholder="Warung Bu Siti"
                                     autoComplete="organization"
                                     data-testid="auth-warung"

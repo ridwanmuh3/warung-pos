@@ -26,7 +26,7 @@ async function seedProduct(sku: string, price: number, cost: number, stock: numb
     name: `Produk ${sku}`,
     price,
     cost,
-    category: 'makanan',
+    category: 'food',
     imageKey: null,
     stock,
     lowStockThreshold: 5,
@@ -38,7 +38,7 @@ async function seedProduct(sku: string, price: number, cost: number, stock: numb
 async function ringUp(
   productId: string,
   opts: { name: string; imageKey: string | null; price: number; cost: number; qty?: number },
-  paymentMethod: 'tunai' | 'qris' = 'tunai',
+  paymentMethod: 'cash' | 'qris' = 'cash',
 ) {
   const cart = await data.saveCart(TENANT, USER, [
     {
@@ -53,7 +53,7 @@ async function ringUp(
   return data.checkoutCart(TENANT, USER, cart.id, {
     discount: { amount: 0, percent: null },
     paymentMethod,
-    amountPaid: paymentMethod === 'tunai' ? 100000 : null,
+    amountPaid: paymentMethod === 'cash' ? 100000 : null,
     channel: 'dine-in',
   })
 }
@@ -85,7 +85,7 @@ describe('refund is separate from void (ADR-0006)', () => {
   it('a refund marks the order refunded and restocks with the refund reason', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     await data.openShift(TENANT, { openingCash: 50000, userId: USER })
-    const order = await ringUp(product.id, product, 'tunai')
+    const order = await ringUp(product.id, product, 'cash')
     await data.closeShift(TENANT, { countedCash: 59000 })
 
     const refunded = await data.refundOrder(TENANT, order.id, 'makanan basi')
@@ -101,7 +101,7 @@ describe('refund is separate from void (ADR-0006)', () => {
   it('a cash refund reduces the expected cash of the shift that pays it out', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     await data.openShift(TENANT, { openingCash: 50000, userId: USER })
-    const order = await ringUp(product.id, product, 'tunai')
+    const order = await ringUp(product.id, product, 'cash')
     const shiftA = await data.closeShift(TENANT, { countedCash: 59000 })
     expect(shiftA?.expectedCash).toBe(59000)
 
@@ -131,7 +131,7 @@ describe('refund is separate from void (ADR-0006)', () => {
   it('refunds are idempotent: stock is restored exactly once', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     await data.openShift(TENANT, { openingCash: 50000, userId: USER })
-    const order = await ringUp(product.id, product, 'tunai')
+    const order = await ringUp(product.id, product, 'cash')
     await data.closeShift(TENANT, { countedCash: 59000 })
 
     const first = await data.refundOrder(TENANT, order.id, 'makanan basi')
@@ -146,7 +146,7 @@ describe('refund is separate from void (ADR-0006)', () => {
   it('a voided order cannot be refunded, and vice versa', async () => {
     const product = await seedProduct('MKN-001', 9000, 5000, 10)
     await data.openShift(TENANT, { openingCash: 50000, userId: USER })
-    const order = await ringUp(product.id, product, 'tunai')
+    const order = await ringUp(product.id, product, 'cash')
     await data.voidOrder(TENANT, order.id, 'salah input')
 
     await expect(data.refundOrder(TENANT, order.id, 'coba-coba')).rejects.toThrow()

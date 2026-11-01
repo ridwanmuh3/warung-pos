@@ -92,7 +92,7 @@ export function FirstRunGuide({
             Mengerti
           </Button>
           <Link
-            to="/panduan"
+            to="/guide"
             onClick={dismiss}
             className={buttonStyles({ variant: 'secondary', size: 'md', className: 'w-full' })}
           >

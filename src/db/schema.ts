@@ -72,7 +72,7 @@ export const products = sqliteTable(
     price: integer('price').notNull(),
     /** Purchase price (HPP). */
     cost: integer('cost').notNull().default(0),
-    category: text('category', { enum: ['makanan', 'minuman', 'snack'] }).notNull(),
+    category: text('category', { enum: ['food', 'drink', 'snack'] }).notNull(),
     /** R2 object key for the product image; NULL shows a placeholder. */
     imageKey: text('image_key'),
     /** NULL means "not stock-tracked". */
@@ -106,13 +106,13 @@ export const orders = sqliteTable(
     total: integer('total').notNull(),
     costTotal: integer('cost_total').notNull().default(0),
     profit: integer('profit').notNull().default(0),
-    paymentMethod: text('payment_method', { enum: ['tunai', 'qris', 'transfer'] }).notNull(),
+    paymentMethod: text('payment_method', { enum: ['cash', 'qris', 'transfer'] }).notNull(),
     amountPaid: integer('amount_paid'),
     change: integer('change'),
     status: text('status', { enum: ['paid', 'void', 'refunded'] })
       .notNull()
       .default('paid'),
-    channel: text('channel', { enum: ['dine-in', 'bungkus', 'ojol'] })
+    channel: text('channel', { enum: ['dine-in', 'takeaway', 'delivery'] })
       .notNull()
       .default('dine-in'),
     cashier: text('cashier'),

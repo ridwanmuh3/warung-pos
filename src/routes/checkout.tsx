@@ -21,7 +21,7 @@ import type { PaymentMethod, SalesChannel } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { ProductImage } from '../components/ProductImage'
-import { KasStatus } from '../components/KasStatus'
+import { CashStatus } from '../components/CashStatus'
 import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
 
@@ -29,12 +29,12 @@ const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
 const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
 
 const PAYMENT_ICONS: Record<PaymentMethod, typeof IconCash> = {
-  tunai: IconCash,
+  cash: IconCash,
   qris: IconQrcode,
   transfer: IconBuildingBank,
 }
 
-type DiscountMode = 'rupiah' | 'persen'
+type DiscountMode = 'amount' | 'percent'
 
 /** Cash denominations a customer realistically hands over. */
 const CASH_STEPS = [5000, 10000, 20000, 50000, 100000]
@@ -61,12 +61,12 @@ function CheckoutPage() {
   const { items } = useCart()
   const session = useSession()
   const { data: products } = useProducts()
-  const [payment, setPayment] = useState<PaymentMethod>('tunai')
+  const [payment, setPayment] = useState<PaymentMethod>('cash')
   const [channel, setChannel] = useState<SalesChannel>('dine-in')
   /** Null means "not edited yet": the label follows the signed-in user. */
   const [cashierDraft, setCashierDraft] = useState<string | null>(null)
   const cashier = cashierDraft ?? session?.name ?? ''
-  const [discountMode, setDiscountMode] = useState<DiscountMode>('rupiah')
+  const [discountMode, setDiscountMode] = useState<DiscountMode>('amount')
   const [discountInput, setDiscountInput] = useState('')
   /** Null means "uang pas": the amount follows the total until edited. */
   const [cashDraft, setCashDraft] = useState<string | null>(null)
@@ -100,8 +100,8 @@ function CheckoutPage() {
     const parsed = Number(discountInput)
     if (discountInput === '' || !Number.isFinite(parsed) || parsed <= 0) return 0
     return discountValue(subtotal, {
-      amount: discountMode === 'rupiah' ? parsed : 0,
-      percent: discountMode === 'persen' ? parsed : null,
+      amount: discountMode === 'amount' ? parsed : 0,
+      percent: discountMode === 'percent' ? parsed : null,
     })
   }, [discountInput, discountMode, subtotal])
 
@@ -113,18 +113,18 @@ function CheckoutPage() {
   const cashAmount = Number(cashInput)
   const cashValid = cashInput !== '' && Number.isFinite(cashAmount) && cashAmount >= total
   const change = cashValid ? cashAmount - total : 0
-  const canConfirm = payment !== 'tunai' || cashValid
+  const canConfirm = payment !== 'cash' || cashValid
 
   if (items.length === 0) {
     return (
       <div>
-        <PageHeader title="Detail Pesanan" backTo="/keranjang" />
+        <PageHeader title="Detail Pesanan" backTo="/cart" />
         <EmptyState
           icon={IconReceipt}
           title="Tidak ada pesanan untuk ditinjau"
           description="Tambahkan produk ke keranjang terlebih dahulu."
           action={
-            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
+            <Link to="/cashier" className={buttonStyles({ size: 'md' })}>
               Kembali ke Kasir
             </Link>
           }
@@ -180,7 +180,7 @@ function CheckoutPage() {
         // first would re-render this screen as "Tidak ada pesanan" while the
         // next route loads, which read as a blank page between pay and receipt.
         await navigate({
-          to: '/sukses/$orderId',
+          to: '/order-success/$orderId',
           params: { orderId: order.id },
           state: (prev) => ({ ...prev, order }),
           replace: true,
@@ -195,7 +195,7 @@ function CheckoutPage() {
     })()
   }
 
-  const cashSection = payment === 'tunai' && (
+  const cashSection = payment === 'cash' && (
     <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
       <h2 className="text-sm font-semibold text-slate-900">Uang Diterima</h2>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -245,7 +245,7 @@ function CheckoutPage() {
       {cashInput !== '' && !cashValid && (
         <p className="mt-1 text-xs text-red-600">Uang diterima kurang dari total bayar.</p>
       )}
-      <KasStatus compact />
+      <CashStatus compact />
     </section>
   )
 
@@ -273,7 +273,7 @@ function CheckoutPage() {
       <PageHeader
         title="Detail Pesanan"
         subtitle="Periksa kembali sebelum konfirmasi"
-        backTo="/keranjang"
+        backTo="/cart"
         backLabel="Ubah keranjang"
       />
 
@@ -302,7 +302,7 @@ function CheckoutPage() {
           <section className="rounded-2xl border border-border-subtle bg-surface shadow-level1">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
               <h2 className="text-sm font-semibold text-slate-900">Rincian Produk</h2>
-              <Link to="/keranjang" className="text-xs font-semibold text-brand-700 hover:underline">
+              <Link to="/cart" className="text-xs font-semibold text-brand-700 hover:underline">
                 Ubah
               </Link>
             </div>
@@ -419,7 +419,7 @@ function CheckoutPage() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-semibold tracking-wide text-slate-500">Diskon</h3>
                     <div className="flex rounded-lg border border-slate-200 p-0.5">
-                      {(['rupiah', 'persen'] as const).map((mode) => (
+                      {(['amount', 'percent'] as const).map((mode) => (
                         <button
                           key={mode}
                           onClick={() => setDiscountMode(mode)}
@@ -428,7 +428,7 @@ function CheckoutPage() {
                             discountMode === mode ? 'bg-primary text-on-primary' : 'text-body hover:bg-surface-muted'
                           }`}
                         >
-                          {mode === 'rupiah' ? 'Rp' : '%'}
+                          {mode === 'amount' ? 'Rp' : '%'}
                         </button>
                       ))}
                     </div>
@@ -436,11 +436,11 @@ function CheckoutPage() {
                   <input
                     type="number"
                     min={0}
-                    step={discountMode === 'persen' ? 1 : 500}
+                    step={discountMode === 'percent' ? 1 : 500}
                     inputMode="numeric"
                     value={discountInput}
                     onChange={(event) => setDiscountInput(event.target.value)}
-                    placeholder={discountMode === 'persen' ? '10' : '2000'}
+                    placeholder={discountMode === 'percent' ? '10' : '2000'}
                     aria-label="Nilai diskon"
                     data-testid="discount-input"
                     className="tabular mt-2 min-h-11 w-full rounded-sm border border-border bg-surface px-3 py-2 text-right text-sm font-semibold text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"

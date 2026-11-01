@@ -19,9 +19,9 @@ export const Route = createFileRoute('/sitemap')({
 const PUBLIC_LINKS = [
   { label: 'Beranda', href: '/', note: 'Ringkasan produk, fitur, dan masa uji coba.' },
   { label: 'Sitemap', href: '/sitemap', note: 'Halaman ini.' },
-  { label: 'Kebijakan privasi', href: '/privasi', note: 'Data yang disimpan dan cara meminta penghapusan.' },
-  { label: 'Ketentuan layanan', href: '/ketentuan', note: 'Batas layanan selama masa uji coba.' },
-  { label: 'Masuk atau daftar', href: '/masuk', note: 'Akun baru otomatis menjadi owner warung.' },
+  { label: 'Kebijakan privasi', href: '/privacy', note: 'Data yang disimpan dan cara meminta penghapusan.' },
+  { label: 'Ketentuan layanan', href: '/terms', note: 'Batas layanan selama masa uji coba.' },
+  { label: 'Masuk atau daftar', href: '/login', note: 'Akun baru otomatis menjadi owner warung.' },
 ] as const
 
 const HOME_SECTIONS = [
@@ -32,14 +32,14 @@ const HOME_SECTIONS = [
 ] as const
 
 const APP_LINKS = [
-  { label: 'Kasir', href: '/kasir', note: 'Pilih produk dan jalankan transaksi.' },
-  { label: 'Produk', href: '/produk', note: 'Katalog, harga, HPP, dan stok.' },
-  { label: 'Laporan', href: '/laporan', note: 'Omzet, laba, dan rekonsiliasi kas.' },
-  { label: 'Riwayat pesanan', href: '/riwayat', note: 'Cari transaksi dan cetak ulang struk.' },
-  { label: 'Panduan pengguna', href: '/panduan', note: 'Langkah untuk kasir dan pemilik.' },
-  { label: 'Anggota toko', href: '/anggota', note: 'Undang anggota dan atur peran.' },
-  { label: 'Pengaturan', href: '/pengaturan', note: 'Nama warung dan preferensi.' },
-  { label: 'Pulihkan data lama', href: '/pulihkan', note: 'Impor data dari penyimpanan browser lama.' },
+  { label: 'Kasir', href: '/cashier', note: 'Pilih produk dan jalankan transaksi.' },
+  { label: 'Produk', href: '/products', note: 'Katalog, harga, HPP, dan stok.' },
+  { label: 'Laporan', href: '/reports', note: 'Omzet, laba, dan rekonsiliasi kas.' },
+  { label: 'Riwayat pesanan', href: '/orders', note: 'Cari transaksi dan cetak ulang struk.' },
+  { label: 'Panduan pengguna', href: '/guide', note: 'Langkah untuk kasir dan pemilik.' },
+  { label: 'Anggota toko', href: '/members', note: 'Undang anggota dan atur peran.' },
+  { label: 'Pengaturan', href: '/settings', note: 'Nama warung dan preferensi.' },
+  { label: 'Pulihkan data lama', href: '/restore', note: 'Impor data dari penyimpanan browser lama.' },
 ] as const
 
 function SitemapPage() {

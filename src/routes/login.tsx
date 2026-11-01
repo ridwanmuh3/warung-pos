@@ -4,7 +4,7 @@ import { AuthScreen } from '../components/AuthScreen'
 import { userCountFn } from '../lib/auth.functions'
 import { redirectPath } from '../lib/validation'
 
-export const Route = createFileRoute('/masuk')({
+export const Route = createFileRoute('/login')({
     component: LoginPage,
     validateSearch: z.object({
         /** Where to continue after a successful sign-in. */

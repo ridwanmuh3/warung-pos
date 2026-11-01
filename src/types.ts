@@ -1,4 +1,4 @@
-export type ProductCategory = 'makanan' | 'minuman' | 'snack'
+export type ProductCategory = 'food' | 'drink' | 'snack'
 
 export interface Product {
   id: string
@@ -29,10 +29,10 @@ export interface StockMovement {
   orderId?: string
 }
 
-export type PaymentMethod = 'tunai' | 'qris' | 'transfer'
+export type PaymentMethod = 'cash' | 'qris' | 'transfer'
 
 /** Where the order was consumed. */
-export type SalesChannel = 'dine-in' | 'bungkus' | 'ojol'
+export type SalesChannel = 'dine-in' | 'takeaway' | 'delivery'
 
 /** One aggregated row of the per-category sales breakdown. */
 export interface CategoryReportRow {

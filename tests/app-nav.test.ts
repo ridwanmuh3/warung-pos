@@ -3,9 +3,9 @@ import { isActive } from '../src/components/app-nav'
 
 describe('navigasi sidebar', () => {
     it('menandai rute tepat dan turunannya, bukan rute berawalan mirip', () => {
-        expect(isActive('/kasir', '/kasir')).toBe(true)
-        expect(isActive('/produk', '/kasir')).toBe(false)
-        expect(isActive('/riwayat/123', '/riwayat')).toBe(true)
-        expect(isActive('/produksi', '/produk')).toBe(false)
+        expect(isActive('/cashier', '/cashier')).toBe(true)
+        expect(isActive('/products', '/cashier')).toBe(false)
+        expect(isActive('/orders/123', '/orders')).toBe(true)
+        expect(isActive('/produksi', '/products')).toBe(false)
     })
 })

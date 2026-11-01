@@ -1,5 +1,6 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/geist';
+@import '@fontsource-variable/jetbrains-mono';
 @import 'tailwindcss';
 
 /**
@@ -62,6 +63,12 @@
   --color-link-hover: #256b16;
   --color-ring-focus: rgb(22 51 0 / 0.6);
   --color-overlay: rgb(14 15 12 / 0.5);
+
+  /* Atmospheric hero trio: warm peach, lime, pale mint. Decorative only —
+   * large soft shapes behind content, never behind body text. */
+  --color-hero-warm: #ffc091;
+  --color-hero-glow: #9fe870;
+  --color-hero-pink: #e2f6d5;
 
   /* --------------------- compatibility aliases ----------------------- */
   /* brand-* → Wise greens. Fills paired with white text map to the deep
@@ -136,10 +143,11 @@
   /* ------------------------- semantic: type -------------------------- */
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Geist Variable', 'Inter Variable', ui-sans-serif, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* ------------------------ semantic: motion ------------------------- */
   --ease-out: ease-out;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 150ms;
   --duration-normal: 200ms;
   --duration-slow: 300ms;
@@ -166,8 +174,122 @@
   }
 }
 
+/* Homepage entrance: content lifts into place once, under CSS so the hero
+ * never depends on the GSAP chunk arriving. */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes check-pop {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.55);
+  }
+  60% {
+    transform: scale(1.16);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hero-rise {
+  animation: hero-rise 0.7s var(--ease-out-soft) both;
+}
+.hero-rise-delay-1 {
+  animation-delay: 90ms;
+}
+.hero-rise-delay-2 {
+  animation-delay: 180ms;
+}
+.hero-rise-delay-3 {
+  animation-delay: 270ms;
+}
+.hero-rise-delay-4 {
+  animation-delay: 360ms;
+}
+
+.panel-in {
+  animation: panel-in 320ms var(--ease-out-soft) both;
+}
+
+.check-pop {
+  animation: check-pop 320ms var(--ease-out-soft);
+}
+
+/* ------------------------- ledger scrollytelling -------------------- */
+[data-ledger-row] {
+  transition:
+    opacity 360ms var(--ease-out-soft),
+    transform 360ms var(--ease-out-soft);
+}
+[data-ledger]:not([data-motion='on']) [data-ledger-narration] {
+  display: none;
+}
+[data-ledger][data-motion='on'] [data-ledger-row][data-visible='false'] {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* The runway gives the sticky stage something to scroll through. Motion is
+ * switched on from the component only after GSAP has loaded. */
+[data-ledger][data-motion='on'] [data-ledger-runway] {
+  min-height: 190vh;
+}
+[data-ledger][data-motion='on'] [data-ledger-stage] {
+  position: sticky;
+  top: 4rem;
+  min-height: calc(100svh - 4rem);
+}
+@media (min-width: 1024px) {
+  [data-ledger][data-motion='on'] [data-ledger-runway] {
+    min-height: 220vh;
+  }
+  [data-ledger][data-motion='on'] [data-ledger-stage] {
+    top: 5rem;
+    min-height: calc(100svh - 5rem);
+  }
+}
+
+@media (max-height: 540px), (prefers-reduced-motion: reduce) {
+  [data-ledger][data-motion='on'] [data-ledger-runway] {
+    min-height: auto;
+  }
+  [data-ledger][data-motion='on'] [data-ledger-stage] {
+    position: static;
+    min-height: 0;
+  }
+  [data-ledger][data-motion='on'] [data-ledger-row][data-visible='false'] {
+    opacity: 1;
+    transform: none;
+  }
+  [data-ledger][data-motion='on'] [data-ledger-narration] {
+    display: none;
+  }
+}
+
 /* Reduced motion: shimmer and sweep stop; the spinner stays (it is essential
- * feedback) but slows down. */
+ * feedback) but slows down. Decorative loops and entrances are removed, and
+ * the duplicated marquee copy would only repeat content it cannot move. */
 @media (prefers-reduced-motion: reduce) {
   .animate-shimmer,
   .animate-nav-progress {
@@ -175,6 +297,14 @@
   }
   .animate-spin {
     animation-duration: 1.6s;
+  }
+  .hero-rise,
+  .panel-in,
+  .check-pop {
+    animation: none;
+  }
+  [data-marquee-duplicate] {
+    display: none;
   }
 }
 
@@ -256,7 +386,7 @@ a {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #868685;
+  background: var(--color-ash);
   border-radius: 9999px;
   border: 2px solid var(--color-surface);
 }

@@ -8,7 +8,7 @@ const LAST_MOD = '2026-10-28'
 describe('sitemap.xml', () => {
   it('memuat halaman publik dengan URL absolut', () => {
     const xml = sitemapXml(ORIGIN, LAST_MOD)
-    for (const path of ['/', '/sitemap', '/privasi', '/ketentuan']) {
+    for (const path of ['/', '/sitemap', '/privacy', '/terms']) {
       expect(xml).toContain(`<loc>${ORIGIN}${path}</loc>`)
     }
     expect(xml).toContain(`<lastmod>${LAST_MOD}</lastmod>`)
@@ -17,8 +17,8 @@ describe('sitemap.xml', () => {
 
   it('tidak membocorkan rute aplikasi atau halaman masuk', () => {
     const xml = sitemapXml(ORIGIN, LAST_MOD)
-    expect(xml).not.toContain('/masuk')
-    expect(xml).not.toContain('/kasir')
+    expect(xml).not.toContain('/login')
+    expect(xml).not.toContain('/cashier')
     expect(xml).not.toContain('/checkout')
   })
 
@@ -31,7 +31,7 @@ describe('robots.txt', () => {
   it('mengizinkan halaman pemasaran dan menunjuk sitemap absolut', () => {
     const robots = robotsTxt(ORIGIN)
     expect(robots).toContain('Allow: /')
-    expect(robots).toContain('Disallow: /kasir')
+    expect(robots).toContain('Disallow: /cashier')
     expect(robots).toContain(`Sitemap: ${ORIGIN}/sitemap.xml`)
   })
 })

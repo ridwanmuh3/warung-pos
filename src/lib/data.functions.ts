@@ -197,7 +197,7 @@ export const checkoutFn = createServerFn({ method: 'POST' })
     return data.checkoutCart(ctx.tenantId, ctx.userId, cart.id, {
       discount: { amount: checkout.discountAmount, percent: checkout.discountPercent },
       paymentMethod: checkout.paymentMethod,
-      amountPaid: checkout.paymentMethod === 'tunai' ? checkout.cashTendered : null,
+      amountPaid: checkout.paymentMethod === 'cash' ? checkout.cashTendered : null,
       channel: checkout.channel,
       cashier: checkout.cashier ?? '',
     })

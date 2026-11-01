@@ -13,13 +13,13 @@ import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { OwnerSetupChecklist } from '../components/OwnerSetupChecklist'
 import { ProductImage } from '../components/ProductImage'
-import { KasStatus } from '../components/KasStatus'
+import { CashStatus } from '../components/CashStatus'
 import { SkeletonGrid } from '../components/ui/Skeleton'
 import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
 
-const FILTERS: Array<{ value: ProductCategory | 'semua'; label: string }> = [
-  { value: 'semua', label: 'Semua' },
+const FILTERS: Array<{ value: ProductCategory | 'all'; label: string }> = [
+  { value: 'all', label: 'Semua' },
   ...(Object.keys(CATEGORY_LABELS) as ProductCategory[]).map((category) => ({
     value: category,
     label: CATEGORY_LABELS[category],
@@ -28,11 +28,11 @@ const FILTERS: Array<{ value: ProductCategory | 'semua'; label: string }> = [
 
 /** Validated search params: the cashier's filter and query survive a refresh. */
 const menuSearchSchema = z.object({
-  kategori: z.enum(['semua', 'makanan', 'minuman', 'snack']).optional().catch(undefined),
-  cari: z.string().optional().catch(undefined),
+  category: z.enum(['all', 'food', 'drink', 'snack']).optional().catch(undefined),
+  q: z.string().optional().catch(undefined),
 })
 
-export const Route = createFileRoute('/kasir')({
+export const Route = createFileRoute('/cashier')({
   component: MenuPage,
   validateSearch: menuSearchSchema,
   // Catalog is browser-local (localStorage); nothing meaningful to render on the server.
@@ -40,9 +40,9 @@ export const Route = createFileRoute('/kasir')({
 })
 
 function MenuPage() {
-  const { kategori, cari } = Route.useSearch()
-  const active = kategori ?? 'semua'
-  const query = cari ?? ''
+  const { category, q } = Route.useSearch()
+  const active = category ?? 'all'
+  const query = q ?? ''
   const navigate = useNavigate({ from: Route.fullPath })
   const searchRef = useRef<HTMLInputElement>(null)
   const { items, count } = useCart()
@@ -58,7 +58,7 @@ function MenuPage() {
 
   const needle = query.trim().toLowerCase()
   const visible = products
-    .filter((p) => active === 'semua' || p.category === active)
+    .filter((p) => active === 'all' || p.category === active)
     .filter((p) => {
       if (needle === '') return true
       return (
@@ -68,7 +68,7 @@ function MenuPage() {
       )
     })
 
-  function setSearch(patch: { kategori?: ProductCategory | 'semua'; cari?: string }) {
+  function setSearch(patch: { category?: ProductCategory | 'all'; q?: string }) {
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
   }
 
@@ -80,7 +80,7 @@ function MenuPage() {
     )
     if (!match) return
     addToCart(match)
-    setSearch({ cari: '' })
+    setSearch({ q: '' })
     searchRef.current?.focus()
   }
 
@@ -92,7 +92,7 @@ function MenuPage() {
         action={
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              to="/produk"
+              to="/products"
               className={buttonStyles({ variant: 'secondary', size: 'sm' })}
             >
               <IconPackage size={16} />
@@ -110,7 +110,7 @@ function MenuPage() {
         />
       )}
 
-      <KasStatus />
+      <CashStatus />
 
       <div className="relative mb-3">
         <IconSearch
@@ -122,7 +122,7 @@ function MenuPage() {
           ref={searchRef}
           type="search"
           value={query}
-          onChange={(event) => setSearch({ cari: event.target.value })}
+          onChange={(event) => setSearch({ q: event.target.value })}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault()
@@ -136,7 +136,7 @@ function MenuPage() {
         />
         {query !== '' && (
           <button
-            onClick={() => setSearch({ cari: '' })}
+            onClick={() => setSearch({ q: '' })}
             aria-label="Hapus pencarian"
             className="absolute right-0 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100"
           >
@@ -151,7 +151,7 @@ function MenuPage() {
         {FILTERS.map((filter) => (
           <button
             key={filter.value}
-            onClick={() => setSearch({ kategori: filter.value })}
+            onClick={() => setSearch({ category: filter.value })}
             aria-pressed={active === filter.value}
             className={`flex min-h-11 shrink-0 items-center rounded-full px-3.5 py-2 text-sm font-semibold transition duration-150 ease-out ${
               active === filter.value
@@ -178,7 +178,7 @@ function MenuPage() {
           action={
             canManageCatalog ? (
               <Link
-                to="/produk"
+                to="/products"
                 className={buttonStyles({ size: 'md' })}
               >
                 <IconPackage size={18} />
@@ -186,7 +186,7 @@ function MenuPage() {
               </Link>
             ) : (
               <Link
-                to="/panduan"
+                to="/guide"
                 className={buttonStyles({ variant: 'secondary', size: 'md' })}
               >
                 <IconBook size={18} />
@@ -263,7 +263,7 @@ function MenuPage() {
       {items.length > 0 && (
         <div className="no-print safe-bottom fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.05)] md:hidden">
           <Link
-            to="/keranjang"
+            to="/cart"
             className={buttonStyles({ size: 'md', justify: 'between', className: 'w-full' })}
           >
             <span className="flex items-center gap-2">

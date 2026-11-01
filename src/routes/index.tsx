@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { MarketingShell } from '../components/marketing/MarketingShell'
 import { Hero } from '../components/marketing/Hero'
+import { HomeMotion } from '../components/marketing/HomeMotion'
+import { LedgerTicker } from '../components/marketing/LedgerTicker'
 import { CapabilityTabs } from '../components/marketing/CapabilityTabs'
 import { SetupChecklist } from '../components/marketing/SetupChecklist'
 import { LedgerBand } from '../components/marketing/LedgerBand'
@@ -47,7 +49,9 @@ export const Route = createFileRoute('/')({
 function HomePage() {
   return (
     <MarketingShell>
+      <HomeMotion />
       <Hero />
+      <LedgerTicker />
       <CapabilityTabs />
       <LedgerBand />
       <Calculator />

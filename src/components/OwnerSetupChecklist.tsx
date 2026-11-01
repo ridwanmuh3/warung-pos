@@ -5,19 +5,19 @@ import { SHIFTS_CHANGED_EVENT } from '../lib/events'
 import { setupProgress } from '../lib/onboarding'
 import { useShifts } from '../lib/useServerData'
 
-type SetupLink = '/pengaturan' | '/produk'
+type SetupLink = '/settings' | '/products'
 
 const STEP_COPY: Record<'name' | 'product' | 'shift', { title: string; hint: string; link?: SetupLink; action?: string }> = {
   name: {
     title: 'Beri nama warung',
     hint: 'Nama ini tampil di struk dan menu Akun.',
-    link: '/pengaturan',
+    link: '/settings',
     action: 'Atur',
   },
   product: {
     title: 'Tambah produk pertama',
     hint: 'Cukup nama dan harga; foto serta stok bisa menyusul.',
-    link: '/produk',
+    link: '/products',
     action: 'Tambah',
   },
   shift: {

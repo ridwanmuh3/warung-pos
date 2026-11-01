@@ -127,7 +127,7 @@ export const email = z
   .pipe(z.string().min(1, 'Email wajib diisi').max(MAX_EMAIL, 'Email terlalu panjang'))
   .pipe(z.email('Format email tidak valid'))
 
-export const paymentMethod = z.enum(['tunai', 'qris', 'transfer'])
+export const paymentMethod = z.enum(['cash', 'qris', 'transfer'])
 
 /** Opaque row id from the database; bounded before it reaches a query. */
 export const entityId = z
@@ -182,8 +182,8 @@ export const orderItemSchema = z.object({
 
 /** A cart or an imported order can never contain an unbounded line list. */
 export const orderItemsSchema = z.array(orderItemSchema).max(MAX_LINE_ITEMS, 'Terlalu banyak item')
-export const salesChannel = z.enum(['dine-in', 'bungkus', 'ojol'])
-export const productCategory = z.enum(['makanan', 'minuman', 'snack'])
+export const salesChannel = z.enum(['dine-in', 'takeaway', 'delivery'])
+export const productCategory = z.enum(['food', 'drink', 'snack'])
 export const dayKey = z.string().regex(/^\d{1,4}-\d{1,2}-\d{1,2}$/, 'Format tanggal tidak valid')
 
 /** Human name: letters, digits, and common punctuation only. */
@@ -253,13 +253,13 @@ export const checkoutSchema = z
     cashTendered: z.union([rupiah, z.null()]),
     total: rupiah,
   })
-  .refine((value) => value.paymentMethod !== 'tunai' || value.cashTendered !== null, {
+  .refine((value) => value.paymentMethod !== 'cash' || value.cashTendered !== null, {
     message: 'Uang diterima wajib diisi untuk pembayaran tunai',
     path: ['cashTendered'],
   })
   .refine(
     (value) =>
-      value.paymentMethod !== 'tunai' ||
+      value.paymentMethod !== 'cash' ||
       value.cashTendered === null ||
       value.cashTendered >= value.total,
     { message: 'Uang diterima kurang dari total bayar', path: ['cashTendered'] },
@@ -277,7 +277,7 @@ export const checkoutFormSchema = z.object({
   paymentMethod,
   channel: salesChannel,
   cashier: z.string().max(200),
-  discountMode: z.enum(['rupiah', 'persen']),
+  discountMode: z.enum(['amount', 'percent']),
   discountInput: z.string().max(20),
   cashInput: z.string().max(20),
   total: rupiah,
@@ -295,8 +295,8 @@ export function parseCheckoutForm(form: z.infer<typeof checkoutFormSchema>): Che
     paymentMethod: form.paymentMethod,
     channel: form.channel,
     cashier: form.cashier,
-    discountAmount: form.discountMode === 'rupiah' ? parsedNumber(form.discountInput) : 0,
-    discountPercent: form.discountMode === 'persen' ? parsedNumber(form.discountInput) : null,
+    discountAmount: form.discountMode === 'amount' ? parsedNumber(form.discountInput) : 0,
+    discountPercent: form.discountMode === 'percent' ? parsedNumber(form.discountInput) : null,
     cashTendered: form.cashInput.trim() === '' ? null : parsedNumber(form.cashInput),
     total: form.total,
   })
@@ -339,7 +339,7 @@ export const registerSchema = z
     password,
     confirmPassword: z.string().max(128, 'Maksimal 128 karakter'),
     /** Optional so older clients (and tests) can still register. */
-    warungName: cleanText(60).optional(),
+    tenantName: cleanText(60).optional(),
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: 'Konfirmasi kata sandi tidak cocok',

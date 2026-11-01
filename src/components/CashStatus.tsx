@@ -18,7 +18,7 @@ import { ShiftPanel } from './ShiftPanel'
  * closed, so an ordinary cash sale is not interrupted by a panel it does not
  * need. Warn-and-allow, like oversell: the warning never blocks the sale.
  */
-export function KasStatus({ compact = false }: { compact?: boolean }) {
+export function CashStatus({ compact = false }: { compact?: boolean }) {
   const { data: open, loading, reload } = useCurrentShift()
   const [dialogOpen, setDialogOpen] = useState(false)
 

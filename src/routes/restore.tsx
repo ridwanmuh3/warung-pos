@@ -14,7 +14,7 @@ import type { LegacySnapshot } from '../lib/legacy'
 import { importLegacyFn, undoImportFn } from '../lib/migration.functions'
 import type { ImportBatchResult } from '../lib/data.server'
 
-export const Route = createFileRoute('/pulihkan')({
+export const Route = createFileRoute('/restore')({
   component: RestorePage,
   // localStorage only exists in the browser.
   ssr: false,
@@ -73,7 +73,7 @@ function RestorePage() {
 
   function finish() {
     clearLegacyStorage()
-    void navigate({ to: '/kasir' })
+    void navigate({ to: '/cashier' })
   }
 
   if (!snapshot) {
@@ -105,7 +105,7 @@ function RestorePage() {
       <PageHeader
         title="Pulihkan Data"
         subtitle="Data dari versi sebelumnya di perangkat ini bisa dipindahkan ke akun ini"
-        backTo="/kasir"
+        backTo="/cashier"
         backLabel="Kembali ke kasir"
       />
 

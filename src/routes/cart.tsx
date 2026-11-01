@@ -50,7 +50,7 @@ function QtyStepper({ item }: { item: OrderItem }) {
   )
 }
 
-export const Route = createFileRoute('/keranjang')({
+export const Route = createFileRoute('/cart')({
   component: CartPage,
   // Cart is persisted to localStorage (cache) and synced to the server.
   ssr: false,
@@ -190,7 +190,7 @@ function CartPage() {
   if (items.length === 0) {
     return (
       <div>
-        <PageHeader title="Keranjang" backTo="/kasir" backLabel="Kembali ke kasir" />
+        <PageHeader title="Keranjang" backTo="/cashier" backLabel="Kembali ke kasir" />
         {undoNotice}
         <ParkedCarts parked={parked} onResume={resume} onDiscard={discard} busy={busy} />
         <EmptyState
@@ -198,7 +198,7 @@ function CartPage() {
           title="Keranjang masih kosong"
           description="Pilih produk di halaman kasir untuk memulai transaksi."
           action={
-            <Link to="/kasir" className={buttonStyles({ size: 'md' })}>
+            <Link to="/cashier" className={buttonStyles({ size: 'md' })}>
               <IconShoppingCart size={18} />
               Mulai Belanja
             </Link>
@@ -210,7 +210,7 @@ function CartPage() {
 
   return (
     <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/kasir" backLabel="Tambah produk" />
+      <PageHeader title="Keranjang" subtitle={`${count} item dipilih`} backTo="/cashier" backLabel="Tambah produk" />
 
       {undoNotice}
 

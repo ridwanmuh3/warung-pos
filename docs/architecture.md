@@ -117,18 +117,26 @@ Rahasia (`TURSO_ACCESS_TOKEN`, `passwordHash`, `libsql://`) tidak boleh muncul d
 
 | URL | Berkas | Render |
 | --- | ------ | ------ |
-| `/` | `index.tsx` | klien (`ssr: false`) |
-| `/keranjang` | `keranjang.tsx` | klien (`ssr: false`) |
+| `/` | `index.tsx` | homepage pemasaran |
+| `/cashier` | `cashier.tsx` | klien (`ssr: false`) |
+| `/cart` | `cart.tsx` | klien (`ssr: false`) |
 | `/checkout` | `checkout.tsx` | klien (`ssr: false`) |
-| `/sukses/$orderId` | `sukses.$orderId.tsx` | SSR + loader |
-| `/riwayat` | `riwayat.index.tsx` | SSR + loader (filter lewat search param) |
-| `/riwayat/$orderId` | `riwayat.$orderId.tsx` | SSR + loader |
-| `/produk` | `produk.tsx` | SSR + loader |
-| `/ringkasan` | `ringkasan.tsx` | `data-only` |
-| `/laporan` | `laporan.tsx` | `data-only` |
-| `/anggota` | `anggota.tsx` | klien (`ssr: false`) |
-| `/pulihkan` | `pulihkan.tsx` | klien (`ssr: false`) |
-| `/masuk` | `masuk.tsx` | SSR + loader |
+| `/order-success/$orderId` | `order-success.$orderId.tsx` | SSR + loader |
+| `/orders` | `orders.index.tsx` | SSR + loader (filter lewat search param) |
+| `/orders/$orderId` | `orders.$orderId.tsx` | SSR + loader |
+| `/products` | `products.tsx` | SSR + loader |
+| `/reports` | `reports.tsx` | `data-only` |
+| `/members` | `members.tsx` | klien (`ssr: false`) |
+| `/settings` | `settings.tsx` | klien (`ssr: false`) |
+| `/restore` | `restore.tsx` | klien (`ssr: false`) |
+| `/login` | `login.tsx` | SSR + loader |
+| `/guide` | `guide.tsx` | klien (`ssr: false`) |
+| `/privacy` | `privacy.tsx` | SSR |
+| `/terms` | `terms.tsx` | SSR |
+| `/sitemap` | `sitemap.tsx` | SSR |
 | `/api/health` | `api.health.ts` | server route |
+| `/$` | `$.tsx` | redirect catch-all URL legacy → English |
 
 `ssr: false` menandai route yang hanya bisa dirender di klien (mis. butuh `localStorage` atau state keranjang). Route lain menjalankan loader di server saat SSR, lalu hydrate di klien. `data-only` merender data dari server tanpa shell halaman penuh.
+
+URL lama berbahasa Indonesia dipertahankan sebagai redirect permanen 301 di `src/lib/legacy-routes.ts`; route `/$` menangkap path yang tidak dimiliki route tree dan mengarahkannya, termasuk menerjemahkan query param lama.

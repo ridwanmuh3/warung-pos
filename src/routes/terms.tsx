@@ -17,7 +17,7 @@ const SECTIONS = [
   { id: 'kontak', title: 'Kontak' },
 ] as const
 
-export const Route = createFileRoute('/ketentuan')({
+export const Route = createFileRoute('/terms')({
   component: TermsPage,
   head: () => ({
     meta: [
