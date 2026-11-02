@@ -10,14 +10,15 @@ Setiap data bisnis dikaitkan ke satu **tenant** (warung). Akses pengguna ditentu
 
 Data bisnis disimpan di Turso/libSQL melalui Drizzle ORM. Keranjang bersifat local-first agar interaksi tetap responsif, lalu disinkronkan ke server setelah pengguna masuk. Checkout dan perhitungan harga akhir dilakukan di server.
 
-Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntansi lengkap. QRIS dan transfer dicatat sebagai metode pembayaran, bukan melalui integrasi payment gateway. Cetak struk menggunakan dialog cetak browser, bukan integrasi langsung dengan printer thermal. Checkout memerlukan koneksi ke server; aplikasi tidak menyediakan mode offline penuh.
+Ruang lingkup aplikasi adalah operasional penjualan harian, bukan sistem akuntansi lengkap. QRIS dan transfer dicatat sebagai metode pembayaran, bukan melalui integrasi payment gateway. Penjualan Ngutang dicatat sebagai piutang penuh tanpa pembayaran cicilan. Cetak struk menggunakan dialog cetak browser, bukan integrasi langsung dengan printer thermal. Checkout memerlukan koneksi ke server; aplikasi tidak menyediakan mode offline penuh.
 
 ## 2. Fitur
 
 | Area | Kemampuan |
 | --- | --- |
 | Kasir & keranjang | Cari produk berdasarkan nama, SKU, atau barcode; filter kategori; lihat stok; ubah jumlah; hapus item; tahan dan lanjutkan pesanan; peringatan ketika harga produk berubah. |
-| Checkout & struk | Pilih metode bayar Tunai, QRIS, atau Transfer; pilih jenis pesanan Makan di Sini, Bungkus, atau Ojol; isi nama kasir; terapkan diskon nominal atau persentase; tombol uang cepat dan kembalian otomatis untuk tunai. Struk dapat dicetak melalui browser. |
+| Checkout & struk | Pilih metode bayar Tunai, QRIS, Transfer, atau Ngutang; pilih jenis pesanan Makan di Sini, Bungkus, atau Ojol; isi nama kasir; terapkan diskon nominal atau persentase; tombol uang cepat dan kembalian otomatis untuk tunai. Struk dapat dicetak melalui browser. |
+| Utang pelanggan | Catat penjualan Ngutang dengan nama pelanggan, lalu tandai lunas dari menu Utang saat dibayar (tunai, QRIS, atau transfer). Daftar belum dibayar dan sudah dibayar dipisah, lengkap dengan total piutang dan pencarian nama. |
 | Produk & stok | Tambah, ubah, dan hapus produk; atur harga, HPP, stok, batas stok menipis, SKU, dan barcode; unggah gambar produk ke Cloudflare R2; restock cepat; filter produk dengan stok menipis. Produk dengan stok `null` tidak dilacak. |
 | Kas & shift | Buka kas dengan modal awal, tutup kas dengan hitungan fisik, dan lihat selisih kas (lebih, kurang, atau pas). Satu tenant memiliki satu shift kas aktif. |
 | Laporan | Ringkasan omzet, laba kotor, margin, jumlah transaksi, penjualan per metode, rincian kategori, produk terlaris, jam tersibuk, dan tren omzet tujuh hari. Tersedia ekspor CSV dan Z-Report teks siap cetak. |

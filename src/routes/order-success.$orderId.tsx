@@ -61,17 +61,27 @@ function SuccessPage() {
     )
   }
 
+  const isCredit = order.paymentMethod === 'credit' && order.settlementStatus === 'unsettled'
+
   return (
     <div className="mx-auto max-w-md">
       <div className="mb-5 text-center">
         <div className="mx-auto grid size-16 place-items-center rounded-full bg-brand-100 text-brand-600">
           <IconCheck size={36} stroke={2.5} />
         </div>
-        <h1 className="mt-3 text-2xl font-bold text-slate-900">Pesanan Berhasil</h1>
+        <h1 className="mt-3 text-2xl font-bold text-slate-900">
+          {isCredit ? 'Utang Tercatat' : 'Pesanan Berhasil'}
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
           <span className="tabular font-medium">{order.orderNumber}</span> · Total{' '}
           <span className="tabular font-semibold text-slate-700">{formatIDR(order.total)}</span>
         </p>
+        {isCredit && (
+          <p className="mx-auto mt-2 max-w-xs text-xs text-amber-700">
+            Belum dibayar{order.customerName ? ` oleh ${order.customerName}` : ''}. Tandai lunas dari menu Utang
+            saat pelanggan membayar.
+          </p>
+        )}
       </div>
 
       <Receipt order={order} />

@@ -6,6 +6,7 @@ import {
   IconBuildingBank,
   IconCash,
   IconChevronDown,
+  IconNotebook,
   IconQrcode,
   IconReceipt,
 } from '@tabler/icons-react'
@@ -32,6 +33,7 @@ const PAYMENT_ICONS: Record<PaymentMethod, typeof IconCash> = {
   cash: IconCash,
   qris: IconQrcode,
   transfer: IconBuildingBank,
+  credit: IconNotebook,
 }
 
 type DiscountMode = 'amount' | 'percent'
@@ -62,6 +64,7 @@ function CheckoutPage() {
   const session = useSession()
   const { data: products } = useProducts()
   const [payment, setPayment] = useState<PaymentMethod>('cash')
+  const [customerName, setCustomerName] = useState('')
   const [channel, setChannel] = useState<SalesChannel>('dine-in')
   /** Null means "not edited yet": the label follows the signed-in user. */
   const [cashierDraft, setCashierDraft] = useState<string | null>(null)
@@ -141,6 +144,7 @@ function CheckoutPage() {
       paymentMethod: payment,
       channel,
       cashier,
+      customerName: payment === 'credit' ? customerName : '',
       discountMode,
       discountInput,
       cashInput,
@@ -326,7 +330,7 @@ function CheckoutPage() {
 
           <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900">Metode Pembayaran</h2>
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {PAYMENT_METHODS.map((method) => {
                 const Icon = PAYMENT_ICONS[method]
                 return (
@@ -334,18 +338,41 @@ function CheckoutPage() {
                     key={method}
                     onClick={() => setPayment(method)}
                     aria-pressed={payment === method}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-4 text-sm font-medium transition-colors ${
+                    data-testid={`payment-${method}`}
+                    className={`flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition-colors ${
                       payment === method
                         ? 'border-primary bg-primary-subtle text-on-primary'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                     }`}
                   >
-                    <Icon size={24} stroke={1.8} />
+                    <Icon size={22} stroke={1.8} />
                     {PAYMENT_LABELS[method]}
                   </button>
                 )
               })}
             </div>
+
+            {payment === 'credit' && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <label htmlFor="customer-name" className="block">
+                  <span className="text-xs font-semibold tracking-wide text-amber-900">
+                    Nama Pelanggan
+                  </span>
+                  <input
+                    id="customer-name"
+                    value={customerName}
+                    onChange={(event) => setCustomerName(event.target.value)}
+                    placeholder="Contoh: Bu Siti"
+                    autoComplete="off"
+                    data-testid="customer-name-input"
+                    className="mt-1 min-h-11 w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-ink outline-none transition duration-150 ease-out focus:border-primary focus:shadow-[0_0_0_3px_rgb(22_51_0/0.15)]"
+                  />
+                </label>
+                <p className="mt-1 text-xs text-amber-800">
+                  Pesanan dicatat sebagai utang. Belum ada uang yang masuk ke kas.
+                </p>
+              </div>
+            )}
           </section>
 
           {cashSection}
@@ -476,6 +503,12 @@ function CheckoutPage() {
                   {PAYMENT_LABELS[payment]}
                 </dd>
               </div>
+              {payment === 'credit' && customerName.trim() !== '' && (
+                <div className="flex justify-between gap-3 text-slate-500">
+                  <dt>Pelanggan</dt>
+                  <dd className="min-w-0 truncate font-medium text-slate-800">{customerName}</dd>
+                </div>
+              )}
             </dl>
             <div className="my-3 border-t border-dashed border-slate-200" />
             <div className="flex items-center justify-between">
@@ -484,7 +517,7 @@ function CheckoutPage() {
                 {formatIDR(total)}
               </span>
             </div>
-            {payButton('lg', 'mt-4 w-full', 'Konfirmasi Pesanan')}
+            {payButton('lg', 'mt-4 w-full', payment === 'credit' ? 'Catat Utang' : 'Konfirmasi Pesanan')}
             <p className="mt-2 text-center text-xs text-slate-400">
               Pesanan tersimpan di server dan stok langsung berkurang.
             </p>
@@ -498,7 +531,7 @@ function CheckoutPage() {
           'md',
           'w-full',
           <>
-            <span>Konfirmasi Pesanan</span>
+            <span>{payment === 'credit' ? 'Catat Utang' : 'Konfirmasi Pesanan'}</span>
             <span data-testid="mobile-payable-total" className="tabular font-display font-black">
               {formatIDR(total)}
             </span>

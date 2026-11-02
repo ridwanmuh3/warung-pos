@@ -8,6 +8,7 @@ import {
     IconLayoutSidebarLeftCollapse,
     IconLayoutSidebarLeftExpand,
     IconLogout,
+    IconNotebook,
     IconPackage,
     IconSettings,
     IconShoppingCart,
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
     { to: '/cashier', label: 'Kasir', Icon: IconShoppingCart },
     { to: '/products', label: 'Produk', Icon: IconPackage },
     { to: '/reports', label: 'Laporan', Icon: IconFileText },
+    { to: '/debts', label: 'Utang', Icon: IconNotebook },
 ] as const
 
 const MORE_ITEMS = [
@@ -267,7 +269,7 @@ export function AppShell({ children, session }: { children: ReactNode; session: 
             </main>
 
             <nav aria-label="Navigasi utama" className="no-print safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-divider bg-surface md:hidden">
-                <div className="mx-auto grid max-w-5xl grid-cols-4 gap-1 px-2 pt-1.5 sm:px-6">
+                <div className="mx-auto grid max-w-5xl grid-cols-5 gap-1 px-2 pt-1.5 sm:px-6">
                     {NAV_ITEMS.map(({ to, label, Icon }) => (
                         <Link
                             key={to}

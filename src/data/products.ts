@@ -10,6 +10,7 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   cash: 'Tunai',
   qris: 'QRIS',
   transfer: 'Transfer Bank',
+  credit: 'Ngutang',
 }
 
 export const CHANNEL_LABELS: Record<SalesChannel, string> = {

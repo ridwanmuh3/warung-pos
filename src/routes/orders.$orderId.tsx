@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { IconAlertTriangle, IconPrinter, IconSearch } from '@tabler/icons-react'
-import { getOrderFn, refundOrderFn, voidOrderFn } from '../lib/data.functions'
+import { getOrderFn, refundOrderFn, settleCreditOrderFn, voidOrderFn } from '../lib/data.functions'
+import { PAYMENT_LABELS } from '../data/products'
 import { formatIDR } from '../lib/format'
 import { useTenant } from '../lib/useTenant'
+import type { SettlementPaymentMethod } from '../types'
 import { Receipt } from '../components/Receipt'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
@@ -28,6 +30,10 @@ function ReceiptPage() {
   const [needsRefund, setNeedsRefund] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [settling, setSettling] = useState(false)
+  const [settleMethod, setSettleMethod] = useState<SettlementPaymentMethod>('cash')
+  const [settleError, setSettleError] = useState<string | null>(null)
+  const [settleBusy, setSettleBusy] = useState(false)
 
   if (!order) {
     return (
@@ -69,6 +75,26 @@ function ReceiptPage() {
       .finally(() => setBusy(false))
   }
 
+  function settleCredit() {
+    if (!order) return
+    setSettleBusy(true)
+    setSettleError(null)
+    void settleCreditOrderFn({ data: { id: order.id, method: settleMethod } })
+      .then(() => {
+        setSettling(false)
+        void router.invalidate()
+      })
+      .catch((cause: unknown) => {
+        setSettleError(cause instanceof Error ? cause.message : 'Gagal menandai lunas')
+      })
+      .finally(() => setSettleBusy(false))
+  }
+
+  const canSettle =
+    order.paymentMethod === 'credit' &&
+    order.status === 'paid' &&
+    order.settlementStatus === 'unsettled'
+
   return (
     <div className="mx-auto max-w-md">
       <div className="no-print">
@@ -104,6 +130,21 @@ function ReceiptPage() {
           <IconPrinter size={18} stroke={2} />
           Cetak Struk
         </Button>
+
+        {canSettle && (
+          <Button
+            size="md"
+            className="w-full"
+            onClick={() => {
+              setSettleMethod('cash')
+              setSettleError(null)
+              setSettling(true)
+            }}
+            data-testid="settle-credit"
+          >
+            Tandai Sudah Dibayar
+          </Button>
+        )}
 
         {/* Cancelling is a manager decision and belongs on the order it
             affects, not as a button on every row of the history list. */}
@@ -161,6 +202,69 @@ function ReceiptPage() {
               onClick={confirmCancellation}
             >
               {needsRefund ? 'Kembalikan Dana' : 'Batalkan Transaksi'}
+            </Button>
+          </div>
+        </Modal>
+      )}
+
+      {settling && (
+        <Modal
+          onClose={() => {
+            setSettling(false)
+            setSettleError(null)
+          }}
+        >
+          <ModalTitle>Tandai Lunas</ModalTitle>
+          <p className="mt-1 text-sm text-slate-600">
+            {order.customerName ? `${order.customerName} · ` : ''}
+            {order.orderNumber}
+          </p>
+          <p className="tabular mt-1 text-lg font-bold text-slate-900">{formatIDR(order.total)}</p>
+
+          <fieldset className="mt-4">
+            <legend className="text-xs font-semibold tracking-wide text-slate-500">
+              Metode Pelunasan
+            </legend>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {(['cash', 'qris', 'transfer'] as const).map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() => setSettleMethod(method)}
+                  aria-pressed={settleMethod === method}
+                  data-testid={`settle-method-${method}`}
+                  className={`min-h-11 rounded-xl border px-2 py-2 text-xs font-semibold transition-colors ${
+                    settleMethod === method
+                      ? 'border-primary bg-primary-subtle text-on-primary'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {PAYMENT_LABELS[method]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          {settleMethod === 'cash' && (
+            <p className="mt-2 text-xs text-slate-500">
+              Pelunasan tunai menambah kas pada shift yang sedang terbuka.
+            </p>
+          )}
+          {settleError && <p className="mt-2 text-xs text-red-600">{settleError}</p>}
+
+          <div className="mt-4 flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setSettling(false)
+                setSettleError(null)
+              }}
+            >
+              Batal
+            </Button>
+            <Button size="sm" busy={settleBusy} onClick={settleCredit} data-testid="settle-confirm">
+              Tandai Lunas
             </Button>
           </div>
         </Modal>

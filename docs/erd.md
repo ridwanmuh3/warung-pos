@@ -82,6 +82,12 @@ erDiagram
     integer amount_paid
     integer change
     text status
+    text customer_name
+    text settlement_status
+    text settled_at
+    text settled_payment_method
+    text settled_in_shift_id
+    text settled_by_user_id FK
     text channel
     text cashier
     text shift_id
@@ -169,7 +175,7 @@ erDiagram
 | `tenants` | Satu toko. Semua baris bisnis milik tepat satu tenant. |
 | `memberships` | Gabungan user dan tenant, plus role (`owner` / `manager` / `cashier`). Unik per (tenant, user). |
 | `products` | Katalog: harga, HPP, stok, SKU, barcode. SKU/barcode unik per tenant. |
-| `orders` | Satu penjualan: total, diskon, HPP, laba, status, kanal, kasir, shift, user, cart. |
+| `orders` | Satu penjualan: total, diskon, HPP, laba, status, metode bayar (termasuk `credit`/Ngutang), status pelunasan utang, kanal, kasir, shift, user, cart. |
 | `order_items` | Baris pesanan. Menyimpan snapshot nama/harga/HPP saat penjualan. |
 | `shifts` | Shift kas: modal awal, kas dihitung, kas seharusnya, selisih. |
 | `counters` | Nomor pesanan monotonik per tenant. Kunci gabungan (tenant, key). |

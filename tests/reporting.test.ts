@@ -20,6 +20,7 @@ function makeOrder(overrides: Partial<Order>): Order {
     amountPaid: 20000,
     change: 2000,
     status: 'paid',
+    settlementStatus: 'settled',
     channel: 'dine-in',
     ...overrides,
   }

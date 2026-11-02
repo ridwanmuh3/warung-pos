@@ -1,10 +1,10 @@
 const ITEMS = [
-  'SALE +Rp7.000',
+  'PENJUALAN Rp7.000',
   'STOK −2',
   'KAS +Rp7.000',
-  'LAPORAN TERISI',
+  'STRUK SIAP CETAK',
+  'LAPORAN DIPERBARUI',
   'TANPA INSTAL',
-  'GRATIS UJI COBA',
 ]
 
 /**

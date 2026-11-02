@@ -19,7 +19,7 @@ const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
 /** Validated search params: malformed values fall back instead of erroring. */
 const orderSearchSchema = z.object({
   q: z.string().optional().catch(undefined),
-  method: z.enum(['cash', 'qris', 'transfer']).optional().catch(undefined),
+  method: z.enum(['cash', 'qris', 'transfer', 'credit']).optional().catch(undefined),
   channel: z.enum(['dine-in', 'takeaway', 'delivery']).optional().catch(undefined),
   // Same guard as the report screens: a malformed `?day=` falls back to "all
   // days" instead of throwing inside the day formatter.
@@ -52,7 +52,7 @@ export const Route = createFileRoute('/orders/')({
       if (deps.channel && order.channel !== deps.channel) return false
       if (deps.q) {
         const needle = deps.q.toLowerCase()
-        const haystack = `${order.orderNumber} ${order.items.map((item) => item.name).join(' ')}`
+        const haystack = `${order.orderNumber} ${order.customerName ?? ''} ${order.items.map((item) => item.name).join(' ')}`
         if (!haystack.toLowerCase().includes(needle)) return false
       }
       return true
@@ -110,7 +110,7 @@ function OrdersPage() {
     <div>
       <PageHeader
         title="Riwayat Pesanan"
-        subtitle={`${orders.length} dari ${storedCount} transaksi · omzet lunas ${formatIDR(netTotal)}`}
+        subtitle={`${orders.length} dari ${storedCount} transaksi · omzet ${formatIDR(netTotal)}`}
       />
 
       <div className="mb-4 space-y-2">
@@ -262,6 +262,14 @@ function OrdersPage() {
                             <Badge variant="primary" className="px-1.5 py-0.5 text-[10px] font-medium">
                               {CHANNEL_LABELS[order.channel]}
                             </Badge>
+                            {order.paymentMethod === 'credit' && (
+                              <Badge
+                                variant={order.settlementStatus === 'settled' ? 'success' : 'warning'}
+                                className="px-1.5 py-0.5 text-[10px] font-medium"
+                              >
+                                {order.settlementStatus === 'settled' ? 'LUNAS' : 'NGUTANG'}
+                              </Badge>
+                            )}
                             {order.status === 'void' && (
                               <Badge variant="danger" className="px-1.5 py-0.5 text-[10px]">
                                 BATAL
@@ -279,6 +287,7 @@ function OrdersPage() {
                             )}
                           </div>
                           <p className="mt-0.5 truncate text-xs text-slate-500">
+                            {order.customerName ? `${order.customerName} · ` : ''}
                             {order.items.map((item) => item.name).join(', ')}
                           </p>
                         </Link>

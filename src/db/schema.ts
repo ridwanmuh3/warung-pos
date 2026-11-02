@@ -106,12 +106,31 @@ export const orders = sqliteTable(
     total: integer('total').notNull(),
     costTotal: integer('cost_total').notNull().default(0),
     profit: integer('profit').notNull().default(0),
-    paymentMethod: text('payment_method', { enum: ['cash', 'qris', 'transfer'] }).notNull(),
+    /** `credit` is the UI's "Ngutang": the sale happened, but no money moved. */
+    paymentMethod: text('payment_method', { enum: ['cash', 'qris', 'transfer', 'credit'] }).notNull(),
     amountPaid: integer('amount_paid'),
     change: integer('change'),
     status: text('status', { enum: ['paid', 'void', 'refunded'] })
       .notNull()
       .default('paid'),
+    /** Snapshot of who owes, for a `credit` sale. */
+    customerName: text('customer_name'),
+    /**
+     * Credit settlement is a separate axis from `status`: a credit order is a
+     * valid (paid) sale that simply has not been settled yet. Every non-credit
+     * order is `settled` from the start, so existing reports keep working.
+     */
+    settlementStatus: text('settlement_status', { enum: ['settled', 'unsettled'] })
+      .notNull()
+      .default('settled'),
+    settledAt: text('settled_at'),
+    /** How the customer eventually paid the credit (cash/qris/transfer). */
+    settledPaymentMethod: text('settled_payment_method', {
+      enum: ['cash', 'qris', 'transfer'],
+    }),
+    /** The drawer that actually received a cash settlement. */
+    settledInShiftId: text('settled_in_shift_id'),
+    settledByUserId: text('settled_by_user_id').references(() => users.id),
     channel: text('channel', { enum: ['dine-in', 'takeaway', 'delivery'] })
       .notNull()
       .default('dine-in'),
@@ -143,6 +162,8 @@ export const orders = sqliteTable(
     index('orders_created_at_idx').on(table.createdAt),
     index('orders_status_idx').on(table.status),
     index('orders_user_idx').on(table.userId),
+    index('orders_settlement_idx').on(table.tenantId, table.settlementStatus),
+    index('orders_credit_customer_idx').on(table.tenantId, table.customerName),
   ],
 )
 

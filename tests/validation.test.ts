@@ -19,6 +19,7 @@ describe('parseCheckoutForm', () => {
     paymentMethod: 'cash',
     channel: 'dine-in',
     cashier: '',
+    customerName: '',
     discountMode: 'amount',
     discountInput: '2000',
     cashInput: '20000',
@@ -41,6 +42,22 @@ describe('parseCheckoutForm', () => {
       parseCheckoutForm({ ...base, discountMode: 'percent', discountInput: '150' }),
     ).toThrow()
   })
+
+  it('requires a customer name for a credit sale', () => {
+    expect(() =>
+      parseCheckoutForm({ ...base, paymentMethod: 'credit', customerName: '' }),
+    ).toThrow('Nama pelanggan')
+  })
+
+  it('accepts a credit sale with a customer name and ignores cash tendered', () => {
+    const parsed = parseCheckoutForm({
+      ...base,
+      paymentMethod: 'credit',
+      customerName: 'Bu Siti',
+    })
+    expect(parsed.customerName).toBe('Bu Siti')
+    expect(parsed.cashTendered).toBeNull()
+  })
 })
 
 describe('input sanitisation (checkoutSchema)', () => {
@@ -49,6 +66,7 @@ describe('input sanitisation (checkoutSchema)', () => {
       paymentMethod: 'qris',
       channel: 'dine-in',
       cashier: '<script>alert(1)</script>Siti',
+      customerName: '',
       discountAmount: 0,
       discountPercent: null,
       cashTendered: null,

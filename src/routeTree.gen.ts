@@ -14,6 +14,7 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CashierRouteImport } from './routes/cashier'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as DebtsRouteImport } from './routes/debts'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MembersRouteImport } from './routes/members'
@@ -55,6 +56,11 @@ const CashierRoute = CashierRouteImport.update({
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DebtsRoute = DebtsRouteImport.update({
+  id: '/debts',
+  path: '/debts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuideRoute = GuideRouteImport.update({
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/cashier': typeof CashierRoute
   '/checkout': typeof CheckoutRoute
+  '/debts': typeof DebtsRoute
   '/guide': typeof GuideRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/cashier': typeof CashierRoute
   '/checkout': typeof CheckoutRoute
+  '/debts': typeof DebtsRoute
   '/guide': typeof GuideRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/cashier': typeof CashierRoute
   '/checkout': typeof CheckoutRoute
+  '/debts': typeof DebtsRoute
   '/guide': typeof GuideRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/cashier'
     | '/checkout'
+    | '/debts'
     | '/guide'
     | '/login'
     | '/members'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/cashier'
     | '/checkout'
+    | '/debts'
     | '/guide'
     | '/login'
     | '/members'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/cashier'
     | '/checkout'
+    | '/debts'
     | '/guide'
     | '/login'
     | '/members'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CashierRoute: typeof CashierRoute
   CheckoutRoute: typeof CheckoutRoute
+  DebtsRoute: typeof DebtsRoute
   GuideRoute: typeof GuideRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout'
       fullPath: '/checkout'
       preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/debts': {
+      id: '/debts'
+      path: '/debts'
+      fullPath: '/debts'
+      preLoaderRoute: typeof DebtsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guide': {
@@ -481,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CashierRoute: CashierRoute,
   CheckoutRoute: CheckoutRoute,
+  DebtsRoute: DebtsRoute,
   GuideRoute: GuideRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,

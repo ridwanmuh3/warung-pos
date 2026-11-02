@@ -11,6 +11,7 @@ import {
   openingCashSchema,
   parseCheckoutForm,
   productDraftSchema,
+  settlementPaymentMethod,
   shiftCloseFormSchema,
   shiftCloseSchema,
 } from './validation'
@@ -169,6 +170,10 @@ export const getOrderFn = createServerFn({ method: 'GET' })
     const order = await data.getOrderById(ctx.tenantId, input.id)
     if (!order || ctx.role !== 'cashier') return order
 
+    // The debt screen shows every credit order, including those from older
+    // days, so its receipts must stay openable past the today-only window.
+    if (order.paymentMethod === 'credit' && order.status === 'paid') return order
+
     // The cashier's "today only" rule is a server boundary, not just a UI
     // filter. Keep the current shift visible when it opened before midnight.
     if (order.createdAt >= startOfTodayIso()) return order
@@ -200,6 +205,28 @@ export const checkoutFn = createServerFn({ method: 'POST' })
       amountPaid: checkout.paymentMethod === 'cash' ? checkout.cashTendered : null,
       channel: checkout.channel,
       cashier: checkout.cashier ?? '',
+      customerName: checkout.customerName ?? '',
+    })
+  })
+
+/* ------------------------------ customer credit ----------------------- */
+
+/** Every credit order for the debt screen; the client splits unpaid/paid. */
+export const listCreditOrdersFn = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<Order[]> => {
+    const ctx = await requireMembership('cashier')
+    return data.listCreditOrders(ctx.tenantId)
+  },
+)
+
+/** Marks a credit order as fully paid. */
+export const settleCreditOrderFn = createServerFn({ method: 'POST' })
+  .validator(z.object({ id: entityId, method: settlementPaymentMethod }))
+  .handler(async ({ data: input }): Promise<Order | undefined> => {
+    const ctx = await requireMembership('cashier')
+    return data.settleCreditOrder(ctx.tenantId, input.id, {
+      method: input.method,
+      userId: ctx.userId,
     })
   })
 

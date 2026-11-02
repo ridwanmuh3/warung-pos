@@ -10,7 +10,13 @@ import { and, desc, eq, gte, inArray, or, sql } from 'drizzle-orm'
 import { createServerOnlyFn } from '@tanstack/react-start'
 import { getDb } from '../../db/client.server'
 import { carts, cartItems, counters, orderItems, orders, products, shifts } from '../../db/schema'
-import type { Order, OrderStatus, PaymentMethod, SalesChannel } from '../../types'
+import type {
+  Order,
+  OrderStatus,
+  PaymentMethod,
+  SalesChannel,
+  SettlementPaymentMethod,
+} from '../../types'
 import { discountValue } from '../totals'
 import { applyStockDeltaOn } from './stock.server'
 import { hydrateOrders, toOrder, ORDER_SEQUENCE_KEY } from './mappers.server'
@@ -47,6 +53,8 @@ export interface CheckoutCartInput {
   amountPaid: number | null
   channel: SalesChannel
   cashier?: string
+  /** Required for `credit`, ignored otherwise. */
+  customerName?: string
 }
 
 /**
@@ -123,6 +131,11 @@ export const checkoutCart = createServerOnlyFn(
       const costTotal = priced.reduce((sum, line) => sum + line.cost * line.qty, 0)
 
       const isCash = input.paymentMethod === 'cash'
+      const isCredit = input.paymentMethod === 'credit'
+      const customerName = input.customerName?.trim() ?? ''
+      if (isCredit && customerName === '') {
+        throw new Error('Nama pelanggan wajib diisi untuk pembayaran ngutang')
+      }
       if (isCash && (input.amountPaid === null || input.amountPaid < total)) {
         throw new Error('Uang diterima kurang dari total bayar')
       }
@@ -149,6 +162,8 @@ export const checkoutCart = createServerOnlyFn(
         amountPaid,
         change,
         status: 'paid',
+        settlementStatus: isCredit ? 'unsettled' : 'settled',
+        ...(customerName ? { customerName } : {}),
         channel: input.channel,
         ...(input.cashier ? { cashier: input.cashier } : {}),
         ...(openShiftRows[0] ? { shiftId: openShiftRows[0].id } : {}),
@@ -168,6 +183,8 @@ export const checkoutCart = createServerOnlyFn(
         amountPaid: order.amountPaid,
         change: order.change,
         status: order.status,
+        customerName: order.customerName ?? null,
+        settlementStatus: order.settlementStatus,
         channel: order.channel,
         cashier: order.cashier ?? null,
         shiftId: order.shiftId ?? null,
@@ -241,7 +258,11 @@ export const listOrdersForDrawer = createServerOnlyFn(
       .where(
         and(
           eq(orders.tenantId, tenantId),
-          or(eq(orders.shiftId, shiftId), eq(orders.refundedInShiftId, shiftId)),
+          or(
+            eq(orders.shiftId, shiftId),
+            eq(orders.refundedInShiftId, shiftId),
+            eq(orders.settledInShiftId, shiftId),
+          ),
         ),
       )
       .orderBy(desc(orders.createdAt))
@@ -259,6 +280,87 @@ export const getOrderById = createServerOnlyFn(
     if (rows.length === 0) return undefined
     const [order] = await hydrateOrders(rows)
     return order
+  },
+)
+
+export interface ListCreditOrdersOptions {
+  /** `unsettled` is the outstanding debt list; omit for all credit orders. */
+  settlementStatus?: 'settled' | 'unsettled'
+}
+
+/** Credit (Ngutang) orders, newest first. Used by the debt screen. */
+export const listCreditOrders = createServerOnlyFn(
+  async (tenantId: string, options: ListCreditOrdersOptions = {}): Promise<Order[]> => {
+    const filters = [eq(orders.tenantId, tenantId), eq(orders.paymentMethod, 'credit')]
+    if (options.settlementStatus) {
+      filters.push(eq(orders.settlementStatus, options.settlementStatus))
+    }
+    const rows = await getDb()
+      .select()
+      .from(orders)
+      .where(and(...filters))
+      .orderBy(desc(orders.createdAt))
+    return hydrateOrders(rows)
+  },
+)
+
+/**
+ * Marks a credit order as paid. Full settlement only (the UI is a toggle),
+ * and the original `paymentMethod` stays `credit` so reports keep showing how
+ * the sale was made; the money side lives in `settledPaymentMethod`.
+ *
+ * Idempotent: settling an already-settled order returns it unchanged.
+ */
+export const settleCreditOrder = createServerOnlyFn(
+  async (
+    tenantId: string,
+    id: string,
+    input: { method: SettlementPaymentMethod; userId?: string },
+  ): Promise<Order | undefined> => {
+    const db = getDb()
+    const rows = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, id), eq(orders.tenantId, tenantId)))
+      .limit(1)
+    const existing = rows[0]
+    if (!existing) return undefined
+    if (existing.paymentMethod !== 'credit') {
+      throw new Error('Hanya pesanan ngutang yang bisa ditandai lunas')
+    }
+    if (existing.status !== 'paid') {
+      throw new Error('Pesanan batal atau refund tidak bisa ditandai lunas')
+    }
+    if (existing.settlementStatus === 'settled') return (await hydrateOrders(rows))[0]
+
+    const openShiftRows = await db
+      .select({ id: shifts.id })
+      .from(shifts)
+      .where(and(eq(shifts.tenantId, tenantId), sql`${shifts.closedAt} is null`))
+      .limit(1)
+
+    return db.transaction(async (tx) => {
+      await tx
+        .update(orders)
+        .set({
+          settlementStatus: 'settled',
+          settledAt: new Date().toISOString(),
+          settledPaymentMethod: input.method,
+          // Only a cash settlement reaches a drawer; the shift is recorded
+          // for every method so the audit trail is complete.
+          settledInShiftId: openShiftRows[0]?.id ?? null,
+          settledByUserId: input.userId ?? null,
+        })
+        .where(and(eq(orders.id, id), eq(orders.tenantId, tenantId)))
+
+      const updated = await tx
+        .select()
+        .from(orders)
+        .where(and(eq(orders.id, id), eq(orders.tenantId, tenantId)))
+        .limit(1)
+      const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, id))
+      return toOrder(updated[0], items)
+    })
   },
 )
 

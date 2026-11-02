@@ -145,6 +145,9 @@ export interface DailyReport {
   paid: Order[]
   voided: Order[]
   refunded: Order[]
+  /** Credit sales of the day that are still outstanding. */
+  receivables: Order[]
+  receivableTotal: number
   revenue: number
   costTotal: number
   profit: number
@@ -164,6 +167,9 @@ export function buildDailyReport(day: string, orders: Order[], shifts: Shift[]):
   const paid = dayOrders.filter((order) => order.status === 'paid')
   const voided = dayOrders.filter((order) => order.status === 'void')
   const refunded = dayOrders.filter((order) => order.status === 'refunded')
+  const receivables = paid.filter(
+    (order) => order.paymentMethod === 'credit' && order.settlementStatus === 'unsettled',
+  )
 
   const byPaymentMap = new Map<keyof typeof PAYMENT_LABELS, { count: number; total: number }>()
   const byChannelMap = new Map<keyof typeof CHANNEL_LABELS, { count: number; total: number }>()
@@ -183,6 +189,8 @@ export function buildDailyReport(day: string, orders: Order[], shifts: Shift[]):
     paid,
     voided,
     refunded,
+    receivables,
+    receivableTotal: receivables.reduce((sum, order) => sum + order.total, 0),
     revenue: paid.reduce((sum, order) => sum + order.total, 0),
     costTotal: paid.reduce((sum, order) => sum + order.costTotal, 0),
     profit: paid.reduce((sum, order) => sum + order.profit, 0),
@@ -259,6 +267,7 @@ export function zReportText(report: DailyReport, dayLabel: string): string {
     `HPP       : ${formatIDR(report.costTotal)}`,
     `Laba      : ${formatIDR(report.profit)}`,
     `Diskon    : ${formatIDR(report.discountTotal)}`,
+    `Piutang   : ${formatIDR(report.receivableTotal)} (${report.receivables.length} transaksi)`,
     '',
     'PEMBAYARAN',
   ]

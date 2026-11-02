@@ -29,7 +29,13 @@ export interface StockMovement {
   orderId?: string
 }
 
-export type PaymentMethod = 'cash' | 'qris' | 'transfer'
+export type PaymentMethod = 'cash' | 'qris' | 'transfer' | 'credit'
+
+/** How a credit sale was eventually settled. */
+export type SettlementPaymentMethod = 'cash' | 'qris' | 'transfer'
+
+/** Separate from `OrderStatus`: a credit order is a valid sale, paid or not. */
+export type SettlementStatus = 'settled' | 'unsettled'
 
 /** Where the order was consumed. */
 export type SalesChannel = 'dine-in' | 'takeaway' | 'delivery'
@@ -81,6 +87,16 @@ export interface Order {
   amountPaid: number | null
   change: number | null
   status: OrderStatus
+  /** Customer who owes, for a `credit` sale. */
+  customerName?: string
+  /** `unsettled` only for credit orders that have not been paid yet. */
+  settlementStatus: SettlementStatus
+  settledAt?: string
+  /** How the credit was paid off; absent until settled. */
+  settledPaymentMethod?: SettlementPaymentMethod
+  /** The drawer that received a cash settlement. */
+  settledInShiftId?: string
+  settledByUserId?: string
   /** Sum of item cost snapshots. */
   costTotal: number
   /** `total − costTotal`, i.e. gross profit after discount. */

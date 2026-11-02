@@ -44,6 +44,10 @@ export function TodaySummary({ day }: { day: string }) {
     const costTotal = todayOrders.reduce((sum, order) => sum + order.costTotal, 0)
     const profit = todayOrders.reduce((sum, order) => sum + order.profit, 0)
     const discountTotal = todayOrders.reduce((sum, order) => sum + order.discount, 0)
+    const receivables = todayOrders.filter(
+      (order) => order.paymentMethod === 'credit' && order.settlementStatus === 'unsettled',
+    )
+    const receivableTotal = receivables.reduce((sum, order) => sum + order.total, 0)
 
     const byPayment: Partial<Record<PaymentMethod, { count: number; total: number }>> = {}
     for (const order of todayOrders) {
@@ -60,6 +64,8 @@ export function TodaySummary({ day }: { day: string }) {
       costTotal,
       profit,
       discountTotal,
+      receivables,
+      receivableTotal,
       byPayment,
     }
   }, [orders, day])
@@ -184,6 +190,19 @@ export function TodaySummary({ day }: { day: string }) {
           ))}
         </ul>
       </section>
+
+      {stats.receivableTotal > 0 && (
+        <Link
+          to="/debts"
+          className="no-print mt-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+        >
+          <span>
+            {stats.receivables.length} transaksi ngutang hari ini ·{' '}
+            <span className="tabular">{formatIDR(stats.receivableTotal)}</span>
+          </span>
+          <span className="text-xs font-medium">Lihat utang</span>
+        </Link>
+      )}
 
       <Link
         to="/orders"

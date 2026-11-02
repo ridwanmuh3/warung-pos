@@ -289,6 +289,18 @@ function DailyReport({
             </div>
           )}
 
+          {report.receivableTotal > 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <span>
+                {report.receivables.length} transaksi ngutang hari ini belum dibayar ·{' '}
+                <span className="tabular font-semibold">{formatIDR(report.receivableTotal)}</span>
+              </span>
+              <Link to="/debts" className="font-semibold underline underline-offset-2 hover:text-amber-950">
+                Lihat Utang
+              </Link>
+            </div>
+          )}
+
           <div className="mt-4 grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
             <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
               <h2 className="text-sm font-semibold text-slate-900">Pembayaran</h2>

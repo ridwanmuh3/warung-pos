@@ -41,8 +41,16 @@ How the customer takes the order: `dine-in`, `takeaway`, or `delivery`. API/DB v
 _Avoid_: order type, service mode
 
 **Payment Method**:
-How the customer pays: `cash`, `qris`, or `transfer`. API/DB values are English; the UI labels `cash` as "Tunai".
+How the customer pays: `cash`, `qris`, `transfer`, or `credit`. API/DB values are English; the UI labels `cash` as "Tunai" and `credit` as "Ngutang".
 _Avoid_: payment type, tender
+
+**Customer Credit (Ngutang)**:
+A sale that is final — stock moved, the order is numbered, and it counts in revenue — but whose money has not been received. Stored as `payment_method = credit` with a required `customer_name` snapshot. Credit is a separate axis from `OrderStatus`: `settlement_status` is `unsettled` until the customer pays, then `settled`.
+_Avoid_: unpaid order (the sale is not cancelled), debt payment (see Settlement)
+
+**Credit Settlement**:
+Marking a credit sale as paid, in full. The original `payment_method` stays `credit`; the settlement records `settled_at`, `settled_payment_method` (`cash`/`qris`/`transfer`), the user, and the drawer that received cash. Only a `cash` settlement changes the drawer's expected cash. Settlement is idempotent.
+_Avoid_: paying the order again (revenue is counted once, at sale time)
 
 **Void**:
 Cancelling a paid order *while its shift is still open*, so it no longer counts in sales. A void restocks tracked inventory and, for `cash` orders, reduces the open drawer's expected cash — the money never really left. Voids are idempotent and always carry a reason. Cancelling after the shift has closed is a Refund, not a void.
@@ -63,7 +71,7 @@ The purchase price of a product, in whole rupiah. Snapshotted onto every line it
 _Avoid_: COGS, modal (in code)
 
 **Net Revenue**:
-Sum of `order.total` (subtotal − discount) over paid orders. This is what the daily report and Z-report call "Omzet".
+Sum of `order.total` (subtotal − discount) over paid orders, including credit sales that are not yet settled — the sale and the stock movement already happened. This is what the daily report and Z-report call "Omzet". Outstanding credit is reported separately as Piutang.
 _Avoid_: gross sales (see below)
 
 **Gross Sales**:

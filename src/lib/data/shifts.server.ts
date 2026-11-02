@@ -110,14 +110,21 @@ export const closeShift = createServerOnlyFn(
         total: orders.total,
         status: orders.status,
         paymentMethod: orders.paymentMethod,
+        settlementStatus: orders.settlementStatus,
+        settledPaymentMethod: orders.settledPaymentMethod,
         shiftId: orders.shiftId,
         refundedInShiftId: orders.refundedInShiftId,
+        settledInShiftId: orders.settledInShiftId,
       })
       .from(orders)
       .where(
         and(
           eq(orders.tenantId, tenantId),
-          or(eq(orders.shiftId, open.id), eq(orders.refundedInShiftId, open.id)),
+          or(
+            eq(orders.shiftId, open.id),
+            eq(orders.refundedInShiftId, open.id),
+            eq(orders.settledInShiftId, open.id),
+          ),
         ),
       )
     const expectedCash = expectedDrawerCash({
@@ -126,8 +133,11 @@ export const closeShift = createServerOnlyFn(
         total: row.total,
         status: row.status,
         paymentMethod: row.paymentMethod,
+        settlementStatus: row.settlementStatus,
+        ...(row.settledPaymentMethod ? { settledPaymentMethod: row.settledPaymentMethod } : {}),
         ...(row.shiftId ? { shiftId: row.shiftId } : {}),
         ...(row.refundedInShiftId ? { refundedInShiftId: row.refundedInShiftId } : {}),
+        ...(row.settledInShiftId ? { settledInShiftId: row.settledInShiftId } : {}),
       })),
       shiftId: open.id,
     })

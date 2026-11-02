@@ -75,6 +75,36 @@ export function Receipt({ order }: { order: Order }) {
           <dt>Jenis</dt>
           <dd data-testid="receipt-channel">{CHANNEL_LABELS[order.channel]}</dd>
         </div>
+        {order.customerName && (
+          <div className="flex justify-between gap-3">
+            <dt>Pelanggan</dt>
+            <dd className="min-w-0 truncate text-right font-medium text-slate-700">{order.customerName}</dd>
+          </div>
+        )}
+        {order.paymentMethod === 'credit' && (
+          <div>
+            <div className="flex justify-between gap-3">
+              <dt>Status Utang</dt>
+              <dd
+                data-testid="receipt-settlement"
+                className={`font-semibold ${
+                  order.settlementStatus === 'settled' ? 'text-brand-700' : 'text-amber-700'
+                }`}
+              >
+                {order.settlementStatus === 'settled' ? 'LUNAS' : 'BELUM DIBAYAR'}
+              </dd>
+            </div>
+            {order.settlementStatus === 'settled' && order.settledAt && (
+              <div className="mt-0.5 flex justify-between gap-3 text-[11px] text-mute">
+                <dt>Dilunasi</dt>
+                <dd className="text-right">
+                  {formatDateTime(order.settledAt)}
+                  {order.settledPaymentMethod ? ` · ${PAYMENT_LABELS[order.settledPaymentMethod]}` : ''}
+                </dd>
+              </div>
+            )}
+          </div>
+        )}
         {order.cashier && (
           <div className="flex justify-between">
             <dt>Kasir</dt>

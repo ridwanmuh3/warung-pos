@@ -51,4 +51,55 @@ describe('expectedDrawerCash: the single drawer rule (CONTEXT.md: Shift)', () =>
     ]
     expect(expectedDrawerCash({ openingCash: 40000, orders, shiftId: SHIFT })).toBe(31000)
   })
+
+  it('a credit sale adds nothing to the drawer until it is settled in cash', () => {
+    const orders = [
+      order({
+        total: 9000,
+        paymentMethod: 'credit',
+        settlementStatus: 'unsettled',
+        shiftId: SHIFT,
+      }),
+      order({
+        total: 7000,
+        paymentMethod: 'credit',
+        settlementStatus: 'settled',
+        settledPaymentMethod: 'qris',
+        settledInShiftId: SHIFT,
+      }),
+      order({
+        total: 5000,
+        paymentMethod: 'credit',
+        settlementStatus: 'settled',
+        settledPaymentMethod: 'cash',
+        settledInShiftId: SHIFT,
+      }),
+    ]
+    expect(expectedDrawerCash({ openingCash: 50000, orders, shiftId: SHIFT })).toBe(55000)
+  })
+
+  it('a cash-settled credit refund subtracts from the refunding drawer', () => {
+    const orders = [
+      order({
+        total: 8000,
+        paymentMethod: 'credit',
+        settlementStatus: 'settled',
+        settledPaymentMethod: 'cash',
+        settledInShiftId: 'old-shift',
+        shiftId: 'old-shift',
+        status: 'refunded',
+        refundedInShiftId: SHIFT,
+      }),
+      // An unpaid credit that was cancelled never returned cash.
+      order({
+        total: 4000,
+        paymentMethod: 'credit',
+        settlementStatus: 'unsettled',
+        shiftId: 'old-shift',
+        status: 'refunded',
+        refundedInShiftId: SHIFT,
+      }),
+    ]
+    expect(expectedDrawerCash({ openingCash: 40000, orders, shiftId: SHIFT })).toBe(32000)
+  })
 })

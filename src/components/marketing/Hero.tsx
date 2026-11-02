@@ -11,7 +11,7 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div
           data-hero-blob
-          className="absolute -right-40 -top-56 size-[38rem] rounded-full bg-hero-warm/55 blur-3xl"
+          className="animate-blob-breathe absolute -right-40 -top-56 size-[38rem] rounded-full bg-hero-warm/55 blur-3xl"
         />
         <div
           data-hero-blob
@@ -19,7 +19,8 @@ export function Hero() {
         />
         <div
           data-hero-blob
-          className="absolute -bottom-56 left-[-9rem] size-[34rem] rounded-full bg-hero-pink/80 blur-3xl"
+          className="animate-blob-breathe absolute -bottom-56 left-[-9rem] size-[34rem] rounded-full bg-hero-pink/80 blur-3xl"
+          style={{ animationDelay: '-4.5s' }}
         />
         <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-b from-transparent to-surface" />
       </div>

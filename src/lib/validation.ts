@@ -127,7 +127,10 @@ export const email = z
   .pipe(z.string().min(1, 'Email wajib diisi').max(MAX_EMAIL, 'Email terlalu panjang'))
   .pipe(z.email('Format email tidak valid'))
 
-export const paymentMethod = z.enum(['cash', 'qris', 'transfer'])
+export const paymentMethod = z.enum(['cash', 'qris', 'transfer', 'credit'])
+
+/** How a credit sale is settled; `credit` is not a settlement method. */
+export const settlementPaymentMethod = z.enum(['cash', 'qris', 'transfer'])
 
 /** Opaque row id from the database; bounded before it reaches a query. */
 export const entityId = z
@@ -247,6 +250,8 @@ export const checkoutSchema = z
     paymentMethod,
     channel: salesChannel,
     cashier: cleanText(60),
+    /** Required when the order is on credit (UI: "Ngutang"). */
+    customerName: cleanText(60),
     discountAmount: rupiah,
     discountPercent: z.union([discountPercent, z.null()]),
     /** Cash tendered; required only for cash payments. */
@@ -264,6 +269,10 @@ export const checkoutSchema = z
       value.cashTendered >= value.total,
     { message: 'Uang diterima kurang dari total bayar', path: ['cashTendered'] },
   )
+  .refine((value) => value.paymentMethod !== 'credit' || Boolean(value.customerName), {
+    message: 'Nama pelanggan wajib diisi untuk pembayaran ngutang',
+    path: ['customerName'],
+  })
 export type CheckoutInput = z.infer<typeof checkoutSchema>
 
 /**
@@ -277,6 +286,7 @@ export const checkoutFormSchema = z.object({
   paymentMethod,
   channel: salesChannel,
   cashier: z.string().max(200),
+  customerName: z.string().max(200),
   discountMode: z.enum(['amount', 'percent']),
   discountInput: z.string().max(20),
   cashInput: z.string().max(20),
@@ -295,9 +305,14 @@ export function parseCheckoutForm(form: z.infer<typeof checkoutFormSchema>): Che
     paymentMethod: form.paymentMethod,
     channel: form.channel,
     cashier: form.cashier,
+    customerName: form.customerName,
     discountAmount: form.discountMode === 'amount' ? parsedNumber(form.discountInput) : 0,
     discountPercent: form.discountMode === 'percent' ? parsedNumber(form.discountInput) : null,
-    cashTendered: form.cashInput.trim() === '' ? null : parsedNumber(form.cashInput),
+    // Cash tendered only matters for cash; credit and the rest ignore it.
+    cashTendered:
+      form.paymentMethod === 'cash' && form.cashInput.trim() !== ''
+        ? parsedNumber(form.cashInput)
+        : null,
     total: form.total,
   })
 }
