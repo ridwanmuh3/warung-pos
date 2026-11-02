@@ -17,6 +17,7 @@ dist-ssr
 *.local
 .smoke
 .impeccable
+drizzle/*
 
 # Editor directories and files
 .vscode/*
