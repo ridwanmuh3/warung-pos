@@ -83,7 +83,10 @@ Setiap toko adalah satu **tenant**. Satu user dapat tergabung ke beberapa tenant
 
 - Server membaca `tenant_id` dan `role` dari cookie sesi, bukan dari body request.
 - Role membatasi server function, bukan sekadar menyembunyikan tombol di UI.
-- `scripts/check-tenant-scoping.mjs` memindai `src/lib/data/*.server.ts` dan gagal bila ada akses ke tabel tenant tanpa predikat `tenantId`. Jalankan dengan `pnpm check:tenant`.
+- Setiap fungsi repository menerima `tenantId` sebagai parameter dan memakainya di predicate query, termasuk saat `update`/`delete`.
+- Tabel anak (`order_items`, `cart_items`) tidak punya kolom `tenant_id`; aksesnya harus dibatasi lewat kunci induknya (`orderId` / `cartId`) yang berasal dari query induk yang sudah ber-tenant.
+- `scripts/check-tenant-scoping.mjs` memindai `src/lib/data/**/*.server.ts` dan (saat migrasi selesai) `src/server/db/repositories/**/*.server.ts`. Pemeriksaan berbasis AST: setiap statement yang menyentuh tabel root tenant wajib memuat `tenantId` (termasuk join), dan setiap akses tabel anak wajib memuat kunci induk. Jalankan dengan `pnpm check:tenant`.
+- Ekspektasi uji: `tests/tenant-isolation.test.ts` membuat dua tenant dan memastikan list/get/update/delete/settle untuk products, orders, carts, shifts, stock, dan credit settlement tidak bisa melihat atau mengubah baris tenant lain. Menghapus satu filter `tenantId` harus membuat uji ini gagal, bukan hanya guard.
 
 ## 5. Autentikasi & sesi
 
