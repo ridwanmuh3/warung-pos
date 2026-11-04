@@ -1,4 +1,5 @@
 import type { PaymentMethod, SettlementStatus } from '../../types'
+import { AppError } from '../../shared/lib/app-error'
 
 /**
  * Payment rules — cash cover, change, and the credit axis.
@@ -7,7 +8,8 @@ import type { PaymentMethod, SettlementStatus } from '../../types'
  * valid paid sale that leaves the drawer untouched and creates a receivable.
  *
  * Pure: the caller supplies the authoritative total. Change is derived here,
- * never trusted from the client.
+ * never trusted from the client. Expected failures throw `AppError` with code
+ * `payment-invalid` so the checkout RPC can return a typed outcome.
  */
 
 export interface PaymentIntent {
@@ -39,12 +41,12 @@ export function validatePayment({
   const name = customerName?.trim() ?? ''
 
   if (isCredit && name === '') {
-    throw new Error('Nama pelanggan wajib diisi untuk pembayaran ngutang')
+    throw new AppError('payment-invalid', 'Nama pelanggan wajib diisi untuk pembayaran ngutang')
   }
 
   const tendered = amountPaid ?? null
   if (isCash && (tendered === null || tendered < total)) {
-    throw new Error('Uang diterima kurang dari total bayar')
+    throw new AppError('payment-invalid', 'Uang diterima kurang dari total bayar')
   }
 
   return {

@@ -20,6 +20,7 @@ import type {
 import { priceCart } from '../../domain/sales/pricing'
 import { validatePayment } from '../../domain/sales/payment'
 import { RefundRequiredError, canRefund, canSettle, voidDecision } from '../../domain/sales/lifecycle'
+import { AppError } from '../../shared/lib/app-error'
 import { applyStockDeltaOn } from './stock.server'
 import { hydrateOrders, toOrder, ORDER_SEQUENCE_KEY } from './mappers.server'
 import type { DbOrTx } from './mappers.server'
@@ -125,7 +126,10 @@ export const checkoutCart = createServerOnlyFn(
       })
       const missing = pricing.missing[0]
       if (missing) {
-        throw new Error(`Produk "${missing.name}" sudah tidak ada di katalog; hapus dari keranjang`)
+        throw new AppError(
+          'product-missing',
+          `Produk "${missing.name}" sudah tidak ada di katalog; hapus dari keranjang`,
+        )
       }
 
       const { items: priced, subtotal, discount, total, costTotal } = pricing

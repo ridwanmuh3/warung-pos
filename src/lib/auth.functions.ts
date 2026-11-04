@@ -20,6 +20,7 @@ import {
 import { destroySession, readSessionUserId, writeSessionIdentity } from './session.server'
 import { listMemberships, provisionDefaultTenant } from './tenant.server'
 import { loginSchema, registerSchema } from './validation'
+import { appValidator } from './app-server-fn'
 
 /**
  * Typed authentication RPC.
@@ -57,7 +58,7 @@ function rateLimited(retryAfterSeconds: number): AuthResponse {
 }
 
 export const registerFn = createServerFn({ method: 'POST' })
-  .validator(registerSchema)
+  .validator(appValidator(registerSchema))
   .handler(async ({ data }): Promise<AuthResponse> => {
     const limit = consumeRegistration(`register:${clientIp()}`)
     if (!limit.allowed) return rateLimited(limit.retryAfterSeconds)
@@ -84,7 +85,7 @@ export const registerFn = createServerFn({ method: 'POST' })
   })
 
 export const loginFn = createServerFn({ method: 'POST' })
-  .validator(loginSchema)
+  .validator(appValidator(loginSchema))
   .handler(async ({ data }): Promise<AuthResponse> => {
     const ip = clientIp()
     const key = loginKey(data.email, ip)

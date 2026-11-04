@@ -25,6 +25,7 @@ import { CashStatus } from '~/components/CashStatus'
 import { Button } from '~/components/ui/Button'
 import { buttonStyles } from '~/components/ui/buttonStyles'
 import { checkoutFn } from './checkout.functions'
+import { checkoutRejectionMessage } from './checkout.outcome'
 
 const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
 const route = getRouteApi('/checkout')
@@ -170,17 +171,23 @@ export function CheckoutPage() {
         // exactly once (ADR-0003/0004). A retry returns the original order, so
         // the latch below is a UX nicety, not the integrity mechanism.
         await flushCart()
-        const order = await checkoutFn({ data: { checkout: rawCheckout } })
-        // Let the success route mount before emptying the local cart. Clearing
-        // first would re-render this screen as "Tidak ada pesanan" while the
-        // next route loads, which read as a blank page between pay and receipt.
-        await navigate({
-          to: '/order-success/$orderId',
-          params: { orderId: order.id },
-          state: (prev) => ({ ...prev, order }),
-          replace: true,
-        })
-        clearCart()
+        const result = await checkoutFn({ data: { checkout: rawCheckout } })
+        if (result.kind === 'ordered') {
+          // Let the success route mount before emptying the local cart. Clearing
+          // first would re-render this screen as "Tidak ada pesanan" while the
+          // next route loads, which read as a blank page between pay and receipt.
+          await navigate({
+            to: '/order-success/$orderId',
+            params: { orderId: result.order.id },
+            state: (prev) => ({ ...prev, order: result.order }),
+            replace: true,
+          })
+          clearCart()
+        } else {
+          setFormErrors([checkoutRejectionMessage(result)])
+          submittedRef.current = false
+          setSubmitting(false)
+        }
       } catch (cause) {
         // The order was not created: release the latch so the cashier can retry.
         submittedRef.current = false

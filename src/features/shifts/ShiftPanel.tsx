@@ -71,6 +71,9 @@ export function ShiftPanel({ open, shifts, drawerOrders }: { open: Shift | undef
                     setOpeningCash('')
                     void router.invalidate()
                   })
+                  .catch((cause) => {
+                    setError(cause instanceof Error ? cause.message : 'Gagal membuka kas')
+                  })
                   .finally(() => setBusy(false))
               }}
               data-testid="open-shift"
@@ -205,6 +208,9 @@ export function ShiftPanel({ open, shifts, drawerOrders }: { open: Shift | undef
               setCountedCash('')
               setNote('')
               void router.invalidate()
+            })
+            .catch((cause) => {
+              setError(cause instanceof Error ? cause.message : 'Gagal menutup kas')
             })
             .finally(() => setBusy(false))
         }}

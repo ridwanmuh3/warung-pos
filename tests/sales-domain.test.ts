@@ -84,10 +84,17 @@ describe('validatePayment', () => {
     expect(validatePayment({ paymentMethod: 'cash', total: 16_000, amountPaid: 16_000 }).change).toBe(0)
   })
 
-  it('rejects cash below the total', () => {
-    expect(() => validatePayment({ paymentMethod: 'cash', total: 16_000, amountPaid: 15_999 })).toThrow(
-      'Uang diterima kurang dari total bayar',
-    )
+  it('rejects cash below the total as a payment-invalid AppError', () => {
+    try {
+      validatePayment({ paymentMethod: 'cash', total: 16_000, amountPaid: 15_999 })
+      expect.unreachable('expected payment-invalid')
+    } catch (cause) {
+      expect(cause).toMatchObject({
+        name: 'AppError',
+        code: 'payment-invalid',
+        message: 'Uang diterima kurang dari total bayar',
+      })
+    }
   })
 
   it('rejects cash with no amount', () => {

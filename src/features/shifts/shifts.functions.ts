@@ -9,6 +9,8 @@ import {
   shiftCloseFormSchema,
   shiftCloseSchema,
 } from '~/lib/validation'
+import { appValidator, withAppHandler } from '~/lib/app-server-fn'
+import { AppError } from '~/shared/lib/app-error'
 import type { Order, Shift } from '~/types'
 
 /**
@@ -16,6 +18,9 @@ import type { Order, Shift } from '~/types'
  *
  * Every handler resolves tenant and role from the session cookie. The
  * expected-cash rule itself lives in `domain/shifts/drawer.ts`.
+ *
+ * Validation failures are thrown as `AppError` with a stable `code` so the
+ * client can branch on `code` instead of matching error messages.
  */
 
 /** Local start-of-day, as an ISO string, for the cashier's "today only" view. */
@@ -46,14 +51,20 @@ export const currentShiftFn = createServerFn({ method: 'GET' }).handler(
 )
 
 export const openShiftFn = createServerFn({ method: 'POST' })
-  .validator(openingCashFormSchema)
-  .handler(async ({ data: input }): Promise<Shift> => {
-    const ctx = await requireMembership('cashier')
-    const parsed = openingCashSchema.safeParse(input)
-    if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? 'Modal awal tidak valid')
-    return repo.openShift(ctx.tenantId, {
-      openingCash: parsed.data.openingCash,
-      userId: ctx.userId,
+  .validator(appValidator(openingCashFormSchema))
+  .handler(async ({ data: input }) => {
+    return withAppHandler('cashier', async (ctx) => {
+      const parsed = openingCashSchema.safeParse(input)
+      if (!parsed.success) {
+        throw new AppError(
+          'invalid-opening-cash',
+          parsed.error.issues[0]?.message ?? 'Modal awal tidak valid',
+        )
+      }
+      return repo.openShift(ctx.tenantId, {
+        openingCash: parsed.data.openingCash,
+        userId: ctx.userId,
+      })
     })
   })
 
@@ -74,13 +85,19 @@ export const listDrawerOrdersFn = createServerFn({ method: 'GET' })
   })
 
 export const closeShiftFn = createServerFn({ method: 'POST' })
-  .validator(shiftCloseFormSchema)
-  .handler(async ({ data: input }): Promise<Shift | undefined> => {
-    const ctx = await requireMembership('cashier')
-    const parsed = shiftCloseSchema.safeParse(input)
-    if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? 'Jumlah kas tidak valid')
-    return repo.closeShift(ctx.tenantId, {
-      countedCash: parsed.data.countedCash,
-      note: parsed.data.note,
+  .validator(appValidator(shiftCloseFormSchema))
+  .handler(async ({ data: input }) => {
+    return withAppHandler('cashier', async (ctx) => {
+      const parsed = shiftCloseSchema.safeParse(input)
+      if (!parsed.success) {
+        throw new AppError(
+          'invalid-closing-cash',
+          parsed.error.issues[0]?.message ?? 'Jumlah kas tidak valid',
+        )
+      }
+      return repo.closeShift(ctx.tenantId, {
+        countedCash: parsed.data.countedCash,
+        note: parsed.data.note,
+      })
     })
   })
