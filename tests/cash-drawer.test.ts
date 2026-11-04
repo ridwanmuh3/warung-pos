@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { expectedDrawerCash } from '../src/lib/cashDrawer'
-import type { CashOrderLike } from '../src/lib/cashDrawer'
+import { expectedDrawerCash } from '../src/domain/shifts/drawer'
+import type { CashOrderLike } from '../src/domain/shifts/drawer'
 
 function order(overrides: Partial<CashOrderLike>): CashOrderLike {
   return {
