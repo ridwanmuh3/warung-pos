@@ -1,12 +1,9 @@
-import { useEffect } from 'react'
-import { Link, getRouteApi, useNavigate, useRouter } from '@tanstack/react-router'
+import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
 import { IconReceipt, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
 import { CHANNEL_LABELS, PAYMENT_LABELS } from '~/data/products'
 import { dayKey, formatDayLabel, formatIDR, formatTime } from '~/lib/format'
-import { useOrders } from '~/lib/useServerData'
 import { PageHeader } from '~/components/PageHeader'
 import { EmptyState } from '~/components/EmptyState'
-import { SkeletonRows } from '~/components/ui/Skeleton'
 import { Badge } from '~/components/ui/Badge'
 import { Button } from '~/components/ui/Button'
 import { buttonStyles } from '~/components/ui/buttonStyles'
@@ -33,13 +30,6 @@ export function OrdersPage() {
   const { q: rawQ, method, channel, day } = route.useSearch()
   const q = rawQ ?? ''
   const navigate = useNavigate({ from: '/orders/' })
-
-  // Re-run the loader whenever the order set changes (new order, void, ...).
-  const { data: liveOrders, loading: liveLoading } = useOrders()
-  const router = useRouter()
-  useEffect(() => {
-    void router.invalidate()
-  }, [liveOrders, router])
 
   const hasFilters = q !== '' || method !== undefined || channel !== undefined || day !== undefined
 
@@ -165,9 +155,7 @@ export function OrdersPage() {
         </div>
       </div>
 
-      {orders.length === 0 && liveLoading ? (
-        <SkeletonRows count={6} />
-      ) : orders.length === 0 ? (
+      {orders.length === 0 ? (
         <EmptyState
           icon={IconSearch}
           title="Tidak ada pesanan cocok"

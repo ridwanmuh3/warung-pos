@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { IconUserPlus, IconUsers } from '@tabler/icons-react'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { Button } from '../components/ui/Button'
-import { SkeletonRows } from '../components/ui/Skeleton'
 import {
   inviteMemberFn,
   listMembersFn,
   updateMemberRoleFn,
 } from '../lib/tenant.functions'
-import type { MemberRow, Role } from '../lib/tenant.server'
+import type { Role } from '../lib/tenant.server'
 
 const ROLE_LABELS: Record<Role, string> = {
   owner: 'Pemilik',
@@ -22,40 +21,25 @@ const ROLES: Role[] = ['manager', 'cashier']
 
 export const Route = createFileRoute('/members')({
   component: MembersPage,
+  loader: () => listMembersFn(),
   // Reads live membership data; the server rejects non-owners.
   ssr: false,
 })
 
 function MembersPage() {
-  const [members, setMembers] = useState<MemberRow[]>([])
-  const [loading, setLoading] = useState(true)
+  const members = Route.useLoaderData()
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<Role>('cashier')
   const [busy, setBusy] = useState(false)
-
-  function reload() {
-    listMembersFn()
-      .then((rows) => {
-        setMembers(rows)
-        setError(null)
-      })
-      .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : 'Gagal memuat anggota')
-      })
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => {
-    reload()
-  }, [])
 
   async function invite() {
     setBusy(true)
     try {
       await inviteMemberFn({ data: { email, role: inviteRole } })
       setEmail('')
-      reload()
+      await router.invalidate()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Gagal mengundang anggota')
     } finally {
@@ -127,9 +111,7 @@ function MembersPage() {
         Daftar Anggota
       </h2>
 
-      {loading ? (
-        <SkeletonRows count={4} />
-      ) : members.length === 0 ? (
+      {members.length === 0 ? (
         <EmptyState icon={IconUsers} title="Belum ada anggota lain" description="Undang rekan kerja lewat form di atas." />
       ) : (
         <ul className="space-y-2">
@@ -154,7 +136,9 @@ function MembersPage() {
                   onChange={(event) => {
                     void updateMemberRoleFn({
                       data: { membershipId: member.membershipId, role: event.target.value as Role },
-                    }).then(reload)
+                    }).then(() => router.invalidate()).catch((cause: unknown) => {
+                      setError(cause instanceof Error ? cause.message : 'Gagal mengubah peran')
+                    })
                   }}
                   aria-label={`Peran ${member.name}`}
                   data-testid={`member-role-${member.userId}`}

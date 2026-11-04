@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
 import { IconAlertTriangle, IconLock, IconLockOpen } from '@tabler/icons-react'
-import { SHIFTS_CHANGED_EVENT } from '~/lib/events'
 import { formatIDR, formatTime } from '~/lib/format'
-import { useCurrentShift } from '~/lib/useServerData'
+import type { Order, Shift } from '~/types'
 import { Button } from '~/components/ui/Button'
 import { Modal, ModalTitle } from '~/components/ui/Modal'
 import { ShiftPanel } from './ShiftPanel'
@@ -18,17 +18,13 @@ import { ShiftPanel } from './ShiftPanel'
  * closed, so an ordinary cash sale is not interrupted by a panel it does not
  * need. Warn-and-allow, like oversell: the warning never blocks the sale.
  */
-export function CashStatus({ compact = false }: { compact?: boolean }) {
-  const { data: open, loading, reload } = useCurrentShift()
+export function CashStatus({ compact = false, open, shifts, drawerOrders }: { compact?: boolean; open: Shift | undefined; shifts: Shift[]; drawerOrders: Order[] }) {
+  const router = useRouter()
   const [dialogOpen, setDialogOpen] = useState(false)
-
-  if (loading) return null
 
   const closeDialog = () => {
     setDialogOpen(false)
-    reload()
-    // The setup checklist and other widgets read the shift history separately.
-    window.dispatchEvent(new Event(SHIFTS_CHANGED_EVENT))
+    void router.invalidate()
   }
 
   if (!open) {
@@ -58,7 +54,7 @@ export function CashStatus({ compact = false }: { compact?: boolean }) {
                 Masukkan modal awal di laci. Setelah dibuka, penjualan tunai masuk rekonsiliasi.
               </p>
               <div className="mt-4">
-                <ShiftPanel onChanged={reload} />
+                <ShiftPanel open={open} shifts={shifts} drawerOrders={drawerOrders} />
               </div>
               <div className="mt-4 flex justify-end">
                 <Button variant="secondary" size="sm" onClick={closeDialog}>
@@ -98,7 +94,7 @@ export function CashStatus({ compact = false }: { compact?: boolean }) {
               Buka laci dengan modal awal, atau tutup dengan hitungan fisik.
             </p>
             <div className="mt-4">
-              <ShiftPanel onChanged={reload} />
+              <ShiftPanel open={open} shifts={shifts} drawerOrders={drawerOrders} />
             </div>
             <div className="mt-4 flex justify-end">
               <Button variant="secondary" size="sm" onClick={closeDialog}>
@@ -145,7 +141,7 @@ export function CashStatus({ compact = false }: { compact?: boolean }) {
             Hitung uang fisik di laci. Selisih terhadap kas seharusnya akan tercatat.
           </p>
           <div className="mt-4">
-            <ShiftPanel onChanged={reload} />
+            <ShiftPanel open={open} shifts={shifts} drawerOrders={drawerOrders} />
           </div>
           <div className="mt-4 flex justify-end">
             <Button variant="secondary" size="sm" onClick={closeDialog}>

@@ -20,9 +20,10 @@ import {
 } from '../lib/format'
 import { buildDailyReport, dailyOrdersCsv, downloadTextFile, zReportText } from '../lib/reporting'
 import { marginPercent } from '../lib/totals'
-import { useOrders, useShifts } from '../lib/useServerData'
+import { listOrdersFn } from '~/features/sales/sales.functions'
+import { listShiftsFn } from '~/features/shifts/shifts.functions'
+import { listProductsFn } from '~/features/catalog/catalog.functions'
 import { useTenant } from '../lib/useTenant'
-import { SkeletonRows, SkeletonStats } from '../components/ui/Skeleton'
 import { ShareBar } from '../components/ui/ShareBar'
 import { StatCard as Summary, type StatTone } from '../components/ui/StatCard'
 import { Tab, TabList } from '../components/ui/Tabs'
@@ -31,7 +32,6 @@ import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
-import { ErrorState } from '../components/ErrorState'
 import { TodaySummary } from '../components/TodaySummary'
 
 export const Route = createFileRoute('/reports')({
@@ -44,13 +44,14 @@ export const Route = createFileRoute('/reports')({
   }),
   ssr: 'data-only',
   loaderDeps: ({ search }) => ({ day: search.day }),
-  loader: ({ deps }) => {
-    return { day: deps.day ?? resolveReportingDay() }
+  loader: async ({ deps }) => {
+    const [orders, shifts, products] = await Promise.all([listOrdersFn(), listShiftsFn(), listProductsFn()])
+    return { day: deps.day ?? resolveReportingDay(), orders, shifts, products }
   },
 })
 
 function ReportPage() {
-  const { day } = Route.useLoaderData()
+  const { day, orders, shifts, products } = Route.useLoaderData()
   const { tab: activeTab } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const tenant = useTenant()
@@ -87,10 +88,12 @@ function ReportPage() {
       </TabList>
 
       {tab === 'today' ? (
-        <TodaySummary day={resolveReportingDay()} />
+        <TodaySummary day={resolveReportingDay()} orders={orders} products={products} />
       ) : (
         <DailyReport
           day={day}
+          orders={orders}
+          shifts={shifts}
           isCashier={tenant.context?.role === 'cashier'}
           onPickDay={(value) =>
             navigate({
@@ -106,16 +109,17 @@ function ReportPage() {
 
 function DailyReport({
   day,
+  orders,
+  shifts,
   isCashier,
   onPickDay,
 }: {
   day: string
+  orders: Awaited<ReturnType<typeof listOrdersFn>>
+  shifts: Awaited<ReturnType<typeof listShiftsFn>>
   isCashier: boolean
   onPickDay: (day: string) => void
 }) {
-  const { data: orders, loading: ordersLoading, error: ordersError, reload: reloadOrders } = useOrders()
-  const { data: shifts, error: shiftsError, reload: reloadShifts } = useShifts()
-
   const report = useMemo(() => buildDailyReport(day, orders, shifts), [day, orders, shifts])
 
   // Every day that has data, so the picker can offer real choices.
@@ -135,7 +139,7 @@ function DailyReport({
   const closedShiftCount = report.shifts.filter((shift) => shift.closedAt !== undefined).length
   const cashState = report.cashVariance === 0 ? 'pas' : report.cashVariance > 0 ? 'lebih' : 'kurang'
   const cashTone: StatTone =
-    shiftsError || closedShiftCount === 0
+    closedShiftCount === 0
       ? 'neutral'
       : report.cashVariance === 0
         ? 'positive'
@@ -206,21 +210,7 @@ function DailyReport({
         </p>
       )}
 
-      {ordersLoading && orders.length === 0 ? (
-        <>
-          <SkeletonStats count={4} />
-          <SkeletonRows count={5} className="mt-4" />
-        </>
-      ) : ordersError && orders.length === 0 ? (
-        <ErrorState
-          title="Gagal memuat laporan"
-          description="Data transaksi tidak bisa diambil. Periksa koneksi internet lalu coba lagi."
-          onRetry={() => {
-            reloadOrders()
-            reloadShifts()
-          }}
-        />
-      ) : !hasData ? (
+      {!hasData ? (
         <EmptyState
           icon={IconFileText}
           title="Tidak ada transaksi pada hari ini"
@@ -258,11 +248,9 @@ function DailyReport({
             <Summary
               label="Selisih Kas"
               // A missing cash figure must read as unknown, never as a real Rp0.
-              value={shiftsError ? '—' : `${report.cashVariance > 0 ? '+' : ''}${formatIDR(report.cashVariance)}`}
+              value={`${report.cashVariance > 0 ? '+' : ''}${formatIDR(report.cashVariance)}`}
               hint={
-                shiftsError
-                  ? 'Gagal memuat kas'
-                  : closedShiftCount > 0
+                closedShiftCount > 0
                     ? `${report.shifts.length} shift · ${cashState}`
                     : report.shifts.length > 0
                       ? `${report.shifts.length} shift · belum tutup`
@@ -272,22 +260,6 @@ function DailyReport({
               testId="report-variance"
             />
           </div>
-
-          {shiftsError && (
-            <div
-              role="alert"
-              className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-danger/30 bg-danger/6 px-3 py-2 text-sm text-danger"
-            >
-              <span>Sebagian data kas gagal dimuat, jadi angka Selisih Kas tidak ditampilkan.</span>
-              <button
-                type="button"
-                onClick={reloadShifts}
-                className="font-semibold underline underline-offset-2 hover:text-danger-hover"
-              >
-                Coba lagi
-              </button>
-            </div>
-          )}
 
           {report.receivableTotal > 0 && (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
