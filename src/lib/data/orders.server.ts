@@ -19,6 +19,7 @@ import type {
 } from '../../types'
 import { priceCart } from '../../domain/sales/pricing'
 import { validatePayment } from '../../domain/sales/payment'
+import { RefundRequiredError, canRefund, canSettle, voidDecision } from '../../domain/sales/lifecycle'
 import { applyStockDeltaOn } from './stock.server'
 import { hydrateOrders, toOrder, ORDER_SEQUENCE_KEY } from './mappers.server'
 import type { DbOrTx } from './mappers.server'
@@ -325,7 +326,7 @@ export const settleCreditOrder = createServerOnlyFn(
     if (existing.status !== 'paid') {
       throw new Error('Pesanan batal atau refund tidak bisa ditandai lunas')
     }
-    if (existing.settlementStatus === 'settled') return (await hydrateOrders(rows))[0]
+    if (!canSettle(existing)) return (await hydrateOrders(rows))[0]
 
     const openShiftRows = await db
       .select({ id: shifts.id })
@@ -385,8 +386,8 @@ export const voidOrder = createServerOnlyFn(
         .from(shifts)
         .where(and(eq(shifts.id, existing.shiftId), eq(shifts.tenantId, tenantId)))
         .limit(1)
-      if (shiftRows[0]?.closedAt) {
-        throw new Error('Shift pesanan ini sudah ditutup; gunakan refund, bukan void')
+      if (voidDecision(existing, Boolean(shiftRows[0]?.closedAt)) === 'refund') {
+        throw new RefundRequiredError()
       }
     }
 
@@ -439,7 +440,7 @@ export const refundOrder = createServerOnlyFn(
     const existing = rows[0]
     if (!existing) return undefined
     if (existing.status === 'refunded') return (await hydrateOrders(rows))[0]
-    if (existing.status !== 'paid') {
+    if (!canRefund(existing)) {
       throw new Error('Hanya pesanan berstatus paid yang bisa di-refund')
     }
 
