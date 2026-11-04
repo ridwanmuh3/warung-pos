@@ -3,6 +3,7 @@ import { and, asc, eq } from 'drizzle-orm'
 import { getDb } from '../db/client.server'
 import { memberships, tenants, users } from '../db/schema'
 import { readSessionTenantId, readSessionUserId } from './session.server'
+import { AppError } from '../shared/lib/app-error'
 
 /**
  * Tenant resolution and role enforcement (Phase 8C).
@@ -92,7 +93,7 @@ async function membershipsForUser(userId: string): Promise<MembershipSummary[]> 
 export const requireMembership = createServerOnlyFn(
   async (minRole: Role = 'cashier'): Promise<TenantContext> => {
     const userId = await readSessionUserId()
-    if (!userId) throw new Error('Anda harus masuk terlebih dahulu')
+    if (!userId) throw new AppError('unauthenticated', 'Anda harus masuk terlebih dahulu')
 
     let list = await membershipsForUser(userId)
     if (list.length === 0) {
@@ -104,7 +105,7 @@ export const requireMembership = createServerOnlyFn(
     const active = list.find((item) => item.tenantId === requested) ?? list[0]!
 
     if (!hasAtLeast(active.role, minRole)) {
-      throw new Error(`Aksi ini hanya untuk ${roleLabel(minRole)}`)
+      throw new AppError('forbidden', `Aksi ini hanya untuk ${roleLabel(minRole)}`)
     }
 
     return {

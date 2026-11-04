@@ -1,3 +1,20 @@
+import { dayKeyToDate } from '../domain/time/business-day'
+
+/**
+ * Presentation formatters only.
+ *
+ * Day-key arithmetic lives in `domain/time/business-day.ts`; the re-exports
+ * below keep existing UI imports working during the migration and contain no
+ * logic of their own.
+ */
+
+export {
+  dayKeyOf as dayKey,
+  dayKeyToDate,
+  isDayKey,
+  resolveReportingDay,
+} from '../domain/time/business-day'
+
 const idrFormatter = new Intl.NumberFormat('id-ID', {
   style: 'currency',
   currency: 'IDR',
@@ -22,42 +39,6 @@ const timeFormatter = new Intl.DateTimeFormat('id-ID', { timeStyle: 'short' })
 
 export function formatTime(iso: string): string {
   return timeFormatter.format(new Date(iso))
-}
-
-/** Key used to bucket orders by local calendar day. THE one implementation —
- * every "which day does this belong to" question in the app goes through here. */
-export function dayKey(iso: string): string {
-  const d = new Date(iso)
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-}
-
-/** The reporting day for an ISO instant (or for now). Same bucketing as `dayKey`. */
-export function resolveReportingDay(iso?: string): string {
-  return dayKey(iso ?? new Date().toISOString())
-}
-
-/**
- * True for a well-formed day key that names a real calendar date.
- *
- * Guards the day-key boundary: a key that comes from a URL (`?tanggal=…`) or a
- * cleared date picker must never reach `dayKeyToDate`/`formatDayLabel`, which
- * build an Invalid Date and throw. `2026-2-31` and `2026-13-8` are rejected
- * because the date does not exist, not because of their shape.
- */
-export function isDayKey(value: string): boolean {
-  const match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value)
-  if (!match) return false
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  const date = new Date(year, month, day)
-  return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day
-}
-
-/** Inverse of `dayKey`: rebuilds the local Date from a day key. */
-export function dayKeyToDate(key: string): Date {
-  const [year, month, day] = key.split('-').map(Number)
-  return new Date(year, month, day)
 }
 
 const dayLabelFormatter = new Intl.DateTimeFormat('id-ID', { dateStyle: 'full' })

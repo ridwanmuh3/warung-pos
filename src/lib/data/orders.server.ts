@@ -17,7 +17,10 @@ import type {
   SalesChannel,
   SettlementPaymentMethod,
 } from '../../types'
-import { discountValue } from '../totals'
+import { priceCart } from '../../domain/sales/pricing'
+import { validatePayment } from '../../domain/sales/payment'
+import { RefundRequiredError, canRefund, canSettle, voidDecision } from '../../domain/sales/lifecycle'
+import { AppError } from '../../shared/lib/app-error'
 import { applyStockDeltaOn } from './stock.server'
 import { hydrateOrders, toOrder, ORDER_SEQUENCE_KEY } from './mappers.server'
 import type { DbOrTx } from './mappers.server'
@@ -45,7 +48,7 @@ async function nextOrderNumber(tenantId: string, db: DbOrTx = getDb()): Promise<
 export interface CheckoutCartInput {
   /**
    * Validated discount intent; the server computes the rupiah value against
-   * its own subtotal via `discountValue` (percent takes precedence).
+   * its own subtotal via `priceCart` (percent takes precedence).
    */
   discount: { amount: number; percent: number | null }
   paymentMethod: PaymentMethod
@@ -109,38 +112,34 @@ export const checkoutCart = createServerOnlyFn(
             inArray(products.id, lines.map((line) => line.productId)),
           ),
         )
-      const byId = new Map(catalog.map((product) => [product.id, product]))
-      const priced = lines.map((line) => {
-        const product = byId.get(line.productId)
-        if (!product) {
-          throw new Error(`Produk "${line.name}" sudah tidak ada di katalog; hapus dari keranjang`)
-        }
-        return {
-          productId: product.id,
-          name: product.name,
-          imageKey: product.imageKey,
-          price: product.price,
-          cost: product.cost,
+      const pricing = priceCart({
+        items: lines.map((line) => ({
+          productId: line.productId,
+          name: line.name,
+          imageKey: line.imageKey,
+          price: line.price,
+          cost: line.cost,
           qty: line.qty,
-        }
+        })),
+        catalog,
+        discount: input.discount,
       })
-
-      const subtotal = priced.reduce((sum, line) => sum + line.price * line.qty, 0)
-      const discount = discountValue(subtotal, input.discount)
-      const total = subtotal - discount
-      const costTotal = priced.reduce((sum, line) => sum + line.cost * line.qty, 0)
-
-      const isCash = input.paymentMethod === 'cash'
-      const isCredit = input.paymentMethod === 'credit'
-      const customerName = input.customerName?.trim() ?? ''
-      if (isCredit && customerName === '') {
-        throw new Error('Nama pelanggan wajib diisi untuk pembayaran ngutang')
+      const missing = pricing.missing[0]
+      if (missing) {
+        throw new AppError(
+          'product-missing',
+          `Produk "${missing.name}" sudah tidak ada di katalog; hapus dari keranjang`,
+        )
       }
-      if (isCash && (input.amountPaid === null || input.amountPaid < total)) {
-        throw new Error('Uang diterima kurang dari total bayar')
-      }
-      const amountPaid = isCash ? input.amountPaid : null
-      const change = isCash && input.amountPaid !== null ? input.amountPaid - total : null
+
+      const { items: priced, subtotal, discount, total, costTotal } = pricing
+      const payment = validatePayment({
+        paymentMethod: input.paymentMethod,
+        total,
+        amountPaid: input.amountPaid,
+        customerName: input.customerName,
+      })
+      const customerName = payment.customerName
 
       const openShiftRows = await tx
         .select({ id: shifts.id })
@@ -159,10 +158,10 @@ export const checkoutCart = createServerOnlyFn(
         costTotal,
         profit: total - costTotal,
         paymentMethod: input.paymentMethod,
-        amountPaid,
-        change,
+        amountPaid: payment.amountPaid,
+        change: payment.change,
         status: 'paid',
-        settlementStatus: isCredit ? 'unsettled' : 'settled',
+        settlementStatus: payment.settlementStatus,
         ...(customerName ? { customerName } : {}),
         channel: input.channel,
         ...(input.cashier ? { cashier: input.cashier } : {}),
@@ -331,7 +330,7 @@ export const settleCreditOrder = createServerOnlyFn(
     if (existing.status !== 'paid') {
       throw new Error('Pesanan batal atau refund tidak bisa ditandai lunas')
     }
-    if (existing.settlementStatus === 'settled') return (await hydrateOrders(rows))[0]
+    if (!canSettle(existing)) return (await hydrateOrders(rows))[0]
 
     const openShiftRows = await db
       .select({ id: shifts.id })
@@ -391,8 +390,8 @@ export const voidOrder = createServerOnlyFn(
         .from(shifts)
         .where(and(eq(shifts.id, existing.shiftId), eq(shifts.tenantId, tenantId)))
         .limit(1)
-      if (shiftRows[0]?.closedAt) {
-        throw new Error('Shift pesanan ini sudah ditutup; gunakan refund, bukan void')
+      if (voidDecision(existing, Boolean(shiftRows[0]?.closedAt)) === 'refund') {
+        throw new RefundRequiredError()
       }
     }
 
@@ -445,7 +444,7 @@ export const refundOrder = createServerOnlyFn(
     const existing = rows[0]
     if (!existing) return undefined
     if (existing.status === 'refunded') return (await hydrateOrders(rows))[0]
-    if (existing.status !== 'paid') {
+    if (!canRefund(existing)) {
       throw new Error('Hanya pesanan berstatus paid yang bisa di-refund')
     }
 

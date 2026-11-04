@@ -1,38 +1,19 @@
 import { IconLockOpen, IconLock, IconAlertTriangle } from '@tabler/icons-react'
-import { formatDateTime, formatIDR } from '../lib/format'
-import { openingCashFormSchema, shiftCloseFormSchema } from '../lib/validation'
-import { closeShiftFn, openShiftFn } from '../lib/data.functions'
-import { useEffect, useState } from 'react'
-import { useCurrentShift, useShifts } from '../lib/useServerData'
-import { listDrawerOrdersFn } from '../lib/data.functions'
-import { expectedDrawerCash } from '../lib/cashDrawer'
-import type { Order } from '../types'
-import { Button } from './ui/Button'
+import { formatDateTime, formatIDR } from '~/lib/format'
+import { openingCashFormSchema, shiftCloseFormSchema } from '~/lib/validation'
+import { closeShiftFn, openShiftFn } from './shifts.functions'
+import { useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
+import { expectedDrawerCash } from '~/domain/shifts/drawer'
+import type { Order, Shift } from '~/types'
+import { Button } from '~/components/ui/Button'
 
 /**
  * Cash-drawer shift panel: open the drawer with a float, then close it with a
  * physical count. The variance is the difference between counted and expected.
  */
-export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
-  const { data: shifts, reload: reloadShifts } = useShifts()
-  const { data: open, reload: reloadCurrent } = useCurrentShift()
-
-  // The drawer display uses the shift's own orders — not the cashier's
-  // today-only list — so refunds and cross-midnight shifts read correctly.
-  const [drawerOrders, setDrawerOrders] = useState<Order[]>([])
-  useEffect(() => {
-    if (!open) {
-      setDrawerOrders([])
-      return
-    }
-    let cancelled = false
-    void listDrawerOrdersFn({ data: { shiftId: open.id } }).then((rows) => {
-      if (!cancelled) setDrawerOrders(rows)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [open, open?.id, shifts])
+export function ShiftPanel({ open, shifts, drawerOrders }: { open: Shift | undefined; shifts: Shift[]; drawerOrders: Order[] }) {
+  const router = useRouter()
 
   const [openingCash, setOpeningCash] = useState('')
   const [countedCash, setCountedCash] = useState('')
@@ -87,10 +68,11 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
                 setBusy(true)
                 void openShiftFn({ data: parsed.data })
                   .then(() => {
-                    reloadShifts()
-                    reloadCurrent()
                     setOpeningCash('')
-                    onChanged?.()
+                    void router.invalidate()
+                  })
+                  .catch((cause) => {
+                    setError(cause instanceof Error ? cause.message : 'Gagal membuka kas')
                   })
                   .finally(() => setBusy(false))
               }}
@@ -133,8 +115,8 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
     )
   }
 
-  // The same rule the server closes with (cashDrawer.ts) — display and close
-  // can never drift.
+  // The same rule the server closes with (domain/shifts/drawer.ts) — display
+  // and close can never drift.
   const expected = expectedDrawerCash({
     openingCash: open.openingCash,
     orders: drawerOrders,
@@ -223,11 +205,12 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
           setBusy(true)
           void closeShiftFn({ data: parsed.data })
             .then(() => {
-              reloadShifts()
-              reloadCurrent()
               setCountedCash('')
               setNote('')
-              onChanged?.()
+              void router.invalidate()
+            })
+            .catch((cause) => {
+              setError(cause instanceof Error ? cause.message : 'Gagal menutup kas')
             })
             .finally(() => setBusy(false))
         }}

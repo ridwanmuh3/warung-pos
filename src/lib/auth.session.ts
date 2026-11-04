@@ -2,6 +2,7 @@ import { currentUserFn, loginFn, logoutFn, registerFn } from './auth.functions'
 import type { AuthResponse } from './auth.functions'
 import type { PublicUser } from './auth.server'
 import { startCartSync, stopCartSync } from './cart'
+import { mapAppError } from '../shared/lib/app-error'
 import { loginSchema, registerSchema } from './validation'
 
 /**
@@ -21,19 +22,8 @@ export type { PublicUser, AuthResponse }
 const listeners = new Set<() => void>()
 
 function authError(cause: unknown): AuthResponse {
-  if (cause instanceof Error) {
-    try {
-      const issues: unknown = JSON.parse(cause.message)
-      if (Array.isArray(issues)) {
-        const messages = issues.flatMap((issue: unknown) =>
-          typeof issue === 'object' && issue !== null && 'message' in issue && typeof issue.message === 'string'
-            ? [issue.message]
-            : [],
-        )
-        if (messages.length) return { ok: false, errors: messages }
-      }
-    } catch { /* Non-validation errors must not expose internal details. */ }
-  }
+  const message = mapAppError(cause)
+  if (message) return { ok: false, errors: [message] }
   return { ok: false, errors: ['Tidak dapat terhubung. Coba lagi.'] }
 }
 

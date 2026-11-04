@@ -2,10 +2,11 @@ import { useMemo, useRef } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { IconArrowRight, IconBook, IconPackage, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
 import { z } from 'zod'
-import { CATEGORY_LABELS } from '../data/products'
+import { CATEGORY_LABELS } from '../content/labels'
 import { addToCart, useCart } from '../lib/cart'
 import { formatIDR } from '../lib/format'
-import { useProducts } from '../lib/useServerData'
+import { listProductsFn } from '~/features/catalog/catalog.functions'
+import { currentShiftFn, listDrawerOrdersFn, listShiftsFn } from '~/features/shifts/shifts.functions'
 import { useTenant } from '../lib/useTenant'
 import { itemsTotal } from '../lib/totals'
 import type { ProductCategory } from '../types'
@@ -13,8 +14,7 @@ import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { OwnerSetupChecklist } from '../components/OwnerSetupChecklist'
 import { ProductImage } from '../components/ProductImage'
-import { CashStatus } from '../components/CashStatus'
-import { SkeletonGrid } from '../components/ui/Skeleton'
+import { CashStatus } from '~/features/shifts/CashStatus'
 import { Button } from '../components/ui/Button'
 import { buttonStyles } from '../components/ui/buttonStyles'
 
@@ -35,7 +35,12 @@ const menuSearchSchema = z.object({
 export const Route = createFileRoute('/cashier')({
   component: MenuPage,
   validateSearch: menuSearchSchema,
-  // Catalog is browser-local (localStorage); nothing meaningful to render on the server.
+  loader: async () => {
+    const [products, currentShift, shifts] = await Promise.all([listProductsFn(), currentShiftFn(), listShiftsFn()])
+    const drawerOrders = currentShift ? await listDrawerOrdersFn({ data: { shiftId: currentShift.id } }) : []
+    return { products, currentShift, shifts, drawerOrders }
+  },
+  // Cart is browser-local (localStorage); catalog and shifts load from server.
   ssr: false,
 })
 
@@ -46,7 +51,7 @@ function MenuPage() {
   const navigate = useNavigate({ from: Route.fullPath })
   const searchRef = useRef<HTMLInputElement>(null)
   const { items, count } = useCart()
-  const { data: products, loading: productsLoading } = useProducts()
+  const { products, currentShift, shifts, drawerOrders } = Route.useLoaderData()
   const tenant = useTenant()
   const canManageCatalog = tenant.context?.role === 'owner' || tenant.context?.role === 'manager'
 
@@ -106,11 +111,11 @@ function MenuPage() {
         <OwnerSetupChecklist
           tenantName={tenant.context.tenantName}
           productCount={products.length}
-          productsLoading={productsLoading}
+          shifts={shifts}
         />
       )}
 
-      <CashStatus />
+      <CashStatus open={currentShift} shifts={shifts} drawerOrders={drawerOrders} />
 
       <div className="relative mb-3">
         <IconSearch
@@ -164,9 +169,7 @@ function MenuPage() {
         ))}
       </div>
 
-      {productsLoading && products.length === 0 ? (
-        <SkeletonGrid count={8} />
-      ) : products.length === 0 ? (
+      {products.length === 0 ? (
         <EmptyState
           icon={IconPackage}
           title="Belum ada produk"
