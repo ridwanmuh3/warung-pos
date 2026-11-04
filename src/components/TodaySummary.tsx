@@ -1,16 +1,24 @@
 import { useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
 import { IconArrowRight, IconChartBar, IconChevronDown, IconShoppingCart } from '@tabler/icons-react'
-import { CATEGORY_LABELS, CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
-import { dayKey, formatDayLabel, formatIDR } from '../lib/format'
-import { busiestHour, channelBreakdown, hourHistogram, revenueTrend, summarizeCategories, topProducts } from '../lib/reporting'
+import { CATEGORY_LABELS, CHANNEL_LABELS, PAYMENT_LABELS } from '../content/labels'
+import { formatDayLabel, formatIDR } from '../lib/format'
+import {
+  buildSalesSummary,
+  busiestHour,
+  channelBreakdown,
+  hourHistogram,
+  revenueTrend,
+  summarizeCategories,
+  topProducts,
+} from '../lib/reporting'
 import { marginPercent } from '../lib/totals'
 import { EmptyState } from './EmptyState'
 import { ProductImage } from './ProductImage'
 import { ShareBar } from './ui/ShareBar'
 import { StatCard } from './ui/StatCard'
 import { buttonStyles } from './ui/buttonStyles'
-import type { Order, OrderItem, PaymentMethod, Product, ProductCategory } from '../types'
+import type { Order, OrderItem, Product, ProductCategory } from '../types'
 
 /** Y-axis ticks for the trend: at 10px, "3,5 jt" beats a seven-digit rupiah. */
 const compactIDR = new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 })
@@ -25,68 +33,27 @@ const compactIDR = new Intl.NumberFormat('id-ID', { notation: 'compact', maximum
  */
 export function TodaySummary({ day, orders, products }: { day: string; orders: Order[]; products: Product[] }) {
 
-  const stats = useMemo(() => {
-    const todayOrders = orders.filter((order) => order.status === 'paid' && dayKey(order.createdAt) === day)
-    const voidCount = orders.filter(
-      (order) => order.status === 'void' && dayKey(order.createdAt) === day,
-    ).length
-    const revenue = todayOrders.reduce((sum, order) => sum + order.total, 0)
-    const itemCount = todayOrders.reduce(
-      (sum, order) => sum + order.items.reduce((s, item) => s + item.qty, 0),
-      0,
-    )
-    const average = todayOrders.length > 0 ? Math.round(revenue / todayOrders.length) : 0
-    const costTotal = todayOrders.reduce((sum, order) => sum + order.costTotal, 0)
-    const profit = todayOrders.reduce((sum, order) => sum + order.profit, 0)
-    const discountTotal = todayOrders.reduce((sum, order) => sum + order.discount, 0)
-    const receivables = todayOrders.filter(
-      (order) => order.paymentMethod === 'credit' && order.settlementStatus === 'unsettled',
-    )
-    const receivableTotal = receivables.reduce((sum, order) => sum + order.total, 0)
-
-    const byPayment: Partial<Record<PaymentMethod, { count: number; total: number }>> = {}
-    for (const order of todayOrders) {
-      const entry = byPayment[order.paymentMethod] ?? { count: 0, total: 0 }
-      byPayment[order.paymentMethod] = { count: entry.count + 1, total: entry.total + order.total }
-    }
-
-    return {
-      todayOrders,
-      voidCount,
-      revenue,
-      itemCount,
-      average,
-      costTotal,
-      profit,
-      discountTotal,
-      receivables,
-      receivableTotal,
-      byPayment,
-    }
-  }, [orders, day])
+  const stats = useMemo(() => buildSalesSummary(day, orders), [orders, day])
 
   const categoryOf = useMemo(
     () => Object.fromEntries(products.map((product) => [product.id, product.category])),
     [products],
   )
-  const todayItems = useMemo(() => stats.todayOrders.flatMap((order) => order.items), [stats.todayOrders])
+  const todayItems = useMemo(() => stats.paid.flatMap((order) => order.items), [stats.paid])
 
   const patterns = useMemo(
     () => ({
-      top: topProducts(stats.todayOrders, 5),
-      hours: hourHistogram(stats.todayOrders),
-      busiest: busiestHour(stats.todayOrders),
-      channels: channelBreakdown(stats.todayOrders),
+      top: topProducts(stats.paid, 5),
+      hours: hourHistogram(stats.paid),
+      busiest: busiestHour(stats.paid),
+      channels: channelBreakdown(stats.paid),
       trend: revenueTrend(orders, 7, day),
     }),
-    [stats.todayOrders, orders, day],
+    [stats.paid, orders, day],
   )
 
   const paymentRows = useMemo(
-    () =>
-      Object.entries(stats.byPayment)
-        .filter((entry): entry is [PaymentMethod, { count: number; total: number }] => entry[1] !== undefined)
-        .sort((a, b) => b[1].total - a[1].total),
+    () => [...stats.byPayment].sort((a, b) => b.total - a.total),
     [stats.byPayment],
   )
 
@@ -94,7 +61,7 @@ export function TodaySummary({ day, orders, products }: { day: string; orders: O
   const trendPeak = Math.max(...patterns.trend.map((point) => point.revenue), 1)
   const margin = marginPercent(stats.profit, stats.revenue)
 
-  if (stats.todayOrders.length === 0) {
+  if (stats.paid.length === 0) {
     return (
       <EmptyState
         icon={IconChartBar}
@@ -120,9 +87,9 @@ export function TodaySummary({ day, orders, products }: { day: string; orders: O
           label="Omzet Hari Ini"
           value={formatIDR(stats.revenue)}
           hint={
-            stats.voidCount > 0
-              ? `${stats.todayOrders.length} transaksi · ${stats.voidCount} dibatalkan`
-              : `${stats.todayOrders.length} transaksi`
+            stats.voided.length > 0
+              ? `${stats.paid.length} transaksi · ${stats.voided.length} dibatalkan`
+              : `${stats.paid.length} transaksi`
           }
           emphasis
         />
@@ -136,7 +103,7 @@ export function TodaySummary({ day, orders, products }: { day: string; orders: O
         <StatCard
           testId="stat-transaksi"
           label="Transaksi"
-          value={String(stats.todayOrders.length)}
+          value={String(stats.paid.length)}
           hint={`${stats.itemCount} pcs terjual`}
         />
         <StatCard
@@ -150,18 +117,18 @@ export function TodaySummary({ day, orders, products }: { day: string; orders: O
       <section className="mt-4 rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
         <h2 className="text-sm font-semibold text-slate-900">Penjualan per Metode</h2>
         <ul className="mt-3 space-y-2.5" data-testid="payment-mix">
-          {paymentRows.map(([method, value]) => (
-            <li key={method}>
+          {paymentRows.map((row) => (
+            <li key={row.method}>
               <div className="flex items-baseline justify-between gap-3 text-sm">
                 <span className="min-w-0 truncate font-medium text-slate-700">
-                  {PAYMENT_LABELS[method] ?? method}{' '}
-                  <span className="tabular text-xs text-slate-400">({value.count}×)</span>
+                  {PAYMENT_LABELS[row.method] ?? row.method}{' '}
+                  <span className="tabular text-xs text-slate-400">({row.count}×)</span>
                 </span>
                 <span className="tabular shrink-0 font-semibold text-slate-900">
-                  {formatIDR(value.total)}
+                  {formatIDR(row.total)}
                 </span>
               </div>
-              <ShareBar share={stats.revenue > 0 ? Math.round((value.total / stats.revenue) * 100) : 0} />
+              <ShareBar share={stats.revenue > 0 ? Math.round((row.total / stats.revenue) * 100) : 0} />
             </li>
           ))}
         </ul>

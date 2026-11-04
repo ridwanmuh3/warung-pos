@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { buildDailyReport, channelBreakdown, summarizeCategories, topProducts } from '../src/lib/reporting'
-import { dayKey, resolveReportingDay } from '../src/lib/format'
+import {
+  buildSalesSummary,
+  channelBreakdown,
+  summarizeCategories,
+  topProducts,
+} from '../src/lib/reporting'
+import { dayKeyOf, resolveReportingDay } from '../src/domain/time/business-day'
+import type { Clock } from '../src/domain/time/business-day'
 import type { Order, Shift } from '../src/types'
 
 function makeOrder(overrides: Partial<Order>): Order {
@@ -26,22 +32,22 @@ function makeOrder(overrides: Partial<Order>): Order {
   }
 }
 
-const DAY = dayKey('2026-10-06T10:00:00.000Z')
+const DAY = dayKeyOf('2026-10-06T10:00:00.000Z')
 
-describe('buildDailyReport', () => {
+describe('buildSalesSummary', () => {
   it('counts only paid orders in money; void and refunded are listed but excluded', () => {
     const orders = [
       makeOrder({ total: 18000 }),
       makeOrder({ total: 9000, status: 'void' }),
       makeOrder({ total: 5000, status: 'refunded' }),
     ]
-    const report = buildDailyReport(DAY, orders, [])
+    const summary = buildSalesSummary(DAY, orders)
 
-    expect(report.revenue).toBe(18000)
-    expect(report.paid).toHaveLength(1)
-    expect(report.voided).toHaveLength(1)
-    expect(report.refunded).toHaveLength(1)
-    expect(report.itemCount).toBe(1)
+    expect(summary.revenue).toBe(18000)
+    expect(summary.paid).toHaveLength(1)
+    expect(summary.voided).toHaveLength(1)
+    expect(summary.refunded).toHaveLength(1)
+    expect(summary.itemCount).toBe(1)
   })
 
   it('excludes orders from other days', () => {
@@ -50,8 +56,25 @@ describe('buildDailyReport', () => {
       // Mid-day two days earlier: another day in every timezone.
       makeOrder({ total: 99000, createdAt: '2026-10-04T10:00:00.000Z' }),
     ]
-    const report = buildDailyReport(DAY, orders, [])
-    expect(report.revenue).toBe(18000)
+    const summary = buildSalesSummary(DAY, orders)
+    expect(summary.revenue).toBe(18000)
+  })
+
+  it('keeps gross sales and net revenue distinct', () => {
+    const summary = buildSalesSummary(DAY, [
+      makeOrder({
+        subtotal: 18000,
+        discount: 3000,
+        total: 15000,
+        items: [
+          { productId: 'p1', name: 'Nasi Goreng', imageKey: null, price: 18000, cost: 11000, qty: 1 },
+        ],
+      }),
+    ])
+    expect(summary.grossSales).toBe(18000)
+    expect(summary.revenue).toBe(15000)
+    expect(summary.discountTotal).toBe(3000)
+    expect(summary.profit).toBe(7000)
   })
 
   it('sums cash figures from closed shifts of the day only', () => {
@@ -64,16 +87,56 @@ describe('buildDailyReport', () => {
       expectedCash: 59000,
       variance: 0,
     }
-    const openShift: Shift = { id: 's2', openedAt: '2026-10-06T23:00:00.000Z', openingCash: 10000 }
-    const report = buildDailyReport(DAY, [], [shift, openShift])
-    expect(report.cashExpected).toBe(59000)
-    expect(report.cashVariance).toBe(0)
+    // Midday UTC keeps this shift on the same local day in the test timezones.
+    const openShift: Shift = { id: 's2', openedAt: '2026-10-06T12:00:00.000Z', openingCash: 10000 }
+    const summary = buildSalesSummary(DAY, [], [shift, openShift])
+    expect(summary.cashExpected).toBe(59000)
+    expect(summary.cashCounted).toBe(59000)
+    expect(summary.cashVariance).toBe(0)
+    expect(summary.shifts).toHaveLength(2)
+  })
+
+  it('is the same summary for Today and the daily report', () => {
+    const orders = [
+      makeOrder({ total: 18000, paymentMethod: 'cash', channel: 'dine-in' }),
+      makeOrder({ total: 12000, paymentMethod: 'qris', channel: 'takeaway' }),
+      makeOrder({ total: 9000, status: 'void', channel: 'delivery' }),
+    ]
+    const shifts: Shift[] = [
+      {
+        id: 's1',
+        openedAt: '2026-10-06T08:00:00.000Z',
+        closedAt: '2026-10-06T22:00:00.000Z',
+        openingCash: 50000,
+        expectedCash: 30000,
+        closingCash: 30000,
+        variance: 0,
+      },
+    ]
+
+    // TodaySummary passes no shifts; the daily report passes them. The money
+    // fields must not depend on which screen asked.
+    const forToday = buildSalesSummary(DAY, orders)
+    const forDailyReport = buildSalesSummary(DAY, orders, shifts)
+
+    for (const field of ['revenue', 'grossSales', 'costTotal', 'profit', 'discountTotal', 'itemCount', 'receivableTotal'] as const) {
+      expect(forToday[field]).toBe(forDailyReport[field])
+    }
+    expect(forToday.byPayment).toEqual(forDailyReport.byPayment)
+    expect(forToday.byChannel).toEqual(forDailyReport.byChannel)
+
+    // The mixes account for exactly the paid revenue they split.
+    const paymentTotal = forDailyReport.byPayment.reduce((sum, row) => sum + row.total, 0)
+    const channelTotal = forDailyReport.byChannel.reduce((sum, row) => sum + row.total, 0)
+    expect(paymentTotal).toBe(forDailyReport.revenue)
+    expect(channelTotal).toBe(forDailyReport.revenue)
   })
 })
 
 describe('day bucketing is one rule', () => {
-  it('resolveReportingDay buckets like dayKey', () => {
-    expect(resolveReportingDay('2026-10-06T15:00:00.000Z')).toBe(dayKey('2026-10-06T15:00:00.000Z'))
+  it('resolveReportingDay uses the same clock day as dayKeyOf', () => {
+    const clock: Clock = { now: () => new Date(2026, 9, 6, 15, 0) }
+    expect(resolveReportingDay(clock)).toBe(dayKeyOf(clock.now()))
   })
 })
 

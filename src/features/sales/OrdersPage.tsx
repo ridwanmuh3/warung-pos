@@ -1,6 +1,6 @@
 import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
 import { IconReceipt, IconSearch, IconShoppingCart, IconX } from '@tabler/icons-react'
-import { CHANNEL_LABELS, PAYMENT_LABELS } from '~/data/products'
+import { CHANNEL_LABELS, PAYMENT_LABELS } from '~/content/labels'
 import { dayKey, formatDayLabel, formatIDR, formatTime } from '~/lib/format'
 import { PageHeader } from '~/components/PageHeader'
 import { EmptyState } from '~/components/EmptyState'

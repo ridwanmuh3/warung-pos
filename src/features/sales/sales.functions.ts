@@ -5,6 +5,7 @@ import { requireMembership } from '~/lib/tenant.server'
 import { entityId, noteText, settlementPaymentMethod } from '~/lib/validation'
 import { RefundRequiredError } from '~/domain/sales/lifecycle'
 import type { VoidOutcome } from '~/domain/sales/lifecycle'
+import { startOfDayIso } from '~/domain/time/business-day'
 import type { Order } from '~/types'
 
 /**
@@ -16,18 +17,11 @@ import type { Order } from '~/types'
  * on a user-facing message.
  */
 
-/** Local start-of-day, as an ISO string, for the cashier's "today only" view. */
-function startOfTodayIso(): string {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  return start.toISOString()
-}
-
 export const listOrdersFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<Order[]> => {
     const ctx = await requireMembership('cashier')
     // Cashiers only see today's orders; managers and owners see all history.
-    const options = ctx.role === 'cashier' ? { fromIso: startOfTodayIso() } : {}
+    const options = ctx.role === 'cashier' ? { fromIso: startOfDayIso() } : {}
     return repo.listOrders(ctx.tenantId, options)
   },
 )
@@ -46,7 +40,7 @@ export const getOrderFn = createServerFn({ method: 'GET' })
 
     // The cashier's "today only" rule is a server boundary, not just a UI
     // filter. Keep the current shift visible when it opened before midnight.
-    if (order.createdAt >= startOfTodayIso()) return order
+    if (order.createdAt >= startOfDayIso()) return order
     const current = await repo.getCurrentShift(ctx.tenantId)
     return current && order.shiftId === current.id ? order : undefined
   })

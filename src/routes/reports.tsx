@@ -8,17 +8,22 @@ import {
   IconShoppingCart,
 } from '@tabler/icons-react'
 import { z } from 'zod'
-import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
+import { CHANNEL_LABELS, PAYMENT_LABELS } from '../content/labels'
+import { dayKeyOf, resolveReportingDay } from '../domain/time/business-day'
 import {
-  dayKey,
   dayKeyToInputValue,
   formatDayLabel,
   formatIDR,
   formatTime,
   isDayKey,
-  resolveReportingDay,
 } from '../lib/format'
-import { buildDailyReport, dailyOrdersCsv, downloadTextFile, zReportText } from '../lib/reporting'
+import {
+  buildSalesSummary,
+  dailyOrdersCsv,
+  downloadTextFile,
+  zReportText,
+  type ReportLabels,
+} from '../lib/reporting'
 import { marginPercent } from '../lib/totals'
 import { listOrdersFn } from '~/features/sales/sales.functions'
 import { listShiftsFn } from '~/features/shifts/shifts.functions'
@@ -33,6 +38,11 @@ import { buttonStyles } from '../components/ui/buttonStyles'
 import { PageHeader } from '../components/PageHeader'
 import { EmptyState } from '../components/EmptyState'
 import { TodaySummary } from '../components/TodaySummary'
+
+const REPORT_LABELS: ReportLabels = {
+  payment: PAYMENT_LABELS,
+  channel: CHANNEL_LABELS,
+}
 
 export const Route = createFileRoute('/reports')({
   component: ReportPage,
@@ -88,7 +98,7 @@ function ReportPage() {
       </TabList>
 
       {tab === 'today' ? (
-        <TodaySummary day={resolveReportingDay()} orders={orders} products={products} />
+        <TodaySummary day={day} orders={orders} products={products} />
       ) : (
         <DailyReport
           day={day}
@@ -120,11 +130,11 @@ function DailyReport({
   isCashier: boolean
   onPickDay: (day: string) => void
 }) {
-  const report = useMemo(() => buildDailyReport(day, orders, shifts), [day, orders, shifts])
+  const report = useMemo(() => buildSalesSummary(day, orders, shifts), [day, orders, shifts])
 
   // Every day that has data, so the picker can offer real choices.
   const availableDays = useMemo(() => {
-    const days = new Set(orders.map((order) => dayKey(order.createdAt)))
+    const days = new Set(orders.map((order) => dayKeyOf(order.createdAt)))
     days.add(day)
     return [...days].sort((a, b) => b.localeCompare(a))
   }, [orders, day])
@@ -189,7 +199,9 @@ function DailyReport({
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => downloadTextFile(`warung-pos-${day}.csv`, dailyOrdersCsv(report), 'text/csv')}
+            onClick={() =>
+              downloadTextFile(`warung-pos-${day}.csv`, dailyOrdersCsv(report, REPORT_LABELS), 'text/csv')
+            }
             disabled={!hasData}
             data-testid="export-csv"
           >
@@ -398,7 +410,9 @@ function DailyReport({
               variant="secondary"
               size="sm"
               className="no-print"
-              onClick={() => downloadTextFile(`z-report-${day}.txt`, zReportText(report, dayLabel))}
+              onClick={() =>
+                downloadTextFile(`z-report-${day}.txt`, zReportText(report, dayLabel, REPORT_LABELS))
+              }
               data-testid="download-zreport"
             >
               Unduh .txt

@@ -1,5 +1,5 @@
 import { IconBuildingStore } from '@tabler/icons-react'
-import { CHANNEL_LABELS, PAYMENT_LABELS } from '../data/products'
+import { CHANNEL_LABELS, PAYMENT_LABELS } from '../content/labels'
 import { formatDateTime, formatIDR } from '../lib/format'
 import { lineSubtotal } from '../lib/totals'
 import { useTenant } from '../lib/useTenant'

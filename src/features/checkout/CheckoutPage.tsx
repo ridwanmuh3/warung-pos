@@ -10,7 +10,7 @@ import {
   IconQrcode,
   IconReceipt,
 } from '@tabler/icons-react'
-import { PAYMENT_LABELS, CHANNEL_LABELS } from '~/data/products'
+import { PAYMENT_LABELS, CHANNEL_LABELS } from '~/content/labels'
 import { clearCart, flushCart, setCartItems, useCart } from '~/lib/cart'
 import { formatIDR } from '~/lib/format'
 import { priceCart } from '~/domain/sales/pricing'

@@ -1,23 +1,4 @@
-import type { PaymentMethod, Product, ProductCategory, SalesChannel } from '../types'
-
-export const CATEGORY_LABELS: Record<ProductCategory, string> = {
-  food: 'Makanan',
-  drink: 'Minuman',
-  snack: 'Snack',
-}
-
-export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  cash: 'Tunai',
-  qris: 'QRIS',
-  transfer: 'Transfer Bank',
-  credit: 'Ngutang',
-}
-
-export const CHANNEL_LABELS: Record<SalesChannel, string> = {
-  'dine-in': 'Makan di Sini',
-  takeaway: 'Bungkus',
-  delivery: 'Ojol / Online',
-}
+import type { Product } from '../types'
 
 /**
  * Template catalog for the future practice sandbox. The matching images live

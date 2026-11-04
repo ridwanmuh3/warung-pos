@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, getRouteApi, useNavigate, useRouter } from '@tanstack/react-router'
 import { IconNotebook, IconSearch } from '@tabler/icons-react'
-import { PAYMENT_LABELS } from '~/data/products'
+import { PAYMENT_LABELS } from '~/content/labels'
 import { dayKey, formatDayLabel, formatIDR, formatTime } from '~/lib/format'
 import { settleCreditOrderFn } from './sales.functions'
 import { isOutstanding } from '~/domain/sales/lifecycle'

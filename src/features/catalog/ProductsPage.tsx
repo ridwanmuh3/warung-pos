@@ -10,7 +10,7 @@ import {
   IconUpload,
   IconX,
 } from '@tabler/icons-react'
-import { CATEGORY_LABELS } from '~/data/products'
+import { CATEGORY_LABELS } from '~/content/labels'
 import { formatIDR } from '~/lib/format'
 import { MAX_IMAGE_BYTES, productDraftSchema } from '~/lib/validation'
 import {

@@ -10,6 +10,7 @@ import {
   shiftCloseSchema,
 } from '~/lib/validation'
 import { appValidator, withAppHandler } from '~/lib/app-server-fn'
+import { startOfDayIso } from '~/domain/time/business-day'
 import { AppError } from '~/shared/lib/app-error'
 import type { Order, Shift } from '~/types'
 
@@ -23,19 +24,12 @@ import type { Order, Shift } from '~/types'
  * client can branch on `code` instead of matching error messages.
  */
 
-/** Local start-of-day, as an ISO string, for the cashier's "today only" view. */
-function startOfTodayIso(): string {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  return start.toISOString()
-}
-
 export const listShiftsFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<Shift[]> => {
     const ctx = await requireMembership('cashier')
     if (ctx.role === 'cashier') {
       return repo.listShifts(ctx.tenantId, {
-        fromIso: startOfTodayIso(),
+        fromIso: startOfDayIso(),
         includeOpen: true,
       })
     }
@@ -78,7 +72,7 @@ export const listDrawerOrdersFn = createServerFn({ method: 'GET' })
     if (!shift) return []
     // A cashier may inspect today's shifts and the still-open shift. Closed
     // historical shifts are manager/owner territory.
-    if (ctx.role === 'cashier' && shift.openedAt < startOfTodayIso() && shift.closedAt) {
+    if (ctx.role === 'cashier' && shift.openedAt < startOfDayIso() && shift.closedAt) {
       return []
     }
     return repo.listOrdersForDrawer(ctx.tenantId, input.shiftId)
