@@ -5,15 +5,12 @@ import { CATEGORY_LABELS, CHANNEL_LABELS, PAYMENT_LABELS } from '../data/product
 import { dayKey, formatDayLabel, formatIDR } from '../lib/format'
 import { busiestHour, channelBreakdown, hourHistogram, revenueTrend, summarizeCategories, topProducts } from '../lib/reporting'
 import { marginPercent } from '../lib/totals'
-import { useOrders, useProducts } from '../lib/useServerData'
 import { EmptyState } from './EmptyState'
-import { ErrorState } from './ErrorState'
 import { ProductImage } from './ProductImage'
 import { ShareBar } from './ui/ShareBar'
-import { SkeletonRows, SkeletonStats } from './ui/Skeleton'
 import { StatCard } from './ui/StatCard'
 import { buttonStyles } from './ui/buttonStyles'
-import type { OrderItem, PaymentMethod, ProductCategory } from '../types'
+import type { Order, OrderItem, PaymentMethod, Product, ProductCategory } from '../types'
 
 /** Y-axis ticks for the trend: at 10px, "3,5 jt" beats a seven-digit rupiah. */
 const compactIDR = new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 })
@@ -26,9 +23,7 @@ const compactIDR = new Intl.NumberFormat('id-ID', { notation: 'compact', maximum
  * sit first, the payment mix follows, and every deeper cut (category, best
  * sellers, hours, channels, trend) waits behind one disclosure.
  */
-export function TodaySummary({ day }: { day: string }) {
-  const { data: orders, loading, error, reload } = useOrders()
-  const { data: products } = useProducts()
+export function TodaySummary({ day, orders, products }: { day: string; orders: Order[]; products: Product[] }) {
 
   const stats = useMemo(() => {
     const todayOrders = orders.filter((order) => order.status === 'paid' && dayKey(order.createdAt) === day)
@@ -98,25 +93,6 @@ export function TodaySummary({ day }: { day: string }) {
   const hourPeak = Math.max(...patterns.hours.map((bucket) => bucket.orders), 1)
   const trendPeak = Math.max(...patterns.trend.map((point) => point.revenue), 1)
   const margin = marginPercent(stats.profit, stats.revenue)
-
-  if (loading && orders.length === 0) {
-    return (
-      <>
-        <SkeletonStats count={4} />
-        <SkeletonRows count={4} className="mt-4" />
-      </>
-    )
-  }
-
-  if (error && orders.length === 0) {
-    return (
-      <ErrorState
-        title="Gagal memuat ringkasan"
-        description="Data penjualan tidak bisa diambil. Periksa koneksi internet lalu coba lagi."
-        onRetry={reload}
-      />
-    )
-  }
 
   if (stats.todayOrders.length === 0) {
     return (

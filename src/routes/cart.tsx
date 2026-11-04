@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import {
   IconArchive,
   IconArrowRight,
@@ -17,7 +17,7 @@ import {
   resumeCartFn,
 } from '../lib/cart.functions'
 import { formatDateTime, formatIDR } from '../lib/format'
-import { useProducts } from '../lib/useServerData'
+import { listProductsFn } from '~/features/catalog/catalog.functions'
 import type { Cart, OrderItem } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { TotalPanel } from '../components/TotalPanel'
@@ -52,6 +52,10 @@ function QtyStepper({ item }: { item: OrderItem }) {
 
 export const Route = createFileRoute('/cart')({
   component: CartPage,
+  loader: async () => {
+    const [products, parked] = await Promise.all([listProductsFn(), listParkedCartsFn()])
+    return { products, parked }
+  },
   // Cart is persisted to localStorage (cache) and synced to the server.
   ssr: false,
 })
@@ -110,8 +114,8 @@ function ParkedCarts({
 
 function CartPage() {
   const { items, count } = useCart()
-  const { data: products } = useProducts()
-  const [parked, setParked] = useState<Cart[]>([])
+  const { products, parked } = Route.useLoaderData()
+  const router = useRouter()
   const [parkLabel, setParkLabel] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
@@ -120,18 +124,6 @@ function CartPage() {
   const confirmRef = useRef<HTMLButtonElement>(null)
   const stale = stalePriceIds(products)
   const staleNames = items.filter((item) => stale.includes(item.productId)).map((item) => item.name)
-
-  async function reloadParked() {
-    try {
-      setParked(await listParkedCartsFn())
-    } catch {
-      // Offline: keep whatever list we last had.
-    }
-  }
-
-  useEffect(() => {
-    void reloadParked()
-  }, [])
 
   useEffect(() => {
     if (!undoItems) return
@@ -160,7 +152,7 @@ function CartPage() {
       await parkCartFn({ data: { label: parkLabel.trim() || undefined } })
       clearCart()
       setParkLabel('')
-      await reloadParked()
+      await router.invalidate()
     } finally {
       setBusy(false)
     }
@@ -171,7 +163,7 @@ function CartPage() {
     try {
       const cart = await resumeCartFn({ data: { cartId } })
       if (cart) setCartItems(cart.items)
-      await reloadParked()
+      await router.invalidate()
     } finally {
       setBusy(false)
     }
@@ -181,7 +173,7 @@ function CartPage() {
     setBusy(true)
     try {
       await deleteCartFn({ data: { cartId } })
-      await reloadParked()
+      await router.invalidate()
     } finally {
       setBusy(false)
     }

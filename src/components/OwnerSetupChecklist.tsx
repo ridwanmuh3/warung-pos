@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { IconCheck, IconChevronRight, IconX } from '@tabler/icons-react'
-import { SHIFTS_CHANGED_EVENT } from '../lib/events'
 import { setupProgress } from '../lib/onboarding'
-import { useShifts } from '../lib/useServerData'
+import type { Shift } from '../types'
 
 type SetupLink = '/settings' | '/products'
 
@@ -36,24 +35,13 @@ const STEP_COPY: Record<'name' | 'product' | 'shift', { title: string; hint: str
 export function OwnerSetupChecklist({
   tenantName,
   productCount,
-  productsLoading = false,
+  shifts,
 }: {
   tenantName: string | null | undefined
   productCount: number
-  productsLoading?: boolean
+  shifts: Shift[]
 }) {
-  const { data: shifts, loading: shiftsLoading, reload: reloadShifts } = useShifts()
   const [hidden, setHidden] = useState(false)
-
-  useEffect(() => {
-    const refresh = () => reloadShifts()
-    window.addEventListener(SHIFTS_CHANGED_EVENT, refresh)
-    return () => window.removeEventListener(SHIFTS_CHANGED_EVENT, refresh)
-  }, [reloadShifts])
-
-  // Wait for both lists so the count does not flash "0 dari 3" on a shop that
-  // is already set up.
-  if (productsLoading || shiftsLoading) return null
 
   const progress = setupProgress({
     tenantName,

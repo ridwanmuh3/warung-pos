@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
+import { Link, getRouteApi, useNavigate, useRouter } from '@tanstack/react-router'
 import {
   IconAlertTriangle,
   IconDeviceFloppy,
@@ -20,7 +20,6 @@ import {
   restockProductFn,
   updateProductFn,
 } from './catalog.functions'
-import { useProducts } from '~/lib/useServerData'
 import { useTenant } from '~/lib/useTenant'
 import type { Product, ProductCategory } from '~/types'
 import { PageHeader } from '~/components/PageHeader'
@@ -30,7 +29,6 @@ import { ProductImage } from '~/components/ProductImage'
 import { Button } from '~/components/ui/Button'
 import { buttonStyles } from '~/components/ui/buttonStyles'
 import { Modal, ModalTitle } from '~/components/ui/Modal'
-import { SkeletonRows } from '~/components/ui/Skeleton'
 
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
@@ -315,10 +313,11 @@ export function ProductsPage() {
   const { category, lowStock } = route.useSearch()
   const filter = category ?? 'all'
   const navigate = useNavigate({ from: '/products' })
+  const router = useRouter()
   const tenant = useTenant()
   const canManage = tenant.context?.role === 'owner' || tenant.context?.role === 'manager'
 
-  const { data: products, loading, reload } = useProducts()
+  const { products } = route.useLoaderData()
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [restocking, setRestocking] = useState(false)
@@ -361,7 +360,7 @@ export function ProductsPage() {
     void mutation
       .then(() => {
         closeForm()
-        reload()
+        void router.invalidate()
       })
       .catch((cause: unknown) => {
         setFormError(cause instanceof Error ? cause.message : 'Gagal menyimpan produk')
@@ -447,9 +446,7 @@ export function ProductsPage() {
         </button>
       </div>
 
-      {loading && products.length === 0 ? (
-        <SkeletonRows count={6} />
-      ) : visible.length === 0 ? (
+      {visible.length === 0 ? (
         <EmptyState
           icon={IconPackage}
           title={lowStock ? 'Tidak ada stok menipis' : 'Belum ada produk'}
@@ -619,7 +616,7 @@ export function ProductsPage() {
                   .then(() => {
                     if (draft.id === pendingDelete.id) closeForm()
                     setPendingDelete(null)
-                    reload()
+                    void router.invalidate()
                   })
                   .catch((cause: unknown) => {
                     setDeleteError(cause instanceof Error ? cause.message : 'Gagal menghapus produk')
@@ -700,7 +697,7 @@ export function ProductsPage() {
                 void restockProductFn({ data: { id: restockTarget.id, delta: restockAmount } })
                   .then(() => {
                     setRestockTarget(null)
-                    reload()
+                    void router.invalidate()
                   })
                   .catch((cause: unknown) => {
                     setRestockError(cause instanceof Error ? cause.message : 'Gagal menambah stok')

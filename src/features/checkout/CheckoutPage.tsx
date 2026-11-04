@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 import {
   IconBuildingBank,
@@ -16,7 +16,6 @@ import { formatIDR } from '~/lib/format'
 import { priceCart } from '~/domain/sales/pricing'
 import type { DiscountInput } from '~/domain/sales/pricing'
 import { checkoutFormSchema, parseCheckoutForm } from '~/lib/validation'
-import { useProducts } from '~/lib/useServerData'
 import { useSession } from '~/lib/useSession'
 import type { PaymentMethod, SalesChannel } from '~/types'
 import { PageHeader } from '~/components/PageHeader'
@@ -28,6 +27,7 @@ import { buttonStyles } from '~/components/ui/buttonStyles'
 import { checkoutFn } from './checkout.functions'
 
 const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
+const route = getRouteApi('/checkout')
 const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
 
 const PAYMENT_ICONS: Record<PaymentMethod, typeof IconCash> = {
@@ -57,7 +57,7 @@ export function CheckoutPage() {
   const navigate = useNavigate()
   const { items } = useCart()
   const session = useSession()
-  const { data: products } = useProducts()
+  const { products, currentShift, shifts, drawerOrders } = route.useLoaderData()
   const [payment, setPayment] = useState<PaymentMethod>('cash')
   const [customerName, setCustomerName] = useState('')
   const [channel, setChannel] = useState<SalesChannel>('dine-in')
@@ -240,7 +240,7 @@ export function CheckoutPage() {
       {cashInput !== '' && !cashValid && (
         <p className="mt-1 text-xs text-red-600">Uang diterima kurang dari total bayar.</p>
       )}
-      <CashStatus compact />
+      <CashStatus compact open={currentShift} shifts={shifts} drawerOrders={drawerOrders} />
     </section>
   )
 
