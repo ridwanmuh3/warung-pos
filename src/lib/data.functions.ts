@@ -4,12 +4,10 @@ import * as data from './data.server'
 import { requireMembership } from './tenant.server'
 import { IMAGE_CONTENT_TYPES, createUploadTarget, deleteObject, imageBaseUrl, objectExists } from './r2.server'
 import {
-  checkoutFormSchema,
   entityId,
   noteText,
   openingCashFormSchema,
   openingCashSchema,
-  parseCheckoutForm,
   productDraftSchema,
   settlementPaymentMethod,
   shiftCloseFormSchema,
@@ -24,7 +22,11 @@ import type { Order, Product, Shift, StockMovement } from '../types'
  * encrypted session cookie (`requireMembership`). The client never sends a
  * tenant id, so a crafted request cannot reach another shop's data; and a role
  * that is too low is rejected here, not merely hidden in the UI.
+ *
+ * Checkout now lives in `features/checkout`; it is re-exported here so existing
+ * imports keep working until the facade is deleted.
  */
+export { checkoutFn } from '../features/checkout/checkout.functions'
 
 /** Local start-of-day, as an ISO string, for the cashier's "today only" view. */
 function startOfTodayIso(): string {
@@ -179,34 +181,6 @@ export const getOrderFn = createServerFn({ method: 'GET' })
     if (order.createdAt >= startOfTodayIso()) return order
     const current = await data.getCurrentShift(ctx.tenantId)
     return current && order.shiftId === current.id ? order : undefined
-  })
-
-/**
- * Settles the caller's open server cart (ADR-0003/0004). The client sends no
- * cart id, no items, and no prices: the server finds the open cart, prices it
- * from the live catalog, computes totals and change itself, and settles the
- * cart exactly once. The checkout form payload is still re-validated here so
- * a crafted request cannot bypass the input rules the UI applies.
- */
-export const checkoutFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ checkout: checkoutFormSchema }))
-  .handler(async ({ data: input }): Promise<Order> => {
-    const ctx = await requireMembership('cashier')
-    const cart = await data.getOpenCart(ctx.tenantId, ctx.userId)
-    if (!cart || cart.items.length === 0) {
-      throw new Error('Keranjang masih kosong')
-    }
-    const checkout = parseCheckoutForm(input.checkout)
-    // The validated discount intent travels; the rupiah value is computed
-    // server-side against the server's own subtotal (ADR-0003).
-    return data.checkoutCart(ctx.tenantId, ctx.userId, cart.id, {
-      discount: { amount: checkout.discountAmount, percent: checkout.discountPercent },
-      paymentMethod: checkout.paymentMethod,
-      amountPaid: checkout.paymentMethod === 'cash' ? checkout.cashTendered : null,
-      channel: checkout.channel,
-      cashier: checkout.cashier ?? '',
-      customerName: checkout.customerName ?? '',
-    })
   })
 
 /* ------------------------------ customer credit ----------------------- */
