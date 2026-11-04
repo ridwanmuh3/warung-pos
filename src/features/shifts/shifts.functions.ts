@@ -1,0 +1,86 @@
+import { createServerFn } from '@tanstack/react-start'
+import { z } from 'zod'
+import * as repo from '~/lib/data.server'
+import { requireMembership } from '~/lib/tenant.server'
+import {
+  entityId,
+  openingCashFormSchema,
+  openingCashSchema,
+  shiftCloseFormSchema,
+  shiftCloseSchema,
+} from '~/lib/validation'
+import type { Order, Shift } from '~/types'
+
+/**
+ * Shift RPC: open/close the cash drawer and read its orders.
+ *
+ * Every handler resolves tenant and role from the session cookie. The
+ * expected-cash rule itself lives in `domain/shifts/drawer.ts`.
+ */
+
+/** Local start-of-day, as an ISO string, for the cashier's "today only" view. */
+function startOfTodayIso(): string {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  return start.toISOString()
+}
+
+export const listShiftsFn = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<Shift[]> => {
+    const ctx = await requireMembership('cashier')
+    if (ctx.role === 'cashier') {
+      return repo.listShifts(ctx.tenantId, {
+        fromIso: startOfTodayIso(),
+        includeOpen: true,
+      })
+    }
+    return repo.listShifts(ctx.tenantId)
+  },
+)
+
+export const currentShiftFn = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<Shift | undefined> => {
+    const ctx = await requireMembership('cashier')
+    return repo.getCurrentShift(ctx.tenantId)
+  },
+)
+
+export const openShiftFn = createServerFn({ method: 'POST' })
+  .validator(openingCashFormSchema)
+  .handler(async ({ data: input }): Promise<Shift> => {
+    const ctx = await requireMembership('cashier')
+    const parsed = openingCashSchema.safeParse(input)
+    if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? 'Modal awal tidak valid')
+    return repo.openShift(ctx.tenantId, {
+      openingCash: parsed.data.openingCash,
+      userId: ctx.userId,
+    })
+  })
+
+/** Orders feeding the drawer's expected-cash display: the open shift's sales
+ *  and its refunds, unwindowed (unlike the cashier's today-only order list). */
+export const listDrawerOrdersFn = createServerFn({ method: 'GET' })
+  .validator(z.object({ shiftId: entityId }))
+  .handler(async ({ data: input }): Promise<Order[]> => {
+    const ctx = await requireMembership('cashier')
+    const shift = await repo.getShiftById(ctx.tenantId, input.shiftId)
+    if (!shift) return []
+    // A cashier may inspect today's shifts and the still-open shift. Closed
+    // historical shifts are manager/owner territory.
+    if (ctx.role === 'cashier' && shift.openedAt < startOfTodayIso() && shift.closedAt) {
+      return []
+    }
+    return repo.listOrdersForDrawer(ctx.tenantId, input.shiftId)
+  })
+
+export const closeShiftFn = createServerFn({ method: 'POST' })
+  .validator(shiftCloseFormSchema)
+  .handler(async ({ data: input }): Promise<Shift | undefined> => {
+    const ctx = await requireMembership('cashier')
+    const parsed = shiftCloseSchema.safeParse(input)
+    if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? 'Jumlah kas tidak valid')
+    return repo.closeShift(ctx.tenantId, {
+      countedCash: parsed.data.countedCash,
+      note: parsed.data.note,
+    })
+  })

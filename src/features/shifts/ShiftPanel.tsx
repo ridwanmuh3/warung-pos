@@ -1,13 +1,12 @@
 import { IconLockOpen, IconLock, IconAlertTriangle } from '@tabler/icons-react'
-import { formatDateTime, formatIDR } from '../lib/format'
-import { openingCashFormSchema, shiftCloseFormSchema } from '../lib/validation'
-import { closeShiftFn, openShiftFn } from '../lib/data.functions'
+import { formatDateTime, formatIDR } from '~/lib/format'
+import { openingCashFormSchema, shiftCloseFormSchema } from '~/lib/validation'
+import { closeShiftFn, listDrawerOrdersFn, openShiftFn } from './shifts.functions'
 import { useEffect, useState } from 'react'
-import { useCurrentShift, useShifts } from '../lib/useServerData'
-import { listDrawerOrdersFn } from '../lib/data.functions'
-import { expectedDrawerCash } from '../lib/cashDrawer'
-import type { Order } from '../types'
-import { Button } from './ui/Button'
+import { useCurrentShift, useShifts } from '~/lib/useServerData'
+import { expectedDrawerCash } from '~/domain/shifts/drawer'
+import type { Order } from '~/types'
+import { Button } from '~/components/ui/Button'
 
 /**
  * Cash-drawer shift panel: open the drawer with a float, then close it with a
@@ -133,8 +132,8 @@ export function ShiftPanel({ onChanged }: { onChanged?: () => void } = {}) {
     )
   }
 
-  // The same rule the server closes with (cashDrawer.ts) — display and close
-  // can never drift.
+  // The same rule the server closes with (domain/shifts/drawer.ts) — display
+  // and close can never drift.
   const expected = expectedDrawerCash({
     openingCash: open.openingCash,
     orders: drawerOrders,

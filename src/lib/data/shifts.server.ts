@@ -11,7 +11,7 @@ import { createServerOnlyFn } from '@tanstack/react-start'
 import { getDb } from '../../db/client.server'
 import { orders, shifts } from '../../db/schema'
 import type { Shift } from '../../types'
-import { expectedDrawerCash } from '../cashDrawer'
+import { expectedDrawerCash } from '../../domain/shifts/drawer'
 import { toShift } from './mappers.server'
 /* -------------------------------- shifts ------------------------------ */
 
