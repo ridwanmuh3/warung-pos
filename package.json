@@ -13,6 +13,7 @@
     "lint": "oxlint",
     "test": "vitest run",
     "check:tenant": "node scripts/check-tenant-scoping.mjs",
+    "check:imports": "node scripts/check-import-boundaries.mjs",
     "seed:images": "node --env-file=.env scripts/seed-images.mjs",
     "db:push": "node --env-file=.env node_modules/drizzle-kit/bin.cjs push",
     "db:generate": "node --env-file=.env node_modules/drizzle-kit/bin.cjs generate",
