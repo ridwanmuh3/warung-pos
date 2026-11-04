@@ -5,11 +5,9 @@ import { requireMembership } from './tenant.server'
 import { IMAGE_CONTENT_TYPES, createUploadTarget, deleteObject, imageBaseUrl, objectExists } from './r2.server'
 import {
   entityId,
-  noteText,
   openingCashFormSchema,
   openingCashSchema,
   productDraftSchema,
-  settlementPaymentMethod,
   shiftCloseFormSchema,
   shiftCloseSchema,
 } from './validation'
@@ -153,71 +151,24 @@ export const listStockMovementsFn = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-/* -------------------------------- orders ------------------------------ */
+/* -------------------------------- sales ------------------------------- */
 
-export const listOrdersFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<Order[]> => {
-    const ctx = await requireMembership('cashier')
-    // Cashiers only see today's orders; managers and owners see all history.
-    const options = ctx.role === 'cashier' ? { fromIso: startOfTodayIso() } : {}
-    return data.listOrders(ctx.tenantId, options)
-  },
-)
-
-export const getOrderFn = createServerFn({ method: 'GET' })
-  .validator(z.object({ id: entityId }))
-  .handler(async ({ data: input }): Promise<Order | undefined> => {
-    const ctx = await requireMembership('cashier')
-    // A wrong tenant simply has no such order: an id leak reveals nothing.
-    const order = await data.getOrderById(ctx.tenantId, input.id)
-    if (!order || ctx.role !== 'cashier') return order
-
-    // The debt screen shows every credit order, including those from older
-    // days, so its receipts must stay openable past the today-only window.
-    if (order.paymentMethod === 'credit' && order.status === 'paid') return order
-
-    // The cashier's "today only" rule is a server boundary, not just a UI
-    // filter. Keep the current shift visible when it opened before midnight.
-    if (order.createdAt >= startOfTodayIso()) return order
-    const current = await data.getCurrentShift(ctx.tenantId)
-    return current && order.shiftId === current.id ? order : undefined
-  })
-
-/* ------------------------------ customer credit ----------------------- */
-
-/** Every credit order for the debt screen; the client splits unpaid/paid. */
-export const listCreditOrdersFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<Order[]> => {
-    const ctx = await requireMembership('cashier')
-    return data.listCreditOrders(ctx.tenantId)
-  },
-)
-
-/** Marks a credit order as fully paid. */
-export const settleCreditOrderFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ id: entityId, method: settlementPaymentMethod }))
-  .handler(async ({ data: input }): Promise<Order | undefined> => {
-    const ctx = await requireMembership('cashier')
-    return data.settleCreditOrder(ctx.tenantId, input.id, {
-      method: input.method,
-      userId: ctx.userId,
-    })
-  })
-
-export const voidOrderFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ id: entityId, reason: noteText }))
-  .handler(async ({ data: input }): Promise<Order | undefined> => {
-    const ctx = await requireMembership('manager')
-    return data.voidOrder(ctx.tenantId, input.id, input.reason ?? '')
-  })
-
-/** Returns money for an order whose shift has closed (ADR-0006). */
-export const refundOrderFn = createServerFn({ method: 'POST' })
-  .validator(z.object({ id: entityId, reason: noteText }))
-  .handler(async ({ data: input }): Promise<Order | undefined> => {
-    const ctx = await requireMembership('manager')
-    return data.refundOrder(ctx.tenantId, input.id, input.reason ?? '')
-  })
+/**
+ * Sales history now lives in `features/sales`; re-exported here so existing
+ * imports keep working until this facade is deleted.
+ */
+export {
+  getOrderFn,
+  listCreditOrdersFn,
+  listOrdersFn,
+  refundOrderFn,
+  settleCreditOrderFn,
+  voidOrderFn,
+} from '../features/sales/sales.functions'
+export type {
+  RefundOrderResult,
+  VoidOrderResult,
+} from '../features/sales/sales.functions'
 
 /* -------------------------------- shifts ------------------------------ */
 

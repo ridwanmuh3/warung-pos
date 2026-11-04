@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { resetDatabase } from './helpers/db'
+import { RefundRequiredError } from '../src/domain/sales/lifecycle'
 
 const { getDb } = await import('../src/db/client.server')
 const { tenants, users } = await import('../src/db/schema')
@@ -70,7 +71,9 @@ describe('refund is separate from void (ADR-0006)', () => {
     const order = await ringUp(product.id, product)
     await data.closeShift(TENANT, { countedCash: 59000 })
 
-    await expect(data.voidOrder(TENANT, order.id, 'salah input')).rejects.toThrow()
+    await expect(data.voidOrder(TENANT, order.id, 'salah input')).rejects.toBeInstanceOf(
+      RefundRequiredError,
+    )
   })
 
   it('voiding within the open shift still works', async () => {
