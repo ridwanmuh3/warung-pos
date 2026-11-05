@@ -89,7 +89,17 @@ export async function recordPaymentCreated(
       rawPayload: JSON.stringify(created),
       updatedAt: now,
     })
-    .where(and(eq(payments.id, paymentId), eq(payments.tenantId, tenantId)))
+    .where(
+      and(
+        eq(payments.id, paymentId),
+        eq(payments.tenantId, tenantId),
+        // Only a `creating` attempt may become payable. If the cashier
+        // cancelled while the create call was in flight, the QR exists at
+        // Xendit but must not resurrect the voided order; a late capture is
+        // recorded as `paid_after_cancel` for a manual refund instead.
+        eq(payments.status, 'creating'),
+      ),
+    )
   return toPayment(await requirePaymentRow(tenantId, paymentId))
 }
 
@@ -109,7 +119,15 @@ export async function recordPaymentFailure(
       rawPayload: detail.slice(0, 4000),
       updatedAt: new Date().toISOString(),
     })
-    .where(and(eq(payments.id, paymentId), eq(payments.tenantId, tenantId)))
+    .where(
+      and(
+        eq(payments.id, paymentId),
+        eq(payments.tenantId, tenantId),
+        // A failure report must never overwrite a terminal state. `paid` and
+        // `cancelled` are final; only a live attempt can fail.
+        inArray(payments.status, ['creating', 'pending']),
+      ),
+    )
   return toPayment(await requirePaymentRow(tenantId, paymentId))
 }
 

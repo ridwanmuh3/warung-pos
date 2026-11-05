@@ -414,6 +414,13 @@ export const voidOrder = createServerOnlyFn(
     if (existing.status === 'refunded') {
       throw new Error('Pesanan sudah dikembalikan dananya; tidak bisa di-void')
     }
+    // A pending order still owns an unpaid payment attempt and reserved
+    // stock. Voiding it here would leave the gateway attempt live, so the
+    // cashier must cancel from the QRIS screen, which also cancels the attempt
+    // and parks the items for a retry.
+    if (existing.status === 'pending') {
+      throw new AppError('payment-invalid', 'Batalkan dari layar pembayaran QRIS')
+    }
     if (existing.shiftId) {
       const shiftRows = await db
         .select({ closedAt: shifts.closedAt })
