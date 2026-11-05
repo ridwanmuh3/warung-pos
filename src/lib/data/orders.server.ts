@@ -9,7 +9,7 @@
 import { and, desc, eq, gte, inArray, or, sql } from 'drizzle-orm'
 import { createServerOnlyFn } from '@tanstack/react-start'
 import { getDb } from '../../db/client.server'
-import { carts, cartItems, counters, orderItems, orders, products, shifts } from '../../db/schema'
+import { carts, cartItems, counters, orderItems, orders, payments, products, shifts } from '../../db/schema'
 import type {
   Order,
   OrderStatus,
@@ -61,6 +61,19 @@ export interface CheckoutCartInput {
 }
 
 /**
+ * Optional hooks for the asynchronous QRIS flow.
+ *
+ * `status: 'pending'` reserves stock exactly like a sale but keeps the money
+ * rules dormant until the gateway confirms. `payment` is written in the same
+ * transaction as the order, so a crash can never leave a payable QR with no
+ * order (or an order with no attempt row to reconcile).
+ */
+export interface CheckoutCartOptions {
+  status?: Extract<OrderStatus, 'paid' | 'pending'>
+  payment?: { id: string; referenceId: string; expiresAt: string }
+}
+
+/**
  * Settles a cart into an order (ADR-0004). The cart is the idempotency key:
  * the first checkout creates the order and marks the cart `checked_out` in
  * the same transaction as the order, line items, and stock movements; a
@@ -75,6 +88,7 @@ export const checkoutCart = createServerOnlyFn(
     userId: string,
     cartId: string,
     input: CheckoutCartInput,
+    options: CheckoutCartOptions = {},
   ): Promise<Order> => {
     const db = getDb()
     const cartRows = await db
@@ -160,7 +174,7 @@ export const checkoutCart = createServerOnlyFn(
         paymentMethod: input.paymentMethod,
         amountPaid: payment.amountPaid,
         change: payment.change,
-        status: 'paid',
+        status: options.status ?? 'paid',
         settlementStatus: payment.settlementStatus,
         ...(customerName ? { customerName } : {}),
         channel: input.channel,
@@ -203,6 +217,22 @@ export const checkoutCart = createServerOnlyFn(
           qty: line.qty,
         })),
       )
+
+      if (options.payment) {
+        const now = new Date().toISOString()
+        await tx.insert(payments).values({
+          id: options.payment.id,
+          tenantId,
+          orderId: order.id,
+          provider: 'xendit',
+          referenceId: options.payment.referenceId,
+          status: 'creating',
+          amount: total,
+          expiresAt: options.payment.expiresAt,
+          createdAt: now,
+          updatedAt: now,
+        })
+      }
 
       for (const line of priced) {
         await applyStockDeltaOn(tx, tenantId, {
