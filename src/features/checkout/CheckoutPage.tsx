@@ -14,6 +14,7 @@ import { PAYMENT_LABELS, CHANNEL_LABELS } from '~/content/labels'
 import { clearCart, flushCart, setCartItems, useCart } from '~/lib/cart'
 import { formatIDR } from '~/lib/format'
 import { priceCart } from '~/domain/sales/pricing'
+import { ENABLED_PAYMENT_METHODS } from '~/domain/sales/payment'
 import type { DiscountInput } from '~/domain/sales/pricing'
 import { checkoutFormSchema, parseCheckoutForm } from '~/lib/validation'
 import { useSession } from '~/lib/useSession'
@@ -27,7 +28,6 @@ import { buttonStyles } from '~/components/ui/buttonStyles'
 import { checkoutFn } from './checkout.functions'
 import { checkoutRejectionMessage } from './checkout.outcome'
 
-const PAYMENT_METHODS = Object.keys(PAYMENT_LABELS) as PaymentMethod[]
 const route = getRouteApi('/checkout')
 const CHANNELS = Object.keys(CHANNEL_LABELS) as SalesChannel[]
 
@@ -58,7 +58,11 @@ export function CheckoutPage() {
   const navigate = useNavigate()
   const { items } = useCart()
   const session = useSession()
-  const { products, currentShift, shifts, drawerOrders } = route.useLoaderData()
+  const { products, currentShift, shifts, drawerOrders, qrisEnabled } = route.useLoaderData()
+  const paymentMethods = useMemo(
+    () => ENABLED_PAYMENT_METHODS.filter((method) => method !== 'qris' || qrisEnabled),
+    [qrisEnabled],
+  )
   const [payment, setPayment] = useState<PaymentMethod>('cash')
   const [customerName, setCustomerName] = useState('')
   const [channel, setChannel] = useState<SalesChannel>('dine-in')
@@ -183,7 +187,11 @@ export function CheckoutPage() {
           await navigate({
             to: '/order-success/$orderId',
             params: { orderId: result.order.id },
-            state: (prev) => ({ ...prev, order: result.order }),
+            state: (prev) => ({
+              ...prev,
+              order: result.order,
+              payment: result.kind === 'payment-required' ? result.payment : undefined,
+            }),
             replace: true,
           })
           clearCart()
@@ -333,7 +341,7 @@ export function CheckoutPage() {
           <section className="rounded-2xl border border-border-subtle bg-surface p-4 shadow-level1 sm:p-5">
             <h2 className="text-sm font-semibold text-slate-900">Metode Pembayaran</h2>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {PAYMENT_METHODS.map((method) => {
+              {paymentMethods.map((method) => {
                 const Icon = PAYMENT_ICONS[method]
                 return (
                   <button
@@ -353,6 +361,16 @@ export function CheckoutPage() {
                 )
               })}
             </div>
+
+            {payment === 'qris' && (
+              <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs text-sky-900">
+                <p className="font-semibold">QRIS otomatis lewat Xendit</p>
+                <p className="mt-1">
+                  QR dibuat dengan nominal yang sudah terisi. Pesanan berstatus menunggu sampai
+                  pembayaran dikonfirmasi; stok sudah dikunci selama menunggu.
+                </p>
+              </div>
+            )}
 
             {payment === 'credit' && (
               <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
@@ -519,9 +537,15 @@ export function CheckoutPage() {
                 {formatIDR(total)}
               </span>
             </div>
-            {payButton('lg', 'mt-4 w-full', payment === 'credit' ? 'Catat Utang' : 'Konfirmasi Pesanan')}
+            {payButton(
+              'lg',
+              'mt-4 w-full',
+              payment === 'credit' ? 'Catat Utang' : payment === 'qris' ? 'Buat QRIS' : 'Konfirmasi Pesanan',
+            )}
             <p className="mt-2 text-center text-xs text-slate-400">
-              Pesanan tersimpan di server dan stok langsung berkurang.
+              {payment === 'qris'
+                ? 'Stok dikunci sekarang; pesanan lunas setelah pembayaran terkonfirmasi.'
+                : 'Pesanan tersimpan di server dan stok langsung berkurang.'}
             </p>
           </div>
         </div>
@@ -533,7 +557,7 @@ export function CheckoutPage() {
           'md',
           'w-full',
           <>
-            <span>{payment === 'credit' ? 'Catat Utang' : 'Konfirmasi Pesanan'}</span>
+            <span>{payment === 'credit' ? 'Catat Utang' : payment === 'qris' ? 'Buat QRIS' : 'Konfirmasi Pesanan'}</span>
             <span data-testid="mobile-payable-total" className="tabular font-display font-black">
               {formatIDR(total)}
             </span>
