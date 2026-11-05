@@ -197,11 +197,19 @@ export function OrdersPage() {
                     <li key={order.id}>
                       <div
                         className={`flex items-center gap-3 rounded-xl border bg-white p-3 shadow-sm ${
-                          order.status !== 'paid' ? 'border-red-200 opacity-75' : 'border-slate-200'
+                          order.status === 'void' || order.status === 'refunded'
+                            ? 'border-red-200 opacity-75'
+                            : order.status === 'pending'
+                              ? 'border-sky-200'
+                              : 'border-slate-200'
                         }`}
                       >
                         <Link
-                          to="/orders/$orderId"
+                          to={
+                            order.status === 'pending'
+                              ? '/order-success/$orderId'
+                              : '/orders/$orderId'
+                          }
                           params={{ orderId: order.id }}
                           className="min-w-0 flex-1"
                         >
@@ -219,6 +227,11 @@ export function OrdersPage() {
                                 className="px-1.5 py-0.5 text-[10px] font-medium"
                               >
                                 {order.settlementStatus === 'settled' ? 'LUNAS' : 'NGUTANG'}
+                              </Badge>
+                            )}
+                            {order.status === 'pending' && (
+                              <Badge variant="warning" className="px-1.5 py-0.5 text-[10px]">
+                                MENUNGGU
                               </Badge>
                             )}
                             {order.status === 'void' && (

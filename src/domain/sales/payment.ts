@@ -30,6 +30,17 @@ export interface ValidatedPayment {
   settlementStatus: SettlementStatus
 }
 
+/**
+ * Methods a new checkout may use. `transfer` stays in the type and database
+ * enum so historical rows still render, but it is no longer offered or
+ * accepted: the MVP is cash, Xendit QRIS, and credit.
+ */
+export const ENABLED_PAYMENT_METHODS = ['cash', 'qris', 'credit'] as const
+
+export function isEnabledPaymentMethod(method: PaymentMethod): boolean {
+  return (ENABLED_PAYMENT_METHODS as readonly PaymentMethod[]).includes(method)
+}
+
 export function validatePayment({
   paymentMethod,
   total,
@@ -39,6 +50,10 @@ export function validatePayment({
   const isCash = paymentMethod === 'cash'
   const isCredit = paymentMethod === 'credit'
   const name = customerName?.trim() ?? ''
+
+  if (!isEnabledPaymentMethod(paymentMethod)) {
+    throw new AppError('payment-invalid', 'Metode pembayaran ini sudah tidak tersedia')
+  }
 
   if (isCredit && name === '') {
     throw new AppError('payment-invalid', 'Nama pelanggan wajib diisi untuk pembayaran ngutang')
