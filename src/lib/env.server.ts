@@ -66,3 +66,47 @@ export const r2PublicUrl = createServerOnlyFn((): string | null => {
   return value ? value.replace(/\/+$/, '') : null
 })
 
+export interface XenditEnv {
+  apiKey: string
+  /** API origin; overridable so tests can point at a local fake server. */
+  baseUrl: string
+  /** Test key in use; production keys are refused unless explicitly allowed. */
+  isTestKey: boolean
+}
+
+/**
+ * Xendit credentials and the safety rail around them.
+ *
+ * A production key (`xnd_production_…`) is refused unless `XENDIT_LIVE=true`
+ * is set explicitly. That prevents a live key pasted into a dev `.env` from
+ * charging real customers during local testing.
+ */
+export const xenditEnv = createServerOnlyFn((): XenditEnv => {
+  const apiKey = required('XENDIT_API_KEY').trim()
+  const isTestKey = apiKey.startsWith('xnd_development')
+  const live = (process.env.XENDIT_LIVE ?? '').trim().toLowerCase() === 'true'
+  if (!isTestKey && !live) {
+    throw new Error(
+      'XENDIT_API_KEY is a production key; set XENDIT_LIVE=true to use it explicitly',
+    )
+  }
+  return {
+    apiKey,
+    baseUrl: (process.env.XENDIT_BASE_URL?.trim() || 'https://api.xendit.co').replace(/\/+$/, ''),
+    isTestKey,
+  }
+})
+
+/**
+ * Dashboard webhook verification token. Required only by the callback route:
+ * a checkout can create a QR without it, but deliveries cannot be trusted.
+ */
+export const xenditCallbackToken = createServerOnlyFn((): string =>
+  required('XENDIT_CALLBACK_TOKEN').trim(),
+)
+
+/** True when the gateway is wired up; the QRIS option is hidden otherwise. */
+export const isXenditConfigured = createServerOnlyFn((): boolean =>
+  Boolean(process.env.XENDIT_API_KEY?.trim()),
+)
+

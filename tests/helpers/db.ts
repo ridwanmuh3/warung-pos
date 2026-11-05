@@ -48,6 +48,7 @@ export async function resetDatabase(): Promise<void> {
   const tables = [
     'cart_items',
     'carts',
+    'payments',
     'order_items',
     'orders',
     'stock_movements',

@@ -73,7 +73,49 @@ export interface OrderItem {
   cost: number
 }
 
-export type OrderStatus = 'paid' | 'void' | 'refunded'
+/**
+ * `pending` is an order whose stock is reserved but whose money has not
+ * arrived yet (Xendit QRIS). Every money rule gates on `status === 'paid'`, so
+ * a pending order is excluded from revenue, receivables, and the drawer.
+ */
+export type OrderStatus = 'pending' | 'paid' | 'void' | 'refunded'
+
+/** Payment gateways this app can talk to. Only Xendit ships today. */
+export type PaymentProvider = 'xendit'
+
+/**
+ * One attempt to collect money for a pending order.
+ *
+ * `expired` is not terminal: a customer can still complete a QR after the
+ * display window, so a late `payment.capture` still moves it to `paid`.
+ * `cancelled` is terminal — money arriving afterwards must be refunded by
+ * hand (recorded with `failureCode: 'paid_after_cancel'`).
+ */
+export type PaymentAttemptStatus =
+  | 'creating'
+  | 'pending'
+  | 'paid'
+  | 'expired'
+  | 'failed'
+  | 'cancelled'
+
+export interface PaymentAttempt {
+  id: string
+  orderId: string
+  provider: PaymentProvider
+  /** Our globally unique idempotency key, sent to Xendit as `reference_id`. */
+  referenceId: string
+  /** Xendit's `payment_request_id`. */
+  providerRef?: string
+  status: PaymentAttemptStatus
+  amount: number
+  /** The `QR_STRING` action returned by Xendit, rendered client-side. */
+  qrString?: string
+  expiresAt?: string
+  paidAt?: string
+  failureCode?: string
+  createdAt: string
+}
 
 export interface Order {
   id: string

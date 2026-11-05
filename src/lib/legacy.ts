@@ -81,7 +81,7 @@ const legacyOrderSchema = z.object({
   paymentMethod: legacyPaymentMethod,
   amountPaid: z.number().nullable().catch(null),
   change: z.number().nullable().catch(null),
-  status: z.enum(['paid', 'void', 'refunded']).catch('paid'),
+  status: z.enum(['pending', 'paid', 'void', 'refunded']).catch('paid'),
   channel: legacyChannel.catch('dine-in'),
   cashier: z.string().optional(),
   shiftId: z.string().optional(),

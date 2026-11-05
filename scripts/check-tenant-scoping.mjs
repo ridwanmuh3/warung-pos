@@ -12,8 +12,8 @@ import ts from 'typescript'
  *
  * Two kinds of tables exist:
  *  - root tables carry `tenant_id` (`products`, `orders`, `carts`, `shifts`,
- *    `stock_movements`, `counters`). Every statement touching one must mention
- *    `tenantId`, including joins.
+ *    `stock_movements`, `counters`, `payments`). Every statement touching one
+ *    must mention `tenantId`, including joins.
  *  - child tables (`order_items`, `cart_items`) have no `tenant_id`; they are
  *    scoped through their parent (`orderId` / `cartId`), which in turn came
  *    from a tenant-scoped query.
@@ -38,7 +38,19 @@ const PARENT_TABLES = new Set([
   'stockMovements',
   'counters',
   'carts',
+  'payments',
 ])
+
+/**
+ * Deliberate, documented exceptions.
+ *
+ * A Xendit webhook arrives without a session. It resolves the payment row by
+ * our globally unique `reference_id` before it can know the tenant; every
+ * write afterwards is scoped by the `tenantId` read off that row. Keeping the
+ * exception to one named function means any other unscoped `payments` query
+ * still fails the build.
+ */
+const UNSCOPED_LOOKUPS = new Set(['findPaymentByReference'])
 
 /** Child tables and the parent key that scopes them. */
 const CHILD_TABLES = new Map([
@@ -143,6 +155,27 @@ function tableOf(call) {
   return { method, table }
 }
 
+/** Name of the nearest enclosing named function or `const fn = …` arrow. */
+function functionNameOf(node) {
+  let current = node
+  while (current) {
+    if (ts.isFunctionDeclaration(current) && current.name) return current.name.text
+    if (ts.isMethodDeclaration(current) && current.name && ts.isIdentifier(current.name)) {
+      return current.name.text
+    }
+    if (
+      ts.isVariableDeclaration(current) &&
+      ts.isIdentifier(current.name) &&
+      current.initializer &&
+      (ts.isArrowFunction(current.initializer) || ts.isFunctionExpression(current.initializer))
+    ) {
+      return current.name.text
+    }
+    current = current.parent
+  }
+  return null
+}
+
 function violationsIn(file) {
   const source = readFileSync(file, 'utf8')
   const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
@@ -152,7 +185,7 @@ function violationsIn(file) {
   function visit(node) {
     if (ts.isCallExpression(node)) {
       const access = tableOf(node)
-      if (access) {
+      if (access && !UNSCOPED_LOOKUPS.has(functionNameOf(node))) {
         const statement = statementOf(node)
         const text = statement.getText(sourceFile)
         const line = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1

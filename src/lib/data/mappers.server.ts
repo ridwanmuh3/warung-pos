@@ -9,8 +9,8 @@
 import { eq, inArray } from 'drizzle-orm'
 import { getDb } from '../../db/client.server'
 import type { AppDatabase } from '../../db/client.server'
-import { cartItems, carts, orderItems, orders, products, shifts } from '../../db/schema'
-import type { Cart, Order, OrderItem, Product, Shift } from '../../types'
+import { cartItems, carts, orderItems, orders, payments, products, shifts } from '../../db/schema'
+import type { Cart, Order, OrderItem, PaymentAttempt, Product, Shift } from '../../types'
 
 /** A database handle: the client itself or a transaction inside it. */
 export type DbOrTx = AppDatabase | Parameters<Parameters<AppDatabase['transaction']>[0]>[0]
@@ -109,6 +109,26 @@ export function toCart(row: CartRow, items: CartItemRow[]): Cart {
     ...(row.label ? { label: row.label } : {}),
     items: items.map(toCartItem),
     updatedAt: row.updatedAt,
+  }
+}
+
+export type PaymentRow = typeof payments.$inferSelect
+
+/** Row → domain view. `tenantId` and `rawPayload` stay server-side. */
+export function toPayment(row: PaymentRow): PaymentAttempt {
+  return {
+    id: row.id,
+    orderId: row.orderId,
+    provider: row.provider,
+    referenceId: row.referenceId,
+    ...(row.providerRef ? { providerRef: row.providerRef } : {}),
+    status: row.status,
+    amount: row.amount,
+    ...(row.qrString ? { qrString: row.qrString } : {}),
+    ...(row.expiresAt ? { expiresAt: row.expiresAt } : {}),
+    ...(row.paidAt ? { paidAt: row.paidAt } : {}),
+    ...(row.failureCode ? { failureCode: row.failureCode } : {}),
+    createdAt: row.createdAt,
   }
 }
 
