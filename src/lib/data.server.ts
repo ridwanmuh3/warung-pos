@@ -8,6 +8,7 @@
 export * from './data/products.server'
 export * from './data/stock.server'
 export * from './data/orders.server'
+export * from './data/payments.server'
 export * from './data/shifts.server'
 export * from './data/carts.server'
 export * from './data/import.server'

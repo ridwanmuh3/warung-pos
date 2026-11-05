@@ -172,7 +172,11 @@ export function CheckoutPage() {
         // the latch below is a UX nicety, not the integrity mechanism.
         await flushCart()
         const result = await checkoutFn({ data: { checkout: rawCheckout } })
-        if (result.kind === 'ordered') {
+        if (
+          result.kind === 'ordered' ||
+          result.kind === 'payment-required' ||
+          result.kind === 'payment-setup-failed'
+        ) {
           // Let the success route mount before emptying the local cart. Clearing
           // first would re-render this screen as "Tidak ada pesanan" while the
           // next route loads, which read as a blank page between pay and receipt.

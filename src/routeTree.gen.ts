@@ -32,6 +32,7 @@ import { Route as ImgSplatRouteImport } from './routes/img/$'
 import { Route as OrderSuccessOrderIdRouteImport } from './routes/order-success.$orderId'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as OrdersOrderIdRouteImport } from './routes/orders.$orderId'
+import { Route as ApiXenditCallbackRouteImport } from './routes/api.xendit.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -148,6 +149,11 @@ const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
   path: '/orders/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiXenditCallbackRoute = ApiXenditCallbackRouteImport.update({
+  id: '/api/xendit/callback',
+  path: '/api/xendit/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/order-success/$orderId': typeof OrderSuccessOrderIdRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/orders/': typeof OrdersIndexRoute
+  '/api/xendit/callback': typeof ApiXenditCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/order-success/$orderId': typeof OrderSuccessOrderIdRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/orders': typeof OrdersIndexRoute
+  '/api/xendit/callback': typeof ApiXenditCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/order-success/$orderId': typeof OrderSuccessOrderIdRoute
   '/orders/$orderId': typeof OrdersOrderIdRoute
   '/orders/': typeof OrdersIndexRoute
+  '/api/xendit/callback': typeof ApiXenditCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/order-success/$orderId'
     | '/orders/$orderId'
     | '/orders/'
+    | '/api/xendit/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/order-success/$orderId'
     | '/orders/$orderId'
     | '/orders'
+    | '/api/xendit/callback'
   id:
     | '__root__'
     | '/'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/order-success/$orderId'
     | '/orders/$orderId'
     | '/orders/'
+    | '/api/xendit/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   OrderSuccessOrderIdRoute: typeof OrderSuccessOrderIdRoute
   OrdersOrderIdRoute: typeof OrdersOrderIdRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
+  ApiXenditCallbackRoute: typeof ApiXenditCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -492,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/xendit/callback': {
+      id: '/api/xendit/callback'
+      path: '/api/xendit/callback'
+      fullPath: '/api/xendit/callback'
+      preLoaderRoute: typeof ApiXenditCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -519,6 +539,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrderSuccessOrderIdRoute: OrderSuccessOrderIdRoute,
   OrdersOrderIdRoute: OrdersOrderIdRoute,
   OrdersIndexRoute: OrdersIndexRoute,
+  ApiXenditCallbackRoute: ApiXenditCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
