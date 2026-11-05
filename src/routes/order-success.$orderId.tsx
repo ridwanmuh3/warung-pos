@@ -2,7 +2,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { OrderSuccessPage, SuccessPending } from '~/features/sales/OrderSuccessPage'
 import { PendingPayment } from '~/features/checkout/PendingPayment'
 import { getOrderFn } from '~/features/sales/sales.functions'
-import { getPaymentStatusFn } from '~/features/checkout/checkout.functions'
+import {
+  checkoutCapabilitiesFn,
+  getPaymentStatusFn,
+} from '~/features/checkout/checkout.functions'
 import type { Order, PaymentAttempt } from '~/types'
 
 interface SuccessState {
@@ -26,19 +29,31 @@ export const Route = createFileRoute('/order-success/$orderId')({
         ? cached
         : await getOrderFn({ data: { id: params.orderId } })
 
-    if (!order || order.status !== 'pending') return { order, payment: undefined }
-
-    const cachedPayment = state.payment
-    if (cachedPayment?.orderId === order.id && cachedPayment.status === 'pending') {
-      return { order, payment: cachedPayment }
+    if (!order || order.status !== 'pending') {
+      return { order, payment: undefined, simulationEnabled: false }
     }
-    const result = await getPaymentStatusFn({ data: { orderId: order.id } })
-    return { order, payment: result.payment }
+
+    // The capability comes from the server's key type, so a deployed sandbox
+    // still offers simulation while a live key removes it automatically.
+    const cachedPayment = state.payment
+    const [status, capabilities] = await Promise.all([
+      cachedPayment?.orderId === order.id && cachedPayment.status === 'pending'
+        ? Promise.resolve({ payment: cachedPayment })
+        : getPaymentStatusFn({ data: { orderId: order.id } }),
+      checkoutCapabilitiesFn(),
+    ])
+    return {
+      order,
+      payment: status.payment,
+      simulationEnabled: capabilities.simulationEnabled,
+    }
   },
 })
 
 function OrderSuccessRoute() {
-  const { order, payment } = Route.useLoaderData()
-  if (order?.status === 'pending') return <PendingPayment order={order} payment={payment} />
+  const { order, payment, simulationEnabled } = Route.useLoaderData()
+  if (order?.status === 'pending') {
+    return <PendingPayment order={order} payment={payment} simulationEnabled={simulationEnabled} />
+  }
   return <OrderSuccessPage />
 }

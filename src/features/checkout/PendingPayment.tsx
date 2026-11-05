@@ -32,13 +32,19 @@ function countdown(expiresAt: string | undefined, now: number): string {
  * for the webhook's effect, offers a manual check when a callback is delayed,
  * and keeps expiry non-destructive: a lapsed QR offers a new attempt or a
  * cancel that restocks and parks the items.
+ *
+ * `simulationEnabled` comes from the server: it is true only when the process
+ * holds a Xendit test key, so the sandbox action is available on a deployed
+ * build but disappears the moment a live key is installed.
  */
 export function PendingPayment({
   order,
   payment,
+  simulationEnabled = false,
 }: {
   order: Order
   payment?: PaymentAttempt
+  simulationEnabled?: boolean
 }) {
   const router = useRouter()
   const navigate = useNavigate()
@@ -127,6 +133,14 @@ export function PendingPayment({
           <span className="tabular font-medium">{order.orderNumber}</span> · Total{' '}
           <span className="tabular font-semibold text-slate-700">{formatIDR(order.total)}</span>
         </p>
+        {simulationEnabled && (
+          <p
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-800"
+            data-testid="sandbox-badge"
+          >
+            Mode Uji Xendit — transaksi ini tidak menagih uang nyata
+          </p>
+        )}
       </div>
 
       <div className="rounded-2xl border border-border-subtle bg-surface p-5 text-center shadow-level1">
@@ -219,7 +233,7 @@ export function PendingPayment({
           <IconX size={18} stroke={2.5} />
           Batalkan Pesanan
         </Button>
-        {import.meta.env.DEV && attempt?.providerRef && (
+        {simulationEnabled && attempt?.providerRef && (
           <Button
             variant="dark"
             size="sm"
@@ -228,7 +242,7 @@ export function PendingPayment({
             onClick={() => void run('simulate')}
             data-testid="simulate-payment"
           >
-            Simulasikan Pembayaran (Test Mode)
+            Simulasikan Pembayaran (Mode Uji)
           </Button>
         )}
         <Link to="/orders" className={buttonStyles({ variant: 'ghost', size: 'sm', className: 'w-full' })}>

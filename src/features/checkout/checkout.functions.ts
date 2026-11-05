@@ -93,10 +93,13 @@ export const checkoutFn = createServerFn({ method: 'POST' })
     })
   })
 
-/** Whether the checkout screen may offer QRIS at all. */
+/** Whether the checkout screen may offer QRIS at all, and sandbox simulation. */
 export const checkoutCapabilitiesFn = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<{ qrisEnabled: boolean }> =>
-    withAppHandler('cashier', async () => ({ qrisEnabled: repo.isQrisAvailable() })),
+  async (): Promise<{ qrisEnabled: boolean; simulationEnabled: boolean }> =>
+    withAppHandler('cashier', async () => ({
+      qrisEnabled: repo.isQrisAvailable(),
+      simulationEnabled: repo.isPaymentSimulationAvailable(),
+    })),
 )
 
 export interface PaymentStatusResult {
@@ -151,14 +154,20 @@ export const cancelPendingOrderFn = createServerFn({ method: 'POST' })
   })
 
 /**
- * Test-mode helper: asks Xendit to complete the newest attempt. Hard-gated to
- * a non-production runtime; the adapter also refuses a live key.
+ * Test-mode helper: asks Xendit to complete the newest attempt.
+ *
+ * Gated on the key type rather than `NODE_ENV`: a deployed sandbox is a
+ * production build, and that is where the button is actually useful. A live
+ * key disables it here and the adapter refuses it again before the call.
  */
 export const simulatePaymentFn = createServerFn({ method: 'POST' })
   .validator(z.object({ orderId: entityId }))
   .handler(async ({ data }): Promise<{ kind: 'simulated' }> => {
-    if (process.env.NODE_ENV === 'production') {
-      throw new AppError('payment-invalid', 'Simulasi hanya tersedia di lingkungan pengembangan')
+    if (!repo.isPaymentSimulationAvailable()) {
+      throw new AppError(
+        'payment-invalid',
+        'Simulasi hanya tersedia saat server memakai kunci uji Xendit',
+      )
     }
     return withAppHandler('cashier', async (ctx) => {
       await repo.simulateOrderPayment(ctx.tenantId, data.orderId)
