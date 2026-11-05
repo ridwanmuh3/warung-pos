@@ -105,7 +105,7 @@ export function LedgerBand() {
   return (
     <section ref={sectionRef} id="alur" data-ledger className="scroll-mt-24 bg-ink text-white">
       <div className="mx-auto max-w-[1200px] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-        <div data-reveal className="max-w-[62ch]">
+        <div data-reveal className="panel-in max-w-[62ch]">
           <SectionEyebrow index="02" tone="dark">
             Satu transaksi
           </SectionEyebrow>

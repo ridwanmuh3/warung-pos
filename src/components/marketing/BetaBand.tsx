@@ -7,7 +7,7 @@ export function BetaBand() {
   return (
     <section id="gratis" className="scroll-mt-24 bg-primary text-on-primary">
       <div className="mx-auto grid max-w-[1200px] gap-8 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-16 lg:px-8">
-        <div data-reveal>
+        <div data-reveal className="panel-in">
           <span className="inline-flex items-center gap-2 rounded-full bg-on-primary/10 px-3 py-1 text-xs font-semibold">
             <span className="size-1.5 rounded-full bg-on-primary" aria-hidden />
             Masa uji coba
@@ -30,7 +30,7 @@ export function BetaBand() {
           </ul>
         </div>
 
-        <div data-reveal className="rounded-[30px] bg-on-primary/10 p-6 sm:p-8">
+        <div data-reveal className="panel-in rounded-[30px] bg-on-primary/10 p-6 sm:p-8">
           <p className="text-sm leading-relaxed text-on-primary/85">{BETA_NOTE}</p>
           <Link
             to="/login"

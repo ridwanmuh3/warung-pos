@@ -36,7 +36,7 @@ export function SetupChecklist() {
   return (
     <section id="cara-pakai" className="scroll-mt-24 bg-surface-bone px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
       <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-        <div data-reveal>
+        <div data-reveal className="panel-in">
           <SectionEyebrow index="04">Cara pakai</SectionEyebrow>
           <h2 className="mt-5 font-display text-4xl font-black leading-[0.95] tracking-tight sm:text-5xl">
             Dari daftar sampai transaksi pertama.

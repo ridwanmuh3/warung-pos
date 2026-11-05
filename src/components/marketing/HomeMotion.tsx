@@ -24,32 +24,13 @@ export function HomeMotion() {
       let removeVisibilityListener = () => {}
       const context = gsap.context(() => {
         /**
-         * Enter from below only. An element already inside the viewport keeps
-         * its rendered state — a reload mid-page must not blank the screen.
+         * The `[data-reveal]` sections now lift into place through the CSS
+         * `.panel-in` entrance (see index.css), so nothing waits on the GSAP
+         * chunk on first paint — that removes the first-load jitter. GSAP here
+         * only owns the hero parallax and the marquee loop, both of which
+         * animate from the element's current state (no `from` reset), so they
+         * never flash.
          */
-        const enter = (targets: HTMLElement[], trigger: HTMLElement, stagger = 0) => {
-          const pending = targets.filter(
-            (target) => target.getBoundingClientRect().top >= window.innerHeight * 0.94,
-          )
-          if (pending.length === 0) return
-          gsap.fromTo(pending, { opacity: 0, y: 18 }, {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            stagger,
-            ease: 'power3.out',
-            scrollTrigger: { trigger, start: 'top 92%', once: true },
-          })
-        }
-
-        for (const element of gsap.utils.toArray<HTMLElement>('[data-reveal]', root)) {
-          if (!element.closest('[data-reveal-group]')) enter([element], element)
-        }
-
-        for (const group of gsap.utils.toArray<HTMLElement>('[data-reveal-group]', root)) {
-          enter(Array.from(group.children) as HTMLElement[], group, 0.08)
-        }
-
         const hero = root.querySelector<HTMLElement>('[data-hero]')
         if (hero) {
           const scrollTrigger = {

@@ -47,7 +47,7 @@ export function Calculator() {
   return (
     <section className="bg-surface px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
       <div className="mx-auto max-w-[1200px]">
-        <div data-reveal className="max-w-[62ch]">
+        <div data-reveal className="panel-in max-w-[62ch]">
           <SectionEyebrow index="03">Kalkulator</SectionEyebrow>
           <h2 className="mt-5 max-w-[20ch] font-display text-4xl font-black leading-[0.95] tracking-tight sm:text-5xl">
             Coba hitung sendiri. Bukan sekadar lihat fitur.
@@ -58,7 +58,7 @@ export function Calculator() {
           </p>
         </div>
 
-        <div data-reveal-group className="mt-12 grid gap-5 lg:grid-cols-2">
+        <div data-reveal-group className="panel-in mt-12 grid gap-5 lg:grid-cols-2">
           <div className="rounded-[30px] bg-surface-bone p-6 sm:p-8">
             <h3 className="text-2xl font-black">Berapa laba per produk?</h3>
             <p className="mt-2 text-sm text-body">Harga jual dikurangi HPP (harga beli).</p>

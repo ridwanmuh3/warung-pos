@@ -31,3 +31,5 @@ drizzle/*
 *.sw?
 .env
 docs/*
+!docs/warungpos.en.md
+!docs/warungpos.id.md

@@ -12,7 +12,7 @@ export function Faq() {
     <section id="faq" className="scroll-mt-24 bg-surface-bone">
       <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-          <div data-reveal>
+          <div data-reveal className="panel-in">
             <SectionEyebrow index="06">FAQ</SectionEyebrow>
             <h2 className="mt-5 font-display text-3xl font-black leading-[0.95] text-ink sm:text-4xl">
               Pertanyaan yang paling sering muncul.
@@ -23,7 +23,7 @@ export function Faq() {
             </p>
           </div>
 
-          <div data-reveal-group className="space-y-2.5">
+          <div data-reveal-group className="panel-in space-y-2.5">
             {FAQ.map((item) => (
               <details
                 key={item.question}

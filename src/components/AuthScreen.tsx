@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import {
     IconAlertCircle,
     IconBuildingStore,
@@ -13,7 +13,6 @@ import { login, register } from '../lib/auth.session'
 import { useSession } from '../lib/useSession'
 import { safeInternalPath } from '../lib/validation'
 import { Button } from './ui/Button'
-import { buttonStyles } from './ui/buttonStyles'
 
 type Mode = 'login' | 'register'
 
@@ -53,7 +52,17 @@ export function AuthScreen({
     const [errors, setErrors] = useState<string[]>([])
     const [busy, setBusy] = useState(false)
 
-    // Already signed in: show the account instead of a form.
+    // Already signed in: continue to the cashier (or the intended destination)
+    // instead of a dead-end screen that requires a manual "Buka Kasir" click.
+    // The hook runs unconditionally; the redirect itself is guarded by `session`.
+    useEffect(() => {
+        if (!session) return
+        const target = safeInternalPath(redirectTo) ?? '/cashier'
+        // Guard against a redirect loop back to the sign-in screen itself.
+        if (target === '/login') return
+        void navigate({ to: target })
+    }, [session, redirectTo, navigate])
+
     if (session) {
         return (
             <Shell>
@@ -65,12 +74,7 @@ export function AuthScreen({
                     <p className="mt-1 text-sm text-slate-500">
                         {session.name} · <span className="tabular">{session.email}</span>
                     </p>
-                    <Link
-                        to="/cashier"
-                        className={buttonStyles({ size: 'md', className: 'mt-5' })}
-                    >
-                        Buka Kasir
-                    </Link>
+                    <p className="mt-5 text-sm text-mute">Sedang dialihkan ke kasir…</p>
                 </div>
             </Shell>
         )

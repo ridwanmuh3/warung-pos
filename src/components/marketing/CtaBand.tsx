@@ -7,7 +7,7 @@ export function CtaBand() {
   return (
     <section id="coba" className="scroll-mt-24 bg-ink text-white">
       <div className="mx-auto flex max-w-[1200px] flex-col items-start gap-8 px-4 py-16 sm:px-6 sm:py-24 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <div data-reveal>
+        <div data-reveal className="panel-in">
           <SectionEyebrow index="07" tone="dark">
             Mulai
           </SectionEyebrow>
@@ -20,7 +20,7 @@ export function CtaBand() {
           </p>
         </div>
 
-        <div data-reveal className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+        <div data-reveal className="panel-in flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <Link
             to="/login"
             search={{ mode: 'register' }}

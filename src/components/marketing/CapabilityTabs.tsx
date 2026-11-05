@@ -46,7 +46,7 @@ export function CapabilityTabs() {
   return (
     <section id="fitur" className="scroll-mt-24 bg-surface px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
       <div className="mx-auto max-w-[1200px]">
-        <div data-reveal className="max-w-[62ch]">
+        <div data-reveal className="panel-in max-w-[62ch]">
           <SectionEyebrow index="01">Fitur</SectionEyebrow>
           <h2 className="mt-5 font-display text-4xl font-black leading-[0.95] tracking-tight sm:text-5xl">
             Dari pesanan sampai laporan. Satu alur, bukan lima aplikasi.
