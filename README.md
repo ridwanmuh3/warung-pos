@@ -131,6 +131,6 @@ Gunakan akun berikut untuk mencoba instance demo:
 
 | Email | Password |
 | --- | --- |
-| `test@test.com` | `test123123` |
+| `test@test.com` | `123123123` |
 
 Akun demo tidak dibuat otomatis oleh `pnpm db:push`. Pada instalasi lokal baru, buat akun melalui halaman `/login`; akun yang dibuat melalui pendaftaran menjadi owner dari warung baru.
