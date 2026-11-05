@@ -347,3 +347,54 @@ describe('pending orders stay out of money and stock ledgers', () => {
     expect(parkedItems.length).toBeGreaterThan(0)
   })
 })
+
+describe('pending-order race guards', () => {
+  it('refuses to void a pending order through the generic void path', async () => {
+    const { order } = await beginQris(1)
+
+    // Voiding here would leave a live gateway attempt and reserved stock with
+    // no owner, so the cashier is sent to the QRIS screen instead.
+    await expect(data.voidOrder(TENANT, order.id, 'salah input')).rejects.toMatchObject({
+      code: 'payment-invalid',
+      message: 'Batalkan dari layar pembayaran QRIS',
+    })
+
+    expect((await data.getOrderById(TENANT, order.id))?.status).toBe('pending')
+    expect((await data.getLatestPayment(TENANT, order.id))?.status).toBe('pending')
+    const [product] = await data.listProducts(TENANT)
+    expect(product.stock).toBe(9)
+  })
+
+  it('does not turn a cancelled attempt payable when the create call lands late', async () => {
+    const { order, payment } = await beginQris(1)
+    await data.cancelPendingOrder(TENANT, USER, order.id, 'Batal')
+
+    // Simulate the in-flight create response arriving after the cancel.
+    await data.recordPaymentCreated(TENANT, payment.id, {
+      id: 'pr-late',
+      referenceId: payment.referenceId,
+      status: 'REQUIRES_ACTION',
+      amount: payment.amount,
+      currency: 'IDR',
+      qrString: 'QR-LATE',
+      expiresAt: payment.expiresAt ?? null,
+    })
+
+    const latest = await data.getLatestPayment(TENANT, order.id)
+    expect(latest?.status).toBe('cancelled')
+    expect((await data.getOrderById(TENANT, order.id))?.status).toBe('void')
+  })
+
+  it('never overwrites a paid attempt with a failure report', async () => {
+    const { order, payment } = await beginQris(1)
+    await handleXenditCallback('callback-secret', capture(payment.referenceId, 12500))
+    expect((await data.getLatestPayment(TENANT, order.id))?.status).toBe('paid')
+
+    await data.recordPaymentFailure(TENANT, payment.id, 'create_failed', 'late failure')
+
+    const latest = await data.getLatestPayment(TENANT, order.id)
+    expect(latest?.status).toBe('paid')
+    expect(latest?.failureCode).toBeUndefined()
+    expect((await data.getOrderById(TENANT, order.id))?.status).toBe('paid')
+  })
+})
