@@ -83,7 +83,7 @@ const orderSchema = z.object({
   paymentMethod,
   amountPaid: signedMoney.nullable(),
   change: signedMoney.nullable(),
-  status: z.enum(['paid', 'void', 'refunded']),
+  status: z.enum(['pending', 'paid', 'void', 'refunded']),
   channel: salesChannel,
   cashier: cleanText(60).optional(),
   shiftId: legacyId.optional(),
