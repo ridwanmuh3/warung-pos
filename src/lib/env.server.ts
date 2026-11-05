@@ -110,3 +110,19 @@ export const isXenditConfigured = createServerOnlyFn((): boolean =>
   Boolean(process.env.XENDIT_API_KEY?.trim()),
 )
 
+/**
+ * True when the loaded key can only move test money.
+ *
+ * This — not `NODE_ENV` — is the gate for the "Simulasikan Pembayaran" button.
+ * A deployed sandbox build is still a production build, so an environment
+ * check hides the button on exactly the deployment where it is needed. The key
+ * type is the real safety property: a `xnd_development_…` key cannot charge
+ * anyone, and a production key turns simulation off by itself.
+ *
+ * Fails closed: a missing key or a production key without `XENDIT_LIVE` reads
+ * as "not test mode", so the button never appears when it could cost money.
+ */
+export const isXenditTestMode = createServerOnlyFn((): boolean =>
+  (process.env.XENDIT_API_KEY?.trim() ?? '').startsWith('xnd_development'),
+)
+

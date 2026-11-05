@@ -21,7 +21,7 @@ import {
 import type { PaymentSignal } from '../../domain/sales/payment-lifecycle'
 import { createQrisPayment, getPaymentRequest, simulatePayment } from '../../server/payments/xendit.server'
 import type { XenditPaymentRequest } from '../../server/payments/xendit.server'
-import { isXenditConfigured } from '../env.server'
+import { isXenditConfigured, isXenditTestMode } from '../env.server'
 import { checkoutCart, getOrderById } from './orders.server'
 import type { CheckoutCartInput } from './orders.server'
 import { applyStockDeltaOn } from './stock.server'
@@ -242,6 +242,16 @@ export async function applyPaymentSignal(
 
 /** True when a key is configured; the checkout screen hides QRIS otherwise. */
 export const isQrisAvailable = createServerOnlyFn((): boolean => isXenditConfigured())
+
+/**
+ * Whether the sandbox "Simulasikan Pembayaran" action may be offered.
+ *
+ * Keyed off the credential, not the build: a deployed sandbox still runs a
+ * production build, and that is exactly where the button is useful.
+ */
+export const isPaymentSimulationAvailable = createServerOnlyFn((): boolean =>
+  isXenditTestMode(),
+)
 
 export interface BeginQrisInput {
   discount: { amount: number; percent: number | null }
@@ -522,6 +532,14 @@ export const simulateOrderPayment = createServerOnlyFn(
   async (tenantId: string, orderId: string): Promise<void> => {
     const row = await findLatestPaymentOn(getDb(), tenantId, orderId)
     if (!row?.providerRef) throw new AppError('payment-invalid', 'Belum ada QR yang bisa disimulasikan')
+    // Only a live attempt can be completed. Replaying a settled one would
+    // teach the cashier a flow that cannot happen in production.
+    if (row.status === 'paid') {
+      throw new AppError('payment-invalid', 'Pembayaran ini sudah lunas')
+    }
+    if (row.status === 'cancelled') {
+      throw new AppError('payment-invalid', 'Pembayaran ini sudah dibatalkan')
+    }
     await simulatePayment(row.providerRef, row.amount)
   },
 )

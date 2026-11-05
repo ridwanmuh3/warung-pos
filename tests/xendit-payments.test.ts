@@ -398,3 +398,26 @@ describe('pending-order race guards', () => {
     expect((await data.getOrderById(TENANT, order.id))?.status).toBe('paid')
   })
 })
+
+describe('sandbox simulation guards', () => {
+  it('refuses to replay a settled payment', async () => {
+    const { order, payment } = await beginQris(1)
+    await handleXenditCallback('callback-secret', capture(payment.referenceId, 12500))
+    expect((await data.getOrderById(TENANT, order.id))?.status).toBe('paid')
+
+    await expect(data.simulateOrderPayment(TENANT, order.id)).rejects.toMatchObject({
+      code: 'payment-invalid',
+      message: 'Pembayaran ini sudah lunas',
+    })
+  })
+
+  it('refuses to simulate a cancelled attempt', async () => {
+    const { order } = await beginQris(1)
+    await data.cancelPendingOrder(TENANT, USER, order.id, 'Batal')
+
+    await expect(data.simulateOrderPayment(TENANT, order.id)).rejects.toMatchObject({
+      code: 'payment-invalid',
+      message: 'Pembayaran ini sudah dibatalkan',
+    })
+  })
+})
